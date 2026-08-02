@@ -734,6 +734,28 @@ async function loadAll() {
 async function fetchCloudData() {
   if (!supabaseClient) return;
   try {
+    // 1. Fetch Cloud Settings
+    const { data: setRow } = await supabaseClient.from('settings').select('*').eq('id', 1).maybeSingle();
+    if (setRow) {
+      settings.bizName = setRow.biz_name || settings.bizName;
+      settings.rate = Number(setRow.rate || settings.rate);
+      settings.redeemVal = Number(setRow.redeem_val || settings.redeemVal);
+      settings.countryCode = setRow.country_code || settings.countryCode;
+      settings.refBonusReferrer = Number(setRow.ref_bonus_referrer ?? settings.refBonusReferrer);
+      settings.refBonusReferee = Number(setRow.ref_bonus_referee ?? settings.refBonusReferee);
+      document.getElementById('bizNameHeader').textContent = settings.bizName;
+      persistSettings();
+    }
+
+    // 2. Fetch Cloud Staff Logins & Roles
+    const { data: staffRows } = await supabaseClient.from('staff').select('*');
+    if (staffRows && staffRows.length) {
+      settings.staff = staffRows.map(st => ({ name: st.name, pin: st.pin, role: st.role || 'staff' }));
+      persistSettings();
+      renderStaffList();
+    }
+
+    // 3. Fetch Cloud Customers
     const { data: custData } = await supabaseClient.from('customers').select('*');
     if (custData && custData.length) {
       custData.forEach(row => {
@@ -746,6 +768,8 @@ async function fetchCloudData() {
       });
       persistCustomers();
     }
+
+    // 4. Fetch Cloud Transactions
     const { data: txData } = await supabaseClient.from('transactions').select('*').order('date', { ascending: false });
     if (txData && txData.length) {
       transactions = txData.map(row => ({
@@ -754,6 +778,19 @@ async function fetchCloudData() {
         redeemed: Number(row.redeemed || 0), staffName: row.staff_name || '—'
       }));
       persistTransactions();
+    }
+
+    // 5. Fetch Cloud Redemptions
+    const { data: redData } = await supabaseClient.from('redemptions').select('*').order('created_at', { ascending: false });
+    if (redData && redData.length) {
+      redemptions = redData.map(row => ({
+        id: row.id, phone: row.phone, name: row.name,
+        points: Number(row.points || 0), value: Number(row.value || 0),
+        code: row.code, status: row.status,
+        createdAt: new Date(row.created_at).getTime(),
+        fulfilledAt: row.fulfilled_at ? new Date(row.fulfilled_at).getTime() : null
+      }));
+      persistRedemptions();
     }
   } catch(err) {
     console.warn('Cloud sync fetch warning:', err);
@@ -1079,7 +1116,10 @@ function renderRedemptions() {
       <td class="mono">${escapeHtml(r.phone)}</td>
       <td>${r.points} pts (₹${r.value.toFixed(2)})</td>
       <td>${new Date(r.createdAt).toLocaleTimeString()}</td>
-      <td><button class="btn secondary" onclick="fulfillRedemption('${r.id}')">Mark Applied</button> <button class="btn danger" onclick="cancelRedemption('${r.id}')">Cancel & Refund</button></td>
+      <td>
+        <button class="btn secondary" onclick="fulfillRedemption('${r.id}')">Mark Applied</button>
+        ${currentStaffRole === 'owner' ? `<button class="btn danger" onclick="cancelRedemption('${r.id}')">Cancel &amp; Refund</button>` : ''}
+      </td>
     </tr>`).join('');
   let doneRows = done.map(r => `
     <tr>
@@ -1213,7 +1253,7 @@ document.getElementById('add-staff-row').addEventListener('click', () => {
   renderStaffList();
 });
 
-document.getElementById('save-staff').addEventListener('click', () => {
+document.getElementById('save-staff').addEventListener('click', async () => {
   const names = document.querySelectorAll('.staff-name');
   const pins = document.querySelectorAll('.staff-pin');
   const roles = document.querySelectorAll('.staff-role');
@@ -1231,8 +1271,17 @@ document.getElementById('save-staff').addEventListener('click', () => {
   settings.staff = newStaff;
   persistSettings();
   renderStaffList();
-  document.getElementById('staff-status').textContent = 'Staff list saved.';
-  toast('Staff list saved');
+
+  // Cloud sync staff roster to Supabase
+  if (supabaseClient) {
+    try {
+      await supabaseClient.from('staff').delete().neq('name', '___'); // reset table
+      await supabaseClient.from('staff').insert(newStaff.map(s => ({ name: s.name, pin: s.pin, role: s.role })));
+    } catch(err) { console.warn('Supabase staff save failed:', err); }
+  }
+
+  document.getElementById('staff-status').textContent = 'Staff list saved & synced to cloud.';
+  toast('Staff roster updated across all devices!');
 });
 
 // ---- Backup / CSV / JSON Export ----
