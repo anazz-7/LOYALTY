@@ -642,20 +642,36 @@ const Storage = {
 };
 
 function initSupabase() {
-  if (settings.supaUrl && settings.supaKey && window.supabase) {
+  const url = settings.supaUrl || window.SUPABASE_URL || '';
+  const key = settings.supaKey || window.SUPABASE_ANON_KEY || '';
+
+  if (url && key && window.supabase) {
     try {
-      supabaseClient = window.supabase.createClient(settings.supaUrl, settings.supaKey);
-      document.getElementById('supa-status-badge').className = 'badge';
-      document.getElementById('supa-status-badge').textContent = 'Cloud Sync Active (Supabase)';
-      document.getElementById('sync-strip-text').textContent = 'CLOUD SYNC ACTIVE — MULTI-DEVICE REALTIME SYNC ENABLED';
+      supabaseClient = window.supabase.createClient(url, key);
+      const b1 = document.getElementById('supa-status-badge');
+      if (b1) { b1.className = 'badge'; b1.textContent = 'Cloud Sync Active (Realtime)'; }
+      const b2 = document.getElementById('sync-strip-text');
+      if (b2) { b2.textContent = 'CLOUD SYNC ACTIVE — REALTIME MULTI-DEVICE AUTO SYNC ENABLED'; }
+
+      // Setup Supabase Realtime Postgres Changes Subscription
+      try {
+        supabaseClient.channel('b-industries-live-sync')
+          .on('postgres_changes', { event: '*', schema: 'public' }, async () => {
+            await fetchCloudData();
+            renderRecent(); renderCustomers(); renderDashboard(); renderRedemptions();
+          })
+          .subscribe();
+      } catch(subErr) { console.warn('Realtime subscription fallback:', subErr); }
+
       return true;
     } catch(err) {
       console.warn('Supabase init failed:', err);
     }
   }
-  document.getElementById('supa-status-badge').className = 'badge pending';
-  document.getElementById('supa-status-badge').textContent = 'Local Mode (Offline)';
-  document.getElementById('sync-strip-text').textContent = 'ONLINE CLOUD SYSTEM — ACCESSIBLE FROM ANY DEVICE & PHONE';
+  const b1 = document.getElementById('supa-status-badge');
+  if (b1) { b1.className = 'badge pending'; b1.textContent = 'Local Mode (Offline)'; }
+  const b2 = document.getElementById('sync-strip-text');
+  if (b2) { b2.textContent = 'ONLINE CLOUD SYSTEM — ACCESSIBLE FROM ANY DEVICE & PHONE'; }
   return false;
 }
 
@@ -703,6 +719,17 @@ async function loadAll() {
 
   renderStaffList();
   renderRecent(); renderCustomers(); renderDashboard(); renderRedemptions();
+
+  // Automatic Background Auto-Polling (every 4 seconds for seamless multi-device sync)
+  if (!window.autoSyncInterval) {
+    window.autoSyncInterval = setInterval(async () => {
+      if (supabaseClient) {
+        await fetchCloudData();
+        renderRecent(); renderCustomers(); renderDashboard(); renderRedemptions();
+      }
+    }, 4000);
+  }
+}
 }
 
 async function fetchCloudData() {
