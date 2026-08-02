@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="cool-white">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>B-INDUSTRIES LOYALTY — Smart Rewards Program</title>
-<meta name="theme-color" content="#090D16">
+<meta name="theme-color" content="#F8FAFC">
 
 <!-- Google Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -12,46 +12,167 @@
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 
 <style>
-  :root {
-    --bg-dark: #070A10;
-    --bg-card: rgba(15, 23, 38, 0.78);
-    --bg-card-hover: rgba(22, 33, 54, 0.85);
-    --bg-input: #0B1220;
-    --border-glow: rgba(0, 242, 254, 0.2);
-    --border-color: rgba(255, 255, 255, 0.08);
+  /* ================= COLOR THEMES SYSTEM ================= */
+  
+  /* 1. COOL CRISP WHITE (Default) */
+  [data-theme="cool-white"] {
+    --bg-main: #F1F5F9;
+    --bg-header: rgba(255, 255, 255, 0.88);
+    --bg-card: #FFFFFF;
+    --bg-card-elevated: #F8FAFC;
+    --bg-input: #FFFFFF;
+    --border-color: #E2E8F0;
+    --border-glow: rgba(99, 102, 241, 0.25);
 
-    --text-main: #F1F5F9;
+    --text-main: #0F172A;
+    --text-sub: #475569;
+    --text-muted: #94A3B8;
+
+    --accent-primary: #6366F1;
+    --accent-secondary: #06B6D4;
+    --accent-gradient: linear-gradient(135deg, #6366F1 0%, #06B6D4 100%);
+    --accent-glow: rgba(99, 102, 241, 0.2);
+
+    --green: #10B981;
+    --green-bg: rgba(16, 185, 129, 0.1);
+    --amber: #D97706;
+    --amber-bg: rgba(217, 119, 6, 0.1);
+    --rose: #E11D48;
+    --rose-bg: rgba(225, 29, 72, 0.1);
+
+    --card-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.06), 0 4px 12px -2px rgba(15, 23, 42, 0.03);
+    --hero-gradient: linear-gradient(135deg, #1E1B4B 0%, #312E81 50%, #4338CA 100%);
+  }
+
+  /* 2. COOL DARK OBSIDIAN */
+  [data-theme="dark-obsidian"] {
+    --bg-main: #070A10;
+    --bg-header: rgba(15, 23, 38, 0.88);
+    --bg-card: rgba(15, 23, 38, 0.82);
+    --bg-card-elevated: #111827;
+    --bg-input: #0B1220;
+    --border-color: rgba(255, 255, 255, 0.09);
+    --border-glow: rgba(0, 242, 254, 0.3);
+
+    --text-main: #F8FAFC;
     --text-sub: #94A3B8;
     --text-muted: #64748B;
 
-    --neon-cyan: #00F2FE;
-    --neon-blue: #4FACFE;
-    --neon-green: #00FF87;
-    --neon-amber: #FFB302;
-    --neon-rose: #FF2A6D;
-    --neon-purple: #9D4EDD;
+    --accent-primary: #00F2FE;
+    --accent-secondary: #4FACFE;
+    --accent-gradient: linear-gradient(135deg, #00F2FE 0%, #4FACFE 100%);
+    --accent-glow: rgba(0, 242, 254, 0.3);
 
-    --gradient-primary: linear-gradient(135deg, #00F2FE 0%, #4FACFE 100%);
-    --gradient-accent: linear-gradient(135deg, #00FF87 0%, #60EFFF 100%);
-    --gradient-gold: linear-gradient(135deg, #FFB302 0%, #F77737 100%);
+    --green: #00FF87;
+    --green-bg: rgba(0, 255, 135, 0.12);
+    --amber: #FFB302;
+    --amber-bg: rgba(255, 179, 2, 0.12);
+    --rose: #FF2A6D;
+    --rose-bg: rgba(255, 42, 109, 0.12);
 
-    --card-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 242, 254, 0.05);
-    --radius-sm: 8px;
-    --radius-md: 14px;
-    --radius-lg: 22px;
-    --radius-pill: 9999px;
+    --card-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.6);
+    --hero-gradient: linear-gradient(135deg, #0F172A 0%, #1E1B4B 50%, #312E81 100%);
   }
 
+  /* 3. EMERALD MINT */
+  [data-theme="emerald-mint"] {
+    --bg-main: #ECFDF5;
+    --bg-header: rgba(255, 255, 255, 0.9);
+    --bg-card: #FFFFFF;
+    --bg-card-elevated: #F0FDF4;
+    --bg-input: #FFFFFF;
+    --border-color: #A7F3D0;
+    --border-glow: rgba(16, 185, 129, 0.3);
+
+    --text-main: #064E3B;
+    --text-sub: #047857;
+    --text-muted: #6EE7B7;
+
+    --accent-primary: #10B981;
+    --accent-secondary: #0D9488;
+    --accent-gradient: linear-gradient(135deg, #10B981 0%, #059669 100%);
+    --accent-glow: rgba(16, 185, 129, 0.25);
+
+    --green: #059669;
+    --green-bg: rgba(5, 150, 105, 0.12);
+    --amber: #D97706;
+    --amber-bg: rgba(217, 119, 6, 0.12);
+    --rose: #E11D48;
+    --rose-bg: rgba(225, 29, 72, 0.12);
+
+    --card-shadow: 0 10px 30px -5px rgba(6, 78, 59, 0.07);
+    --hero-gradient: linear-gradient(135deg, #064E3B 0%, #047857 50%, #059669 100%);
+  }
+
+  /* 4. CYBER VIOLET */
+  [data-theme="cyber-violet"] {
+    --bg-main: #F5F3FF;
+    --bg-header: rgba(255, 255, 255, 0.9);
+    --bg-card: #FFFFFF;
+    --bg-card-elevated: #FAF5FF;
+    --bg-input: #FFFFFF;
+    --border-color: #DDD6FE;
+    --border-glow: rgba(139, 92, 246, 0.3);
+
+    --text-main: #2E1065;
+    --text-sub: #6B21A8;
+    --text-muted: #A78BFA;
+
+    --accent-primary: #8B5CF6;
+    --accent-secondary: #EC4899;
+    --accent-gradient: linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%);
+    --accent-glow: rgba(139, 92, 246, 0.25);
+
+    --green: #10B981;
+    --green-bg: rgba(16, 185, 129, 0.12);
+    --amber: #F59E0B;
+    --amber-bg: rgba(245, 158, 11, 0.12);
+    --rose: #F43F5E;
+    --rose-bg: rgba(244, 63, 94, 0.12);
+
+    --card-shadow: 0 10px 30px -5px rgba(46, 16, 101, 0.08);
+    --hero-gradient: linear-gradient(135deg, #3B0764 0%, #581C87 50%, #7E22CE 100%);
+  }
+
+  /* 5. SUNSET AMBER */
+  [data-theme="sunset-amber"] {
+    --bg-main: #FFFBEB;
+    --bg-header: rgba(255, 255, 255, 0.9);
+    --bg-card: #FFFFFF;
+    --bg-card-elevated: #FEF3C7;
+    --bg-input: #FFFFFF;
+    --border-color: #FDE68A;
+    --border-glow: rgba(245, 158, 11, 0.3);
+
+    --text-main: #78350F;
+    --text-sub: #92400E;
+    --text-muted: #F59E0B;
+
+    --accent-primary: #F59E0B;
+    --accent-secondary: #F43F5E;
+    --accent-gradient: linear-gradient(135deg, #F59E0B 0%, #F43F5E 100%);
+    --accent-glow: rgba(245, 158, 11, 0.25);
+
+    --green: #10B981;
+    --green-bg: rgba(16, 185, 129, 0.12);
+    --amber: #D97706;
+    --amber-bg: rgba(217, 119, 6, 0.12);
+    --rose: #E11D48;
+    --rose-bg: rgba(225, 29, 72, 0.12);
+
+    --card-shadow: 0 10px 30px -5px rgba(120, 53, 15, 0.08);
+    --hero-gradient: linear-gradient(135deg, #78350F 0%, #B45309 50%, #D97706 100%);
+  }
+
+  /* Global Layout & Reset */
   * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
 
   body {
-    background-color: var(--bg-dark);
-    background-image: 
-      radial-gradient(circle at 10% 20%, rgba(0, 242, 254, 0.08) 0%, transparent 40%),
-      radial-gradient(circle at 90% 80%, rgba(157, 78, 221, 0.08) 0%, transparent 40%);
+    background-color: var(--bg-main);
     color: var(--text-main);
     min-height: 100vh;
     padding-bottom: 70px;
+    transition: background-color 0.3s ease, color 0.3s ease;
     overflow-x: hidden;
   }
 
@@ -60,35 +181,36 @@
 
   /* Top Online Banner */
   .online-strip {
-    background: linear-gradient(90deg, rgba(0, 255, 135, 0.15), rgba(0, 242, 254, 0.15));
-    border-bottom: 1px solid rgba(0, 255, 135, 0.3);
-    color: var(--neon-green);
+    background: var(--accent-gradient);
+    color: #FFFFFF;
     text-align: center;
     font-size: 12.5px;
     font-weight: 700;
     padding: 8px 14px;
     display: flex; align-items: center; justify-content: center; gap: 8px;
     letter-spacing: 0.5px;
+    box-shadow: 0 2px 10px var(--accent-glow);
   }
   .pulse-dot {
-    width: 8px; height: 8px; background-color: var(--neon-green); border-radius: 50%;
-    box-shadow: 0 0 10px var(--neon-green);
+    width: 8px; height: 8px; background-color: #FFFFFF; border-radius: 50%;
+    box-shadow: 0 0 8px #FFFFFF;
     animation: pulse 1.6s infinite;
   }
   @keyframes pulse {
     0% { transform: scale(0.95); opacity: 1; }
-    50% { transform: scale(1.3); opacity: 0.4; }
+    50% { transform: scale(1.3); opacity: 0.5; }
     100% { transform: scale(0.95); opacity: 1; }
   }
 
   /* Header Masthead */
   header.masthead {
-    background: rgba(11, 18, 32, 0.85);
+    background: var(--bg-header);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     border-bottom: 1px solid var(--border-color);
-    padding: 20px 24px;
+    padding: 16px 24px;
     position: sticky; top: 0; z-index: 40;
+    transition: background 0.3s ease;
   }
   .masthead-row {
     max-width: 950px; margin: 0 auto;
@@ -97,42 +219,53 @@
   .brand-block { display: flex; align-items: center; gap: 14px; }
   .brand-logo-icon {
     width: 46px; height: 46px; border-radius: 14px;
-    background: var(--gradient-primary);
+    background: var(--accent-gradient);
     display: flex; align-items: center; justify-content: center;
-    color: #070A10; font-weight: 900; font-size: 22px; font-family: 'Outfit';
-    box-shadow: 0 0 20px rgba(0, 242, 254, 0.4);
+    color: #FFFFFF; font-weight: 900; font-size: 22px; font-family: 'Outfit';
+    box-shadow: 0 4px 14px var(--accent-glow);
   }
-  .masthead .tag { font-size: 11px; color: var(--neon-cyan); letter-spacing: 2px; text-transform: uppercase; font-weight: 700; }
-  .masthead h1 { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; background: linear-gradient(135deg, #FFF, #94A3B8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-  
+  .masthead .tag { font-size: 11px; color: var(--accent-primary); letter-spacing: 2px; text-transform: uppercase; font-weight: 800; }
+  .masthead h1 { font-size: 24px; font-weight: 900; letter-spacing: -0.5px; color: var(--text-main); }
+
+  /* Theme Switcher Dropdown */
+  .theme-selector-box {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--bg-card); border: 1px solid var(--border-color);
+    padding: 6px 12px; border-radius: var(--radius-pill);
+    font-size: 12.5px; font-weight: 700; color: var(--text-main);
+  }
+  .theme-select-dropdown {
+    background: transparent; border: none; outline: none;
+    color: var(--text-main); font-weight: 700; font-size: 12.5px;
+    cursor: pointer; font-family: 'Outfit';
+  }
+
   .stamp {
-    background: rgba(0, 242, 254, 0.08);
-    border: 1.5px solid var(--neon-cyan);
-    color: var(--neon-cyan);
+    border: 2px solid var(--accent-primary);
+    color: var(--accent-primary);
     border-radius: 50%; width: 56px; height: 56px;
     display: flex; align-items: center; justify-content: center;
     font-family: 'Outfit'; font-weight: 800; font-size: 10px;
     text-align: center; line-height: 1.1; transform: rotate(-8deg); flex-shrink: 0;
-    box-shadow: 0 0 15px rgba(0, 242, 254, 0.2);
   }
 
   /* Mode Switcher Buttons */
   .mode-row { max-width: 950px; margin: 20px auto 0; padding: 0 20px; display: flex; gap: 10px; }
   .mode-btn {
-    flex: 1; font-family: 'Outfit'; font-weight: 700; font-size: 15px; padding: 14px;
+    flex: 1; font-family: 'Outfit'; font-weight: 800; font-size: 15px; padding: 14px;
     border-radius: var(--radius-md); border: 1px solid var(--border-color);
     background: var(--bg-card); color: var(--text-sub); cursor: pointer;
     transition: all 0.25s ease; display: flex; align-items: center; justify-content: center; gap: 8px;
-    backdrop-filter: blur(12px);
+    box-shadow: var(--card-shadow);
   }
   .mode-btn.active {
-    background: var(--gradient-primary); color: #070A10; border-color: transparent;
-    box-shadow: 0 6px 20px rgba(0, 242, 254, 0.3); font-weight: 800;
+    background: var(--accent-gradient); color: #FFFFFF; border-color: transparent;
+    box-shadow: 0 6px 20px var(--accent-glow);
   }
   .staff-chip {
-    display: inline-block; background: rgba(7, 10, 16, 0.4);
-    border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 20px;
-    padding: 3px 10px; font-size: 11px; font-weight: 700; color: #070A10; margin-left: 6px;
+    display: inline-block; background: rgba(255, 255, 255, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.4); border-radius: 20px;
+    padding: 3px 10px; font-size: 11px; font-weight: 700; color: #FFFFFF; margin-left: 6px;
   }
 
   /* Navigation Tabs */
@@ -142,22 +275,22 @@
   }
   nav.tabs::-webkit-scrollbar { display: none; }
   nav.tabs button {
-    white-space: nowrap; font-family: 'Inter'; font-weight: 600; font-size: 13.5px;
+    white-space: nowrap; font-family: 'Inter'; font-weight: 700; font-size: 13.5px;
     background: var(--bg-card); color: var(--text-sub);
     border: 1px solid var(--border-color); border-radius: var(--radius-md);
     padding: 10px 18px; cursor: pointer; transition: all 0.2s ease;
+    box-shadow: var(--card-shadow);
   }
   nav.tabs button.active {
-    background: rgba(0, 242, 254, 0.12); color: var(--neon-cyan);
-    border-color: var(--neon-cyan); box-shadow: 0 0 15px rgba(0, 242, 254, 0.2);
+    background: var(--bg-card-elevated); color: var(--accent-primary);
+    border-color: var(--accent-primary); box-shadow: 0 0 0 2px var(--accent-glow);
   }
 
-  /* Main Container & Cards */
+  /* Main Cards & Containers */
   main { max-width: 950px; margin: 22px auto; padding: 0 20px; }
 
   .card {
     background: var(--bg-card);
-    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-lg);
     padding: 24px; margin-bottom: 20px;
@@ -166,14 +299,14 @@
   }
   .card:hover { border-color: var(--border-glow); }
 
-  .card h2 { font-size: 20px; font-weight: 700; color: var(--text-main); margin-bottom: 4px; }
+  .card h2 { font-size: 20px; font-weight: 800; color: var(--text-main); margin-bottom: 4px; }
   .card .sub { color: var(--text-sub); font-size: 13.5px; margin-bottom: 18px; }
 
-  /* Form Controls */
+  /* Form Elements */
   .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
   .field { margin-bottom: 16px; }
   label {
-    font-size: 11.5px; font-weight: 700; color: var(--text-sub);
+    font-size: 11.5px; font-weight: 800; color: var(--text-sub);
     display: block; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.8px;
   }
   input, select {
@@ -182,35 +315,35 @@
     background: var(--bg-input); color: var(--text-main); transition: all 0.2s ease;
   }
   input:focus, select:focus {
-    outline: none; border-color: var(--neon-cyan);
-    box-shadow: 0 0 15px rgba(0, 242, 254, 0.25);
+    outline: none; border-color: var(--accent-primary);
+    box-shadow: 0 0 0 3px var(--accent-glow);
   }
 
   /* Buttons */
   .btn {
-    font-family: 'Outfit'; font-weight: 700; font-size: 14px;
+    font-family: 'Outfit'; font-weight: 800; font-size: 14px;
     padding: 12px 22px; border-radius: var(--radius-md); border: none; cursor: pointer;
-    background: var(--gradient-primary); color: #070A10; transition: all 0.2s ease;
+    background: var(--accent-gradient); color: #FFFFFF; transition: all 0.2s ease;
     display: inline-flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none;
-    box-shadow: 0 4px 15px rgba(0, 242, 254, 0.25);
+    box-shadow: 0 4px 14px var(--accent-glow);
   }
-  .btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0, 242, 254, 0.4); }
+  .btn:hover { transform: translateY(-1px); }
   .btn.secondary {
-    background: transparent; border: 1.5px solid var(--neon-cyan); color: var(--neon-cyan); box-shadow: none;
+    background: var(--bg-card-elevated); border: 1.5px solid var(--border-color); color: var(--text-main); box-shadow: none;
   }
-  .btn.secondary:hover { background: rgba(0, 242, 254, 0.1); }
+  .btn.secondary:hover { border-color: var(--accent-primary); color: var(--accent-primary); }
   .btn.danger {
-    background: rgba(255, 42, 109, 0.12); color: var(--neon-rose); border: 1px solid rgba(255, 42, 109, 0.3); box-shadow: none;
+    background: var(--rose-bg); color: var(--rose); border: 1px solid rgba(225, 29, 72, 0.3); box-shadow: none;
     padding: 6px 12px; font-size: 12.5px;
   }
-  .btn.danger:hover { background: var(--neon-rose); color: #FFF; }
-  .btn.whatsapp { background: #25D366; color: #0B3D24; padding: 8px 16px; font-size: 13px; box-shadow: none; }
-  .btn.print { background: rgba(255,255,255,0.1); color: var(--text-main); padding: 8px 16px; font-size: 13px; border: 1px solid var(--border-color); box-shadow: none; }
+  .btn.danger:hover { background: var(--rose); color: #FFFFFF; }
+  .btn.whatsapp { background: #25D366; color: #FFFFFF; padding: 8px 16px; font-size: 13px; box-shadow: none; }
+  .btn.print { background: var(--bg-card-elevated); color: var(--text-main); padding: 8px 16px; font-size: 13px; border: 1px solid var(--border-color); box-shadow: none; }
   .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
 
-  /* Preview Box */
+  /* Live Preview Box */
   .preview {
-    background: rgba(7, 10, 16, 0.6); border: 1px dashed var(--border-color);
+    background: var(--bg-card-elevated); border: 1px dashed var(--border-color);
     border-radius: var(--radius-md); padding: 16px 20px; margin: 18px 0;
     font-size: 13.5px; color: var(--text-sub); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px;
   }
@@ -218,49 +351,47 @@
 
   /* Badges */
   .badge {
-    display: inline-block; background: rgba(0, 255, 135, 0.15); color: var(--neon-green);
-    border: 1px solid rgba(0, 255, 135, 0.3); font-family: 'JetBrains Mono'; font-weight: 700;
+    display: inline-block; background: var(--green-bg); color: var(--green);
+    border: 1px solid rgba(16, 185, 129, 0.3); font-family: 'JetBrains Mono'; font-weight: 700;
     font-size: 12px; padding: 3px 10px; border-radius: 20px;
   }
-  .badge.redeem { background: rgba(255, 42, 109, 0.15); color: var(--neon-rose); border-color: rgba(255, 42, 109, 0.3); }
-  .badge.pending { background: rgba(255, 179, 2, 0.15); color: var(--neon-amber); border-color: rgba(255, 179, 2, 0.3); }
+  .badge.redeem { background: var(--rose-bg); color: var(--rose); border-color: rgba(225, 29, 72, 0.3); }
+  .badge.pending { background: var(--amber-bg); color: var(--amber); border-color: rgba(217, 119, 6, 0.3); }
 
-  /* Data Tables */
+  /* Tables */
   .table-responsive { overflow-x: auto; border-radius: var(--radius-md); border: 1px solid var(--border-color); }
   table { width: 100%; border-collapse: collapse; font-size: 13.5px; text-align: left; }
-  th { text-align: left; color: var(--text-sub); font-weight: 700; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.5px; padding: 12px 14px; border-bottom: 2px solid var(--border-color); background: rgba(7, 10, 16, 0.5); }
-  td { padding: 12px 14px; border-bottom: 1px solid var(--border-color); vertical-align: middle; }
-  tr:hover td { background: rgba(255, 255, 255, 0.02); }
+  th { text-align: left; color: var(--text-sub); font-weight: 700; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.5px; padding: 12px 14px; border-bottom: 2px solid var(--border-color); background: var(--bg-card-elevated); }
+  td { padding: 12px 14px; border-bottom: 1px solid var(--border-color); vertical-align: middle; color: var(--text-main); }
+  tr:hover td { background: var(--bg-card-elevated); }
   .empty { text-align: center; color: var(--text-muted); padding: 36px 10px; font-size: 14px; }
 
   /* Stat Grid */
   .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; }
-  .stat { background: rgba(7, 10, 16, 0.5); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 18px; }
-  .stat .num { font-size: 28px; font-weight: 800; font-family: 'Outfit'; color: var(--neon-cyan); }
+  .stat { background: var(--bg-card-elevated); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 18px; }
+  .stat .num { font-size: 28px; font-weight: 900; font-family: 'Outfit'; color: var(--accent-primary); }
   .stat .lbl { font-size: 12px; color: var(--text-sub); text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; margin-top: 4px; }
 
   .searchbar { margin-bottom: 16px; }
   .customer-detail { border-top: 2px dashed var(--border-color); margin-top: 18px; padding-top: 18px; }
-  .save-status { font-size: 13px; color: var(--neon-green); font-weight: 600; text-align: center; margin-top: 10px; }
-  .link-btn { background: none; border: none; color: var(--neon-cyan); font-weight: 700; cursor: pointer; font-size: 13px; padding: 0; text-decoration: underline; }
+  .save-status { font-size: 13px; color: var(--green); font-weight: 700; text-align: center; margin-top: 10px; }
+  .link-btn { background: none; border: none; color: var(--accent-primary); font-weight: 700; cursor: pointer; font-size: 13px; padding: 0; text-decoration: underline; }
 
-  /* Customer Pass / Hero Card */
+  /* Customer Hero Pass Card */
   .customer-hero-card {
-    background: linear-gradient(135deg, #0F172A 0%, #1E1B4B 50%, #312E81 100%);
-    border: 1px solid rgba(0, 242, 254, 0.25);
+    background: var(--hero-gradient);
     border-radius: var(--radius-lg);
-    padding: 26px; text-align: center; margin-bottom: 20px;
-    box-shadow: 0 20px 40px -15px rgba(0, 242, 254, 0.2);
-    position: relative; overflow: hidden;
+    padding: 28px; text-align: center; margin-bottom: 20px;
+    color: #FFFFFF; box-shadow: 0 20px 40px -15px var(--accent-glow);
   }
-  .customer-hero-card .balance { font-size: 50px; font-weight: 900; font-family: 'Outfit'; color: var(--neon-green); line-height: 1; text-shadow: 0 0 20px rgba(0, 255, 135, 0.4); }
-  .customer-hero-card .balance-lbl { font-size: 12px; color: var(--text-sub); text-transform: uppercase; letter-spacing: 1px; margin-top: 6px; }
+  .customer-hero-card .balance { font-size: 52px; font-weight: 900; font-family: 'Outfit'; color: #FFFFFF; line-height: 1; }
+  .customer-hero-card .balance-lbl { font-size: 12px; opacity: 0.85; text-transform: uppercase; letter-spacing: 1px; margin-top: 6px; }
 
   .code-box {
-    background: rgba(7, 10, 16, 0.7); border: 2px dashed var(--neon-amber);
+    background: var(--bg-card-elevated); border: 2px dashed var(--amber);
     border-radius: var(--radius-md); padding: 18px; text-align: center; margin-top: 16px;
   }
-  .code-box .code { font-family: 'JetBrains Mono'; font-size: 32px; font-weight: 800; letter-spacing: 4px; color: var(--neon-amber); text-shadow: 0 0 15px rgba(255, 179, 2, 0.3); }
+  .code-box .code { font-family: 'JetBrains Mono'; font-size: 32px; font-weight: 800; letter-spacing: 4px; color: var(--amber); }
 
   /* Staff Row Settings */
   .staff-row { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
@@ -268,13 +399,13 @@
 
   .quick-range { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
   .quick-range button { font-size: 12.5px; font-weight: 700; padding: 8px 16px; border-radius: 20px; border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-sub); cursor: pointer; }
-  .quick-range button.active { background: var(--gradient-primary); color: #070A10; border-color: transparent; }
+  .quick-range button.active { background: var(--accent-gradient); color: #FFFFFF; border-color: transparent; }
 
   /* Toast Notification */
   .toast {
     position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
-    background: var(--bg-card); color: var(--text-main); border: 1px solid var(--neon-cyan); padding: 12px 24px; border-radius: var(--radius-pill);
-    font-size: 13.5px; font-weight: 700; box-shadow: 0 10px 30px rgba(0,0,0,0.5); opacity: 0; pointer-events: none; transition: all 0.3s ease; z-index: 100;
+    background: var(--text-main); color: var(--bg-main); border-radius: var(--radius-pill); padding: 12px 24px;
+    font-size: 13.5px; font-weight: 700; box-shadow: 0 10px 30px rgba(0,0,0,0.25); opacity: 0; pointer-events: none; transition: all 0.3s ease; z-index: 100;
   }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
@@ -311,7 +442,21 @@
         <h1 id="bizNameHeader">B-INDUSTRIES LOYALTY</h1>
       </div>
     </div>
-    <div class="stamp">EARN<br>&amp;<br>SAVE</div>
+
+    <!-- Multi Theme Switcher Selector -->
+    <div style="display:flex; align-items:center; gap:12px;">
+      <div class="theme-selector-box">
+        <span>🎨 Theme:</span>
+        <select class="theme-select-dropdown" id="themeSelectDropdown">
+          <option value="cool-white">🧊 Cool Crisp White</option>
+          <option value="dark-obsidian">🌌 Cool Dark Obsidian</option>
+          <option value="emerald-mint">🌿 Emerald Mint</option>
+          <option value="cyber-violet">💜 Cyber Violet</option>
+          <option value="sunset-amber">🌅 Sunset Amber</option>
+        </select>
+      </div>
+      <div class="stamp">EARN<br>&amp;<br>SAVE</div>
+    </div>
   </div>
 </header>
 
@@ -330,7 +475,7 @@
       <input id="pin-input" type="password" class="mono" inputmode="numeric" placeholder="••••" style="font-size:20px; letter-spacing:6px; text-align:center;">
     </div>
     <button class="btn" id="pin-submit" style="width:100%;">Unlock Terminal</button>
-    <div class="save-status" id="pin-status" style="color:var(--neon-rose);"></div>
+    <div class="save-status" id="pin-status" style="color:var(--rose);"></div>
   </div>
 </main>
 
@@ -480,7 +625,7 @@
     <div class="sub">Enter your registered 10-digit phone number.</div>
     <div class="field"><label>Phone Number</label><input id="c-phone" class="mono" placeholder="10-digit number" maxlength="15" style="text-align:center; font-size:18px;"></div>
     <button class="btn" id="c-lookup" style="width:100%;">Check Balance</button>
-    <div class="save-status" id="c-status" style="color:var(--neon-rose);"></div>
+    <div class="save-status" id="c-status" style="color:var(--rose);"></div>
   </div>
 
   <div id="customer-result"></div>
@@ -536,7 +681,19 @@ function generateReferralCode(name, phone) {
   return letters + digits;
 }
 
+// Theme Engine Selector
+document.getElementById('themeSelectDropdown').addEventListener('change', (e) => {
+  const selectedTheme = e.target.value;
+  document.documentElement.setAttribute('data-theme', selectedTheme);
+  Storage.set('bm-loyalty-theme', selectedTheme);
+  toast(`Theme changed`);
+});
+
 function loadAll() {
+  const savedTheme = Storage.get('bm-loyalty-theme') || 'cool-white';
+  document.documentElement.setAttribute('data-theme', savedTheme);
+  document.getElementById('themeSelectDropdown').value = savedTheme;
+
   const c = Storage.get('bm-loyalty-customers'); customers = c || {};
   const t = Storage.get('bm-loyalty-transactions'); transactions = t || [];
   const r = Storage.get('bm-loyalty-redemptions'); redemptions = r || [];
@@ -749,7 +906,7 @@ window.showCustomer = function(phone) {
   detail.innerHTML = `
     <div class="customer-detail">
       <h3>${escapeHtml(c.name)}</h3>
-      <div class="sub" style="margin-bottom:12px;">${escapeHtml(c.phone)} · ${c.visits} visits · Balance: <b>${c.totalPoints} pts</b> (≈₹${(c.totalPoints * (settings.redeemVal || 0)).toFixed(2)}) · Referral code: <b class="mono" style="color:var(--neon-cyan);">${escapeHtml(c.referralCode || '—')}</b></div>
+      <div class="sub" style="margin-bottom:12px;">${escapeHtml(c.phone)} · ${c.visits} visits · Balance: <b>${c.totalPoints} pts</b> (≈₹${(c.totalPoints * (settings.redeemVal || 0)).toFixed(2)}) · Referral code: <b class="mono" style="color:var(--accent-primary);">${escapeHtml(c.referralCode || '—')}</b></div>
       <div class="table-responsive"><table><thead><tr><th>Bill</th><th>Date</th><th>Amount</th><th>Points</th><th>Staff</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
     </div>`;
 };
@@ -789,7 +946,7 @@ function renderRedemptions() {
     </tr>`).join('');
 
   list.innerHTML = `
-    <h3 style="font-size:14px; margin-bottom:8px; color:var(--neon-amber);">Pending Requests</h3>
+    <h3 style="font-size:14px; margin-bottom:8px; color:var(--amber);">Pending Requests</h3>
     <div class="table-responsive"><table><thead><tr><th>Code</th><th>Name</th><th>Phone</th><th>Value</th><th>Requested</th><th></th></tr></thead><tbody>${rows || '<tr><td colspan="6" class="empty">None pending</td></tr>'}</tbody></table></div>
     <h3 style="font-size:14px; margin:20px 0 8px;">Recent History</h3>
     <div class="table-responsive"><table><thead><tr><th>Code</th><th>Name</th><th>Phone</th><th>Points</th><th>Status</th><th></th></tr></thead><tbody>${doneRows || '<tr><td colspan="6" class="empty">None yet</td></tr>'}</tbody></table></div>`;
@@ -1039,7 +1196,7 @@ document.getElementById('c-lookup').addEventListener('click', () => {
     <div class="customer-hero-card">
       <div class="balance">${c.totalPoints}</div>
       <div class="balance-lbl">Points Balance · Worth ~₹${(c.totalPoints * (settings.redeemVal || 0)).toFixed(2)}</div>
-      <div style="font-size:15px; margin-top:10px; color:var(--text-sub);">Welcome back, <b>${escapeHtml(c.name)}</b> — ${c.visits} visits so far</div>
+      <div style="font-size:15px; margin-top:10px; opacity:0.9;">Welcome back, <b>${escapeHtml(c.name)}</b> — ${c.visits} visits so far</div>
     </div>
 
     <div class="card">
