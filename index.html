@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>B-INDUSTRIES LOYALTY — Smart Rewards Program</title>
-<meta name="theme-color" content="#10B981">
+<meta name="theme-color" content="#1D3557">
 
 <!-- Google Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -12,34 +12,47 @@
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 
 <style>
-  /* PERMANENT MINT WITH WHITE THEME DESIGN SYSTEM */
+  /* EXACT PALETTE DESIGN SYSTEM:
+     ~Strawberry Red:   #E63946
+     ~Honeydew:         #F1FAEE
+     ~Frosted Blue:     #A8DADC
+     ~Steel Blue:       #457B9D
+     ~Deep Space Blue:  #1D3557
+  */
   :root {
-    --bg-main: #F0FDF4;
-    --bg-header: rgba(255, 255, 255, 0.92);
+    --strawberry-red: #E63946;
+    --honeydew: #F1FAEE;
+    --frosted-blue: #A8DADC;
+    --steel-blue: #457B9D;
+    --deep-space-blue: #1D3557;
+
+    --bg-main: #F1FAEE;
+    --bg-header: #1D3557;
     --bg-card: #FFFFFF;
-    --bg-card-elevated: #ECFDF5;
+    --bg-card-elevated: rgba(168, 218, 220, 0.22);
     --bg-input: #FFFFFF;
-    --border-color: #D1FAE5;
-    --border-glow: rgba(16, 185, 129, 0.3);
+    --border-color: #A8DADC;
+    --border-glow: rgba(69, 123, 157, 0.35);
 
-    --text-main: #064E3B;
-    --text-sub: #047857;
-    --text-muted: #6EE7B7;
+    --text-main: #1D3557;
+    --text-sub: #457B9D;
+    --text-muted: #6C8EAD;
 
-    --accent-primary: #10B981;
-    --accent-dark: #059669;
-    --accent-gradient: linear-gradient(135deg, #10B981 0%, #059669 100%);
-    --accent-glow: rgba(16, 185, 129, 0.22);
+    --accent-primary: #E63946;
+    --accent-secondary: #457B9D;
+    --accent-gradient: linear-gradient(135deg, #1D3557 0%, #457B9D 100%);
+    --btn-gradient: linear-gradient(135deg, #E63946 0%, #D62828 100%);
+    --accent-glow: rgba(230, 57, 70, 0.28);
 
-    --green: #059669;
-    --green-bg: rgba(5, 150, 105, 0.12);
-    --amber: #D97706;
-    --amber-bg: rgba(217, 119, 6, 0.12);
-    --rose: #E11D48;
-    --rose-bg: rgba(225, 29, 72, 0.12);
+    --green: #457B9D;
+    --green-bg: rgba(168, 218, 220, 0.35);
+    --amber: #1D3557;
+    --amber-bg: rgba(69, 123, 157, 0.15);
+    --rose: #E63946;
+    --rose-bg: rgba(230, 57, 70, 0.12);
 
-    --card-shadow: 0 10px 30px -5px rgba(6, 78, 59, 0.08), 0 4px 12px -2px rgba(6, 78, 59, 0.04);
-    --hero-gradient: linear-gradient(135deg, #064E3B 0%, #047857 50%, #059669 100%);
+    --card-shadow: 0 10px 30px -5px rgba(29, 53, 87, 0.08), 0 4px 12px -2px rgba(29, 53, 87, 0.04);
+    --hero-gradient: linear-gradient(135deg, #1D3557 0%, #457B9D 70%, #A8DADC 100%);
     --radius-sm: 8px;
     --radius-md: 14px;
     --radius-lg: 22px;
@@ -61,19 +74,19 @@
 
   /* Top Online Banner */
   .online-strip {
-    background: var(--accent-gradient);
-    color: #FFFFFF;
+    background: linear-gradient(90deg, #1D3557, #457B9D);
+    color: #F1FAEE;
     text-align: center;
     font-size: 12.5px;
     font-weight: 700;
     padding: 8px 14px;
     display: flex; align-items: center; justify-content: center; gap: 8px;
     letter-spacing: 0.5px;
-    box-shadow: 0 2px 10px var(--accent-glow);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   }
   .pulse-dot {
-    width: 8px; height: 8px; background-color: #FFFFFF; border-radius: 50%;
-    box-shadow: 0 0 8px #FFFFFF;
+    width: 8px; height: 8px; background-color: #E63946; border-radius: 50%;
+    box-shadow: 0 0 8px #E63946;
     animation: pulse 1.6s infinite;
   }
   @keyframes pulse {
@@ -85,11 +98,10 @@
   /* Header Masthead */
   header.masthead {
     background: var(--bg-header);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border-bottom: 1px solid var(--border-color);
-    padding: 16px 24px;
+    color: var(--honeydew);
+    padding: 18px 24px;
     position: sticky; top: 0; z-index: 40;
+    box-shadow: 0 4px 20px rgba(29, 53, 87, 0.2);
   }
   .masthead-row {
     max-width: 950px; margin: 0 auto;
@@ -97,18 +109,19 @@
   }
   .brand-block { display: flex; align-items: center; gap: 14px; }
   .brand-logo-icon {
-    width: 46px; height: 46px; border-radius: 14px;
-    background: var(--accent-gradient);
+    width: 48px; height: 48px; border-radius: 14px;
+    background: var(--strawberry-red);
     display: flex; align-items: center; justify-content: center;
-    color: #FFFFFF; font-weight: 900; font-size: 22px; font-family: 'Outfit';
-    box-shadow: 0 4px 14px var(--accent-glow);
+    color: #FFFFFF; font-weight: 900; font-size: 24px; font-family: 'Outfit';
+    box-shadow: 0 4px 14px rgba(230, 57, 70, 0.4);
   }
-  .masthead .tag { font-size: 11px; color: var(--accent-primary); letter-spacing: 2px; text-transform: uppercase; font-weight: 800; }
-  .masthead h1 { font-size: 24px; font-weight: 900; letter-spacing: -0.5px; color: var(--text-main); }
+  .masthead .tag { font-size: 11px; color: var(--frosted-blue); letter-spacing: 2px; text-transform: uppercase; font-weight: 800; }
+  .masthead h1 { font-size: 25px; font-weight: 900; letter-spacing: -0.5px; color: #FFFFFF; }
 
   .stamp {
-    border: 2px solid var(--accent-primary);
-    color: var(--accent-primary);
+    border: 2px solid var(--strawberry-red);
+    color: var(--strawberry-red);
+    background: rgba(230, 57, 70, 0.1);
     border-radius: 50%; width: 56px; height: 56px;
     display: flex; align-items: center; justify-content: center;
     font-family: 'Outfit'; font-weight: 800; font-size: 10px;
@@ -119,19 +132,18 @@
   .mode-row { max-width: 950px; margin: 20px auto 0; padding: 0 20px; display: flex; gap: 10px; }
   .mode-btn {
     flex: 1; font-family: 'Outfit'; font-weight: 800; font-size: 15px; padding: 14px;
-    border-radius: var(--radius-md); border: 1px solid var(--border-color);
+    border-radius: var(--radius-md); border: 1.5px solid var(--border-color);
     background: var(--bg-card); color: var(--text-sub); cursor: pointer;
     transition: all 0.25s ease; display: flex; align-items: center; justify-content: center; gap: 8px;
     box-shadow: var(--card-shadow);
   }
   .mode-btn.active {
     background: var(--accent-gradient); color: #FFFFFF; border-color: transparent;
-    box-shadow: 0 6px 20px var(--accent-glow);
+    box-shadow: 0 6px 20px rgba(29, 53, 87, 0.25);
   }
   .staff-chip {
-    display: inline-block; background: rgba(255, 255, 255, 0.25);
-    border: 1px solid rgba(255, 255, 255, 0.4); border-radius: 20px;
-    padding: 3px 10px; font-size: 11px; font-weight: 700; color: #FFFFFF; margin-left: 6px;
+    display: inline-block; background: var(--strawberry-red);
+    border-radius: 20px; padding: 3px 10px; font-size: 11px; font-weight: 700; color: #FFFFFF; margin-left: 6px;
   }
 
   /* Navigation Tabs */
@@ -143,13 +155,13 @@
   nav.tabs button {
     white-space: nowrap; font-family: 'Inter'; font-weight: 700; font-size: 13.5px;
     background: var(--bg-card); color: var(--text-sub);
-    border: 1px solid var(--border-color); border-radius: var(--radius-md);
+    border: 1.5px solid var(--border-color); border-radius: var(--radius-md);
     padding: 10px 18px; cursor: pointer; transition: all 0.2s ease;
     box-shadow: var(--card-shadow);
   }
   nav.tabs button.active {
-    background: var(--bg-card-elevated); color: var(--accent-dark);
-    border-color: var(--accent-primary); box-shadow: 0 0 0 2px var(--accent-glow);
+    background: var(--deep-space-blue); color: #FFFFFF;
+    border-color: var(--deep-space-blue); box-shadow: 0 4px 14px rgba(29, 53, 87, 0.2);
   }
 
   /* Main Cards & Containers */
@@ -157,13 +169,13 @@
 
   .card {
     background: var(--bg-card);
-    border: 1px solid var(--border-color);
+    border: 1.5px solid var(--border-color);
     border-radius: var(--radius-lg);
     padding: 24px; margin-bottom: 20px;
     box-shadow: var(--card-shadow);
     transition: all 0.25s ease;
   }
-  .card:hover { border-color: var(--border-glow); }
+  .card:hover { border-color: var(--steel-blue); }
 
   .card h2 { font-size: 20px; font-weight: 800; color: var(--text-main); margin-bottom: 4px; }
   .card .sub { color: var(--text-sub); font-size: 13.5px; margin-bottom: 18px; }
@@ -181,35 +193,35 @@
     background: var(--bg-input); color: var(--text-main); transition: all 0.2s ease;
   }
   input:focus, select:focus {
-    outline: none; border-color: var(--accent-primary);
-    box-shadow: 0 0 0 3px var(--accent-glow);
+    outline: none; border-color: var(--steel-blue);
+    box-shadow: 0 0 0 3px rgba(69, 123, 157, 0.2);
   }
 
   /* Buttons */
   .btn {
     font-family: 'Outfit'; font-weight: 800; font-size: 14px;
     padding: 12px 22px; border-radius: var(--radius-md); border: none; cursor: pointer;
-    background: var(--accent-gradient); color: #FFFFFF; transition: all 0.2s ease;
+    background: var(--btn-gradient); color: #FFFFFF; transition: all 0.2s ease;
     display: inline-flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none;
     box-shadow: 0 4px 14px var(--accent-glow);
   }
-  .btn:hover { transform: translateY(-1px); }
+  .btn:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(230, 57, 70, 0.4); }
   .btn.secondary {
-    background: var(--bg-card-elevated); border: 1.5px solid var(--border-color); color: var(--text-main); box-shadow: none;
+    background: var(--bg-card-elevated); border: 1.5px solid var(--border-color); color: var(--deep-space-blue); box-shadow: none;
   }
-  .btn.secondary:hover { border-color: var(--accent-primary); color: var(--accent-dark); }
+  .btn.secondary:hover { border-color: var(--deep-space-blue); background: rgba(168, 218, 220, 0.4); }
   .btn.danger {
-    background: var(--rose-bg); color: var(--rose); border: 1px solid rgba(225, 29, 72, 0.3); box-shadow: none;
+    background: var(--rose-bg); color: var(--rose); border: 1px solid rgba(230, 57, 70, 0.3); box-shadow: none;
     padding: 6px 12px; font-size: 12.5px;
   }
   .btn.danger:hover { background: var(--rose); color: #FFFFFF; }
   .btn.whatsapp { background: #25D366; color: #FFFFFF; padding: 8px 16px; font-size: 13px; box-shadow: none; }
-  .btn.print { background: var(--bg-card-elevated); color: var(--text-main); padding: 8px 16px; font-size: 13px; border: 1px solid var(--border-color); box-shadow: none; }
+  .btn.print { background: var(--deep-space-blue); color: #FFFFFF; padding: 8px 16px; font-size: 13px; border: none; box-shadow: none; }
   .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
 
   /* Live Preview Box */
   .preview {
-    background: var(--bg-card-elevated); border: 1px dashed var(--border-color);
+    background: var(--bg-card-elevated); border: 1px dashed var(--steel-blue);
     border-radius: var(--radius-md); padding: 16px 20px; margin: 18px 0;
     font-size: 13.5px; color: var(--text-sub); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px;
   }
@@ -217,15 +229,15 @@
 
   /* Badges */
   .badge {
-    display: inline-block; background: var(--green-bg); color: var(--green);
-    border: 1px solid rgba(5, 150, 105, 0.3); font-family: 'JetBrains Mono'; font-weight: 700;
+    display: inline-block; background: rgba(69, 123, 157, 0.15); color: var(--deep-space-blue);
+    border: 1px solid var(--border-color); font-family: 'JetBrains Mono'; font-weight: 700;
     font-size: 12px; padding: 3px 10px; border-radius: 20px;
   }
-  .badge.redeem { background: var(--rose-bg); color: var(--rose); border-color: rgba(225, 29, 72, 0.3); }
-  .badge.pending { background: var(--amber-bg); color: var(--amber); border-color: rgba(217, 119, 6, 0.3); }
+  .badge.redeem { background: var(--rose-bg); color: var(--rose); border-color: rgba(230, 57, 70, 0.3); }
+  .badge.pending { background: rgba(29, 53, 87, 0.1); color: var(--deep-space-blue); border-color: rgba(29, 53, 87, 0.3); }
 
   /* Data Tables */
-  .table-responsive { overflow-x: auto; border-radius: var(--radius-md); border: 1px solid var(--border-color); }
+  .table-responsive { overflow-x: auto; border-radius: var(--radius-md); border: 1.5px solid var(--border-color); }
   table { width: 100%; border-collapse: collapse; font-size: 13.5px; text-align: left; }
   th { text-align: left; color: var(--text-sub); font-weight: 700; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.5px; padding: 12px 14px; border-bottom: 2px solid var(--border-color); background: var(--bg-card-elevated); }
   td { padding: 12px 14px; border-bottom: 1px solid var(--border-color); vertical-align: middle; color: var(--text-main); }
@@ -234,44 +246,44 @@
 
   /* Stat Grid */
   .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; }
-  .stat { background: var(--bg-card-elevated); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 18px; }
-  .stat .num { font-size: 28px; font-weight: 900; font-family: 'Outfit'; color: var(--accent-dark); }
+  .stat { background: var(--bg-card-elevated); border: 1.5px solid var(--border-color); border-radius: var(--radius-md); padding: 18px; }
+  .stat .num { font-size: 28px; font-weight: 900; font-family: 'Outfit'; color: var(--deep-space-blue); }
   .stat .lbl { font-size: 12px; color: var(--text-sub); text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; margin-top: 4px; }
 
   .searchbar { margin-bottom: 16px; }
   .customer-detail { border-top: 2px dashed var(--border-color); margin-top: 18px; padding-top: 18px; }
-  .save-status { font-size: 13px; color: var(--green); font-weight: 700; text-align: center; margin-top: 10px; }
-  .link-btn { background: none; border: none; color: var(--accent-dark); font-weight: 700; cursor: pointer; font-size: 13px; padding: 0; text-decoration: underline; }
+  .save-status { font-size: 13px; color: var(--deep-space-blue); font-weight: 700; text-align: center; margin-top: 10px; }
+  .link-btn { background: none; border: none; color: var(--strawberry-red); font-weight: 700; cursor: pointer; font-size: 13px; padding: 0; text-decoration: underline; }
 
   /* Customer Hero Pass Card */
   .customer-hero-card {
     background: var(--hero-gradient);
     border-radius: var(--radius-lg);
     padding: 28px; text-align: center; margin-bottom: 20px;
-    color: #FFFFFF; box-shadow: 0 20px 40px -15px var(--accent-glow);
+    color: #FFFFFF; box-shadow: 0 20px 40px -15px rgba(29, 53, 87, 0.3);
   }
   .customer-hero-card .balance { font-size: 52px; font-weight: 900; font-family: 'Outfit'; color: #FFFFFF; line-height: 1; }
-  .customer-hero-card .balance-lbl { font-size: 12px; opacity: 0.85; text-transform: uppercase; letter-spacing: 1px; margin-top: 6px; }
+  .customer-hero-card .balance-lbl { font-size: 12px; color: var(--frosted-blue); text-transform: uppercase; letter-spacing: 1px; margin-top: 6px; }
 
   .code-box {
-    background: var(--bg-card-elevated); border: 2px dashed var(--amber);
+    background: var(--bg-card-elevated); border: 2px dashed var(--strawberry-red);
     border-radius: var(--radius-md); padding: 18px; text-align: center; margin-top: 16px;
   }
-  .code-box .code { font-family: 'JetBrains Mono'; font-size: 32px; font-weight: 800; letter-spacing: 4px; color: var(--amber); }
+  .code-box .code { font-family: 'JetBrains Mono'; font-size: 32px; font-weight: 800; letter-spacing: 4px; color: var(--strawberry-red); }
 
   /* Staff Row Settings */
   .staff-row { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
   .staff-row input, .staff-row select { flex: 1; min-width: 120px; }
 
   .quick-range { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
-  .quick-range button { font-size: 12.5px; font-weight: 700; padding: 8px 16px; border-radius: 20px; border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-sub); cursor: pointer; }
+  .quick-range button { font-size: 12.5px; font-weight: 700; padding: 8px 16px; border-radius: 20px; border: 1.5px solid var(--border-color); background: var(--bg-card); color: var(--text-sub); cursor: pointer; }
   .quick-range button.active { background: var(--accent-gradient); color: #FFFFFF; border-color: transparent; }
 
   /* Toast Notification */
   .toast {
     position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
-    background: var(--text-main); color: #FFFFFF; border-radius: var(--radius-pill); padding: 12px 24px;
-    font-size: 13.5px; font-weight: 700; box-shadow: 0 10px 30px rgba(6, 78, 59, 0.2); opacity: 0; pointer-events: none; transition: all 0.3s ease; z-index: 100;
+    background: var(--deep-space-blue); color: #FFFFFF; border-radius: var(--radius-pill); padding: 12px 24px;
+    font-size: 13.5px; font-weight: 700; box-shadow: 0 10px 30px rgba(29, 53, 87, 0.3); opacity: 0; pointer-events: none; transition: all 0.3s ease; z-index: 100;
   }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
@@ -327,7 +339,7 @@
       <input id="pin-input" type="password" class="mono" inputmode="numeric" placeholder="••••" style="font-size:20px; letter-spacing:6px; text-align:center;">
     </div>
     <button class="btn" id="pin-submit" style="width:100%;">Unlock Terminal</button>
-    <div class="save-status" id="pin-status" style="color:var(--rose);"></div>
+    <div class="save-status" id="pin-status" style="color:var(--strawberry-red);"></div>
   </div>
 </main>
 
@@ -477,7 +489,7 @@
     <div class="sub">Enter your registered 10-digit phone number.</div>
     <div class="field"><label>Phone Number</label><input id="c-phone" class="mono" placeholder="10-digit number" maxlength="15" style="text-align:center; font-size:18px;"></div>
     <button class="btn" id="c-lookup" style="width:100%;">Check Balance</button>
-    <div class="save-status" id="c-status" style="color:var(--rose);"></div>
+    <div class="save-status" id="c-status" style="color:var(--strawberry-red);"></div>
   </div>
 
   <div id="customer-result"></div>
@@ -746,7 +758,7 @@ window.showCustomer = function(phone) {
   detail.innerHTML = `
     <div class="customer-detail">
       <h3>${escapeHtml(c.name)}</h3>
-      <div class="sub" style="margin-bottom:12px;">${escapeHtml(c.phone)} · ${c.visits} visits · Balance: <b>${c.totalPoints} pts</b> (≈₹${(c.totalPoints * (settings.redeemVal || 0)).toFixed(2)}) · Referral code: <b class="mono" style="color:var(--accent-dark);">${escapeHtml(c.referralCode || '—')}</b></div>
+      <div class="sub" style="margin-bottom:12px;">${escapeHtml(c.phone)} · ${c.visits} visits · Balance: <b>${c.totalPoints} pts</b> (≈₹${(c.totalPoints * (settings.redeemVal || 0)).toFixed(2)}) · Referral code: <b class="mono" style="color:var(--strawberry-red);">${escapeHtml(c.referralCode || '—')}</b></div>
       <div class="table-responsive"><table><thead><tr><th>Bill</th><th>Date</th><th>Amount</th><th>Points</th><th>Staff</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
     </div>`;
 };
@@ -786,7 +798,7 @@ function renderRedemptions() {
     </tr>`).join('');
 
   list.innerHTML = `
-    <h3 style="font-size:14px; margin-bottom:8px; color:var(--amber);">Pending Requests</h3>
+    <h3 style="font-size:14px; margin-bottom:8px; color:var(--deep-space-blue);">Pending Requests</h3>
     <div class="table-responsive"><table><thead><tr><th>Code</th><th>Name</th><th>Phone</th><th>Value</th><th>Requested</th><th></th></tr></thead><tbody>${rows || '<tr><td colspan="6" class="empty">None pending</td></tr>'}</tbody></table></div>
     <h3 style="font-size:14px; margin:20px 0 8px;">Recent History</h3>
     <div class="table-responsive"><table><thead><tr><th>Code</th><th>Name</th><th>Phone</th><th>Points</th><th>Status</th><th></th></tr></thead><tbody>${doneRows || '<tr><td colspan="6" class="empty">None yet</td></tr>'}</tbody></table></div>`;
@@ -1036,7 +1048,7 @@ document.getElementById('c-lookup').addEventListener('click', () => {
     <div class="customer-hero-card">
       <div class="balance">${c.totalPoints}</div>
       <div class="balance-lbl">Points Balance · Worth ~₹${(c.totalPoints * (settings.redeemVal || 0)).toFixed(2)}</div>
-      <div style="font-size:15px; margin-top:10px; opacity:0.9;">Welcome back, <b>${escapeHtml(c.name)}</b> — ${c.visits} visits so far</div>
+      <div style="font-size:15px; margin-top:10px; color:var(--frosted-blue);">Welcome back, <b>${escapeHtml(c.name)}</b> — ${c.visits} visits so far</div>
     </div>
 
     <div class="card">
