@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>B-INDUSTRIES LOYALTY — Smart Rewards Program</title>
-<meta name="theme-color" content="#14202E">
+<meta name="theme-color" content="#1A56DB">
 
 <!-- Google Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -12,44 +12,45 @@
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 
 <style>
-  /* MIDNIGHT & GOLD — PREMIUM UPSCALE LOYALTY CLUB THEME */
+  /* WHITE & BLUE — CLEAN PROFESSIONAL THEME */
   :root {
-    /* Core Palette */
-    --midnight: #1F3A5F;       /* Primary deep navy */
-    --ink:      #14202E;       /* Darkest ink — text & header bg */
-    --gold:     #D4A253;       /* Signature gold accent */
-    --gold-hover: #BC8D3F;     /* Gold hover state */
-    --muted:    #7C899C;       /* Muted slate — sub-text */
-    --parchment:#F4F3F0;       /* Warm off-white background */
+    /* Core Blue Palette */
+    --blue:        #1A56DB;   /* Primary action blue */
+    --blue-dark:   #1240A8;   /* Header, hover */
+    --blue-light:  #E8EFFE;   /* Tinted backgrounds */
+    --blue-mid:    #3B72E8;   /* Lighter blue for accents */
 
-    /* Semantic Mappings */
-    --bg-main:          var(--parchment);
-    --bg-header:        var(--ink);
+    /* Backgrounds */
+    --bg-main:          #F0F4FF;
+    --bg-header:        #1240A8;
     --bg-card:          #FFFFFF;
-    --bg-card-elevated: #EEEDE9;
+    --bg-card-elevated: #EEF2FF;
     --bg-input:         #FFFFFF;
-    --border-color:     #DDD9D2;
-    --border-dark:      #C8C3BB;
 
-    --text-main:  var(--ink);
-    --text-sub:   var(--muted);
-    --text-muted: #A8B4C0;
+    /* Borders */
+    --border-color:  #D0DAF8;
+    --border-dark:   #AABAF0;
 
-    --accent-blue:      var(--midnight);
-    --accent-blue-hover:var(--ink);
-    --accent-emerald:   #2D7A5B;
-    --accent-red:       #B83232;
-    --accent-amber:     var(--gold);
+    /* Text */
+    --text-main:  #0D1B3E;
+    --text-sub:   #4A5A84;
+    --text-muted: #8A9CC5;
 
-    /* Badge Tiles (solid, flat) */
-    --green-bg:   #D5EDE4;
-    --green-text: #1A5C3E;
-    --amber-bg:   #F5E8CC;
-    --amber-text: #7A5214;
-    --rose-bg:    #F5D9D9;
-    --rose-text:  #8C2020;
+    /* Semantic aliases (kept for JS-generated HTML compatibility) */
+    --accent-blue:       var(--blue);
+    --accent-blue-hover: var(--blue-dark);
+    --accent-emerald:    #1E7A45;
+    --accent-red:        #C0392B;
 
-    --card-shadow: 0 4px 10px -2px rgba(20, 32, 46, 0.07), 0 2px 4px -1px rgba(20, 32, 46, 0.04);
+    /* Badge Tiles */
+    --green-bg:   #D6F0E3;
+    --green-text: #145C38;
+    --amber-bg:   #EEF2FF;
+    --amber-text: #1A56DB;
+    --rose-bg:    #FDEAEA;
+    --rose-text:  #8C1C1C;
+
+    --card-shadow: 0 4px 12px -2px rgba(26, 86, 219, 0.08), 0 2px 4px -1px rgba(26, 86, 219, 0.04);
     --radius-sm: 8px;
     --radius-md: 12px;
     --radius-lg: 18px;
@@ -69,29 +70,29 @@
   h1, h2, h3, h4, .brand-font { font-family: 'Outfit', sans-serif; }
   .num, .mono { font-family: 'JetBrains Mono', monospace; }
 
-  /* Top Online Banner — Gold Strip */
+  /* Top Online Banner — Blue Strip */
   .online-strip {
-    background-color: var(--gold);
-    color: var(--ink);
+    background-color: var(--blue);
+    color: #FFFFFF;
     text-align: center;
     font-size: 12px;
-    font-weight: 800;
+    font-weight: 700;
     padding: 8px 14px;
     display: flex; align-items: center; justify-content: center; gap: 8px;
-    letter-spacing: 0.8px;
+    letter-spacing: 0.6px;
     text-transform: uppercase;
   }
   .pulse-dot {
-    width: 7px; height: 7px; background-color: var(--ink); border-radius: 50%;
+    width: 7px; height: 7px; background-color: #FFFFFF; border-radius: 50%;
   }
 
-  /* Header Masthead — Deep Ink Navy */
+  /* Header Masthead — Solid Blue */
   header.masthead {
     background-color: var(--bg-header);
     color: #FFFFFF;
     padding: 18px 24px;
     position: sticky; top: 0; z-index: 40;
-    border-bottom: 2px solid var(--midnight);
+    border-bottom: 2px solid var(--blue);
   }
   .masthead-row {
     max-width: 950px; margin: 0 auto;
@@ -100,17 +101,17 @@
   .brand-block { display: flex; align-items: center; gap: 14px; }
   .brand-logo-icon {
     width: 46px; height: 46px; border-radius: 12px;
-    background-color: var(--gold);
+    background-color: #FFFFFF;
     display: flex; align-items: center; justify-content: center;
-    color: var(--ink); font-weight: 900; font-size: 22px; font-family: 'Outfit';
+    color: var(--blue-dark); font-weight: 900; font-size: 22px; font-family: 'Outfit';
   }
-  .masthead .tag { font-size: 11px; color: var(--gold); letter-spacing: 2.5px; text-transform: uppercase; font-weight: 800; }
+  .masthead .tag { font-size: 11px; color: rgba(255,255,255,0.7); letter-spacing: 2.5px; text-transform: uppercase; font-weight: 700; }
   .masthead h1 { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; color: #FFFFFF; }
 
   .stamp {
-    border: 2px solid var(--gold);
-    color: var(--gold);
-    background-color: rgba(212, 162, 83, 0.1);
+    border: 2px solid rgba(255,255,255,0.5);
+    color: #FFFFFF;
+    background-color: rgba(255,255,255,0.1);
     border-radius: 50%; width: 56px; height: 56px;
     display: flex; align-items: center; justify-content: center;
     font-family: 'Outfit'; font-weight: 800; font-size: 10px;
@@ -127,11 +128,11 @@
     box-shadow: var(--card-shadow);
   }
   .mode-btn.active {
-    background-color: var(--gold); color: var(--ink); border-color: var(--gold);
+    background-color: var(--blue); color: #FFFFFF; border-color: var(--blue);
     font-weight: 800;
   }
   .staff-chip {
-    display: inline-block; background-color: var(--midnight);
+    display: inline-block; background-color: var(--blue-dark);
     border-radius: 20px; padding: 3px 10px; font-size: 11px; font-weight: 700; color: #FFFFFF; margin-left: 6px;
   }
 
@@ -149,8 +150,8 @@
     box-shadow: var(--card-shadow);
   }
   nav.tabs button.active {
-    background-color: var(--midnight); color: #FFFFFF;
-    border-color: var(--midnight);
+    background-color: var(--blue); color: #FFFFFF;
+    border-color: var(--blue);
   }
 
   /* Main Container & Cards */
@@ -185,25 +186,25 @@
     outline: none; border-color: var(--accent-blue);
   }
 
-  /* Buttons (Flat Solid — Midnight & Gold) */
+  /* Buttons — Blue Only */
   .btn {
     font-family: 'Outfit'; font-weight: 800; font-size: 14px;
     padding: 12px 22px; border-radius: var(--radius-md); border: none; cursor: pointer;
-    background-color: var(--gold); color: var(--ink); transition: background-color 0.2s ease;
+    background-color: var(--blue); color: #FFFFFF; transition: background-color 0.2s ease;
     display: inline-flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none;
   }
-  .btn:hover { background-color: var(--gold-hover); color: #FFFFFF; }
+  .btn:hover { background-color: var(--blue-dark); }
   .btn.secondary {
-    background-color: var(--bg-card-elevated); border: 1.5px solid var(--border-dark); color: var(--text-main);
+    background-color: #FFFFFF; border: 1.5px solid var(--border-dark); color: var(--text-main);
   }
-  .btn.secondary:hover { border-color: var(--gold); color: var(--gold-hover); background-color: var(--amber-bg); }
+  .btn.secondary:hover { border-color: var(--blue); color: var(--blue); background-color: var(--blue-light); }
   .btn.danger {
-    background-color: var(--rose-bg); color: var(--rose-text); border: 1px solid rgba(184, 50, 50, 0.3);
+    background-color: var(--rose-bg); color: var(--rose-text); border: 1px solid rgba(192, 57, 43, 0.25);
     padding: 6px 12px; font-size: 12.5px;
   }
   .btn.danger:hover { background-color: var(--accent-red); color: #FFFFFF; }
   .btn.whatsapp { background-color: #1E7A45; color: #FFFFFF; padding: 8px 16px; font-size: 13px; }
-  .btn.print { background-color: var(--midnight); color: #FFFFFF; padding: 8px 16px; font-size: 13px; border: none; }
+  .btn.print { background-color: var(--blue-dark); color: #FFFFFF; padding: 8px 16px; font-size: 13px; border: none; }
   .btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
   /* Live Preview Box */
@@ -242,22 +243,22 @@
   .save-status { font-size: 13px; color: var(--accent-emerald); font-weight: 700; text-align: center; margin-top: 10px; }
   .link-btn { background: none; border: none; color: var(--accent-blue); font-weight: 700; cursor: pointer; font-size: 13px; padding: 0; text-decoration: underline; }
 
-  /* Customer Hero Pass Card — Midnight Navy with Gold accents */
+  /* Customer Hero Pass Card — Solid Blue */
   .customer-hero-card {
-    background-color: var(--midnight);
+    background-color: var(--blue-dark);
     border-radius: var(--radius-lg);
     padding: 28px; text-align: center; margin-bottom: 20px;
     color: #FFFFFF; box-shadow: var(--card-shadow);
-    border: 1px solid rgba(212, 162, 83, 0.3);
+    border: 1px solid var(--blue);
   }
-  .customer-hero-card .balance { font-size: 52px; font-weight: 900; font-family: 'Outfit'; color: var(--gold); line-height: 1; }
-  .customer-hero-card .balance-lbl { font-size: 12px; color: rgba(212, 162, 83, 0.75); text-transform: uppercase; letter-spacing: 1.5px; margin-top: 6px; }
+  .customer-hero-card .balance { font-size: 52px; font-weight: 900; font-family: 'Outfit'; color: #FFFFFF; line-height: 1; }
+  .customer-hero-card .balance-lbl { font-size: 12px; color: rgba(255,255,255,0.65); text-transform: uppercase; letter-spacing: 1.5px; margin-top: 6px; }
 
   .code-box {
-    background-color: var(--amber-bg); border: 2px dashed var(--gold);
+    background-color: var(--blue-light); border: 2px dashed var(--blue);
     border-radius: var(--radius-md); padding: 18px; text-align: center; margin-top: 16px;
   }
-  .code-box .code { font-family: 'JetBrains Mono'; font-size: 32px; font-weight: 800; letter-spacing: 4px; color: var(--gold-hover); }
+  .code-box .code { font-family: 'JetBrains Mono'; font-size: 32px; font-weight: 800; letter-spacing: 4px; color: var(--blue-dark); }
 
   /* Staff Row Settings */
   .staff-row { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
@@ -265,14 +266,14 @@
 
   .quick-range { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
   .quick-range button { font-size: 12.5px; font-weight: 700; padding: 8px 16px; border-radius: 20px; border: 1.5px solid var(--border-color); background-color: var(--bg-card); color: var(--text-sub); cursor: pointer; }
-  .quick-range button.active { background-color: var(--midnight); color: #FFFFFF; border-color: var(--midnight); }
+  .quick-range button.active { background-color: var(--blue); color: #FFFFFF; border-color: var(--blue); }
 
-  /* Toast Notification — Gold on Ink */
+  /* Toast Notification — White on Blue */
   .toast {
     position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
-    background-color: var(--ink); color: var(--gold); border-radius: var(--radius-pill); padding: 12px 26px;
-    font-size: 13.5px; font-weight: 800; letter-spacing: 0.3px;
-    box-shadow: 0 10px 30px rgba(20, 32, 46, 0.25); opacity: 0; pointer-events: none; transition: all 0.3s ease; z-index: 100;
+    background-color: var(--blue-dark); color: #FFFFFF; border-radius: var(--radius-pill); padding: 12px 26px;
+    font-size: 13.5px; font-weight: 700; letter-spacing: 0.2px;
+    box-shadow: 0 10px 30px rgba(26, 86, 219, 0.25); opacity: 0; pointer-events: none; transition: all 0.3s ease; z-index: 100;
   }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
@@ -1037,7 +1038,7 @@ document.getElementById('c-lookup').addEventListener('click', () => {
     <div class="customer-hero-card">
       <div class="balance">${c.totalPoints}</div>
       <div class="balance-lbl">Points Balance · Worth ~₹${(c.totalPoints * (settings.redeemVal || 0)).toFixed(2)}</div>
-      <div style="font-size:15px; margin-top:10px; color:rgba(212,162,83,0.9);">Welcome back, <b>${escapeHtml(c.name)}</b> — ${c.visits} visits so far</div>
+      <div style="font-size:15px; margin-top:10px; color:rgba(255,255,255,0.8);">Welcome back, <b>${escapeHtml(c.name)}</b> — ${c.visits} visits so far</div>
     </div>
 
     <div class="card">
