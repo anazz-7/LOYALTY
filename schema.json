@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "B-INDUSTRIES LOYALTY Database Schema",
+  "description": "JSON schema and initial seed structure for B-INDUSTRIES LOYALTY database backup and restoration.",
+  "version": "2.0.0",
+  "settings": {
+    "bizName": "B-INDUSTRIES LOYALTY",
+    "rate": 100,
+    "redeemVal": 1,
+    "countryCode": "91",
+    "refBonusReferrer": 20,
+    "refBonusReferee": 10,
+    "staff": [
+      {
+        "name": "Owner",
+        "pin": "1234",
+        "role": "owner"
+      }
+    ]
+  },
+  "customers": {
+    "9876543210": {
+      "phone": "9876543210",
+      "name": "Sample Customer",
+      "totalPoints": 50,
+      "totalSpent": 5000,
+      "visits": 1,
+      "firstVisit": "2026-08-01",
+      "lastVisit": "2026-08-01",
+      "referralCode": "SAM3210",
+      "referredBy": null
+    }
+  },
+  "transactions": [
+    {
+      "id": "l9x1abc",
+      "billNo": "1001",
+      "date": "2026-08-01",
+      "phone": "9876543210",
+      "name": "Sample Customer",
+      "amount": 5000,
+      "earned": 50,
+      "redeemed": 0,
+      "ts": 1785500000000,
+      "staffName": "Owner"
+    }
+  ],
+  "redemptions": []
+}
