@@ -572,6 +572,7 @@
       <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
         <button class="btn" id="save-supa">Save &amp; Connect Supabase</button>
         <button class="btn secondary" type="button" onclick="testSupabaseConnection()">Run Diagnostic Test</button>
+        <button class="btn secondary" type="button" onclick="syncAllLocalToCloud()">Upload Local Data to Cloud</button>
         <span id="supa-status-badge" class="badge pending">Local Mode (Offline)</span>
       </div>
       <div class="save-status" id="supa-status" style="margin-top:10px; font-size:13px;"></div>
@@ -772,6 +773,9 @@ async function fetchCloudData() {
         };
       });
       persistCustomers();
+    } else if (Object.keys(customers).length > 0) {
+      // Auto-upload local data to cloud if cloud is currently empty!
+      await syncAllLocalToCloud();
     }
 
     // 4. Fetch Cloud Transactions
@@ -1231,6 +1235,71 @@ window.testSupabaseConnection = async function() {
   } catch(e) {
     statusEl.style.color = 'var(--accent-red)';
     statusEl.innerHTML = `❌ Diagnostic Exception: ${e.message}`;
+  }
+};
+
+window.syncAllLocalToCloud = async function() {
+  if (!supabaseClient) {
+    toast('Supabase not connected'); return;
+  }
+  const statusEl = document.getElementById('supa-status');
+  statusEl.innerHTML = `<span class="spinner dark"></span> Uploading all local data to Supabase Cloud...`;
+
+  try {
+    // 1. Sync Settings
+    await supabaseClient.from('settings').upsert({
+      id: 1,
+      biz_name: settings.bizName || 'B-INDUSTRIES LOYALTY',
+      rate: settings.rate || 100,
+      redeem_val: settings.redeemVal || 1,
+      country_code: settings.countryCode || '91',
+      ref_bonus_referrer: settings.refBonusReferrer || 20,
+      ref_bonus_referee: settings.refBonusReferee || 10
+    });
+
+    // 2. Sync Staff
+    if (settings.staff && settings.staff.length) {
+      await supabaseClient.from('staff').delete().neq('name', '___');
+      await supabaseClient.from('staff').insert(settings.staff.map(s => ({ name: s.name, pin: s.pin, role: s.role || 'staff' })));
+    }
+
+    // 3. Sync Customers
+    const custArr = Object.values(customers);
+    if (custArr.length) {
+      const rows = custArr.map(c => ({
+        phone: c.phone, name: c.name, total_points: c.totalPoints,
+        total_spent: c.totalSpent, visits: c.visits, first_visit: c.firstVisit,
+        last_visit: c.lastVisit, referral_code: c.referralCode, referred_by: c.referredBy
+      }));
+      await supabaseClient.from('customers').upsert(rows);
+    }
+
+    // 4. Sync Transactions
+    if (transactions.length) {
+      const txRows = transactions.map(t => ({
+        id: t.id, bill_no: t.billNo, date: t.date, phone: t.phone,
+        name: t.name, amount: t.amount, earned: t.earned, redeemed: t.redeemed,
+        staff_name: t.staffName || '—'
+      }));
+      await supabaseClient.from('transactions').upsert(txRows);
+    }
+
+    // 5. Sync Redemptions
+    if (redemptions.length) {
+      const redRows = redemptions.map(r => ({
+        id: r.id, phone: r.phone, name: r.name, points: r.points,
+        value: r.value, code: r.code, status: r.status,
+        created_at: new Date(r.createdAt).toISOString()
+      }));
+      await supabaseClient.from('redemptions').upsert(redRows);
+    }
+
+    statusEl.style.color = 'var(--accent-emerald)';
+    statusEl.innerHTML = `✅ Successfully uploaded ${custArr.length} customers & ${transactions.length} bills to Supabase Cloud!`;
+    toast('Local data uploaded to Cloud!');
+  } catch(err) {
+    statusEl.style.color = 'var(--accent-red)';
+    statusEl.innerHTML = `❌ Cloud Upload Error: ${err.message}`;
   }
 };
 
