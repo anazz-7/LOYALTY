@@ -564,16 +564,17 @@
 
     <div class="card">
       <h2>Supabase Cloud Database (Multi-Device Sync)</h2>
-      <div class="sub">Connect your free Supabase database to share data across all phones &amp; devices live.</div>
+      <div class="sub">Connect your Supabase database to sync live across all phones, Vercel, and devices.</div>
       <div class="grid">
         <div class="field" style="grid-column: 1 / -1;"><label>Supabase Project URL</label><input id="s-supa-url" class="mono" placeholder="https://your-project.supabase.co"></div>
         <div class="field" style="grid-column: 1 / -1;"><label>Supabase Anon Public Key</label><input id="s-supa-key" class="mono" type="password" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."></div>
       </div>
       <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-        <button class="btn" id="save-supa">Connect &amp; Sync Supabase</button>
+        <button class="btn" id="save-supa">Save &amp; Connect Supabase</button>
+        <button class="btn secondary" type="button" onclick="testSupabaseConnection()">Run Diagnostic Test</button>
         <span id="supa-status-badge" class="badge pending">Local Mode (Offline)</span>
       </div>
-      <div class="save-status" id="supa-status"></div>
+      <div class="save-status" id="supa-status" style="margin-top:10px; font-size:13px;"></div>
     </div>
 
     <div class="card">
@@ -608,6 +609,11 @@
 <div id="print-receipt"></div>
 
 <script>
+// Default Supabase Configuration for Instant Vercel & Multi-Mobile Sync
+// If filled here, every phone & device opening your Vercel link connects automatically!
+window.SUPABASE_URL = window.SUPABASE_URL || "";
+window.SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || "";
+
 let customers = {};
 let transactions = [];
 let redemptions = [];
@@ -1196,16 +1202,38 @@ document.getElementById('save-supa').addEventListener('click', async () => {
 
   const ok = initSupabase();
   if (ok) {
-    statusEl.style.color = 'var(--accent-emerald)';
-    statusEl.textContent = 'Supabase connected! Fetching live cloud data...';
+    await testSupabaseConnection();
     await fetchCloudData();
     renderCustomers(); renderRecent(); renderDashboard();
-    toast('Supabase Connected & Synced!');
   } else {
     statusEl.style.color = 'var(--accent-red)';
     statusEl.textContent = 'Connection failed. Check URL & Key.';
   }
 });
+
+window.testSupabaseConnection = async function() {
+  const statusEl = document.getElementById('supa-status');
+  if (!supabaseClient) {
+    statusEl.style.color = 'var(--accent-red)';
+    statusEl.innerHTML = '❌ Not Connected. Enter Supabase URL and Anon Key below or add them in window.SUPABASE_URL.';
+    return;
+  }
+  statusEl.innerHTML = `<span class="spinner dark"></span> Running Supabase Diagnostic Health Check...`;
+  try {
+    const { data, error } = await supabaseClient.from('customers').select('count', { count: 'exact', head: true });
+    if (error) {
+      statusEl.style.color = 'var(--accent-red)';
+      statusEl.innerHTML = `❌ Supabase Error: ${error.message} (${error.hint || 'Check if supabase_schema.sql was run in SQL Editor'}).`;
+    } else {
+      statusEl.style.color = 'var(--accent-emerald)';
+      statusEl.innerHTML = `✅ Connected & Healthy! Supabase Cloud Database is active and syncing live.`;
+      toast('Supabase Health Check Passed!');
+    }
+  } catch(e) {
+    statusEl.style.color = 'var(--accent-red)';
+    statusEl.innerHTML = `❌ Diagnostic Exception: ${e.message}`;
+  }
+};
 
 async function saveCustomerCloud(c) {
   if (!supabaseClient) return;
