@@ -11,6 +11,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 
+<!-- Supabase JS Client SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <style>
   /* #14202E & WHITE — CLEAN MINIMALIST THEME */
   :root {
@@ -367,7 +370,7 @@
 
 <div class="online-strip">
   <span class="pulse-dot"></span>
-  <span>ONLINE CLOUD SYSTEM — ACCESSIBLE FROM ANY DEVICE & PHONE</span>
+  <span id="sync-strip-text">ONLINE CLOUD SYSTEM — ACCESSIBLE FROM ANY DEVICE & PHONE</span>
 </div>
 
 <header class="masthead">
@@ -560,6 +563,20 @@
     </div>
 
     <div class="card">
+      <h2>Supabase Cloud Database (Multi-Device Sync)</h2>
+      <div class="sub">Connect your free Supabase database to share data across all phones &amp; devices live.</div>
+      <div class="grid">
+        <div class="field" style="grid-column: 1 / -1;"><label>Supabase Project URL</label><input id="s-supa-url" class="mono" placeholder="https://your-project.supabase.co"></div>
+        <div class="field" style="grid-column: 1 / -1;"><label>Supabase Anon Public Key</label><input id="s-supa-key" class="mono" type="password" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."></div>
+      </div>
+      <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+        <button class="btn" id="save-supa">Connect &amp; Sync Supabase</button>
+        <span id="supa-status-badge" class="badge pending">Local Mode (Offline)</span>
+      </div>
+      <div class="save-status" id="supa-status"></div>
+    </div>
+
+    <div class="card">
       <h2>Backup &amp; Data Tools</h2>
       <div class="sub">Safely export bills to CSV or download full JSON database backups.</div>
       <div style="display:flex; gap:10px; flex-wrap:wrap;">
@@ -601,15 +618,18 @@ let settings = {
   countryCode: "91",
   staff: [{ name: "Owner", pin: "1234", role: "owner" }],
   refBonusReferrer: 20,
-  refBonusReferee: 10
+  refBonusReferee: 10,
+  supaUrl: "",
+  supaKey: ""
 };
 
 let lastSavedId = null;
 let staffUnlocked = false;
 let currentStaffName = "";
 let currentStaffRole = "";
+let supabaseClient = null;
 
-// Robust Storage Abstraction Layer
+// Robust Storage Abstraction Layer with Supabase Cloud Sync Fallback
 const Storage = {
   get(key) {
     try { const val = localStorage.getItem(key); return val ? JSON.parse(val) : null; }
@@ -620,6 +640,24 @@ const Storage = {
     catch(e) { toast('Storage write failed'); }
   }
 };
+
+function initSupabase() {
+  if (settings.supaUrl && settings.supaKey && window.supabase) {
+    try {
+      supabaseClient = window.supabase.createClient(settings.supaUrl, settings.supaKey);
+      document.getElementById('supa-status-badge').className = 'badge';
+      document.getElementById('supa-status-badge').textContent = 'Cloud Sync Active (Supabase)';
+      document.getElementById('sync-strip-text').textContent = 'CLOUD SYNC ACTIVE — MULTI-DEVICE REALTIME SYNC ENABLED';
+      return true;
+    } catch(err) {
+      console.warn('Supabase init failed:', err);
+    }
+  }
+  document.getElementById('supa-status-badge').className = 'badge pending';
+  document.getElementById('supa-status-badge').textContent = 'Local Mode (Offline)';
+  document.getElementById('sync-strip-text').textContent = 'ONLINE CLOUD SYSTEM — ACCESSIBLE FROM ANY DEVICE & PHONE';
+  return false;
+}
 
 function toast(msg) {
   const t = document.getElementById('toast');
@@ -637,7 +675,7 @@ function generateReferralCode(name, phone) {
   return letters + digits;
 }
 
-function loadAll() {
+async function loadAll() {
   const c = Storage.get('bm-loyalty-customers'); customers = c || {};
   const t = Storage.get('bm-loyalty-transactions'); transactions = t || [];
   const r = Storage.get('bm-loyalty-redemptions'); redemptions = r || [];
@@ -650,14 +688,50 @@ function loadAll() {
   document.getElementById('s-countrycode').value = settings.countryCode || '91';
   document.getElementById('s-refbonus-referrer').value = settings.refBonusReferrer ?? 20;
   document.getElementById('s-refbonus-referee').value = settings.refBonusReferee ?? 10;
+  document.getElementById('s-supa-url').value = settings.supaUrl || '';
+  document.getElementById('s-supa-key').value = settings.supaKey || '';
 
   if (!settings.staff || settings.staff.length === 0) {
     settings.staff = [{ name: "Owner", pin: "1234", role: "owner" }];
   }
   settings.staff.forEach(st => { if (!st.role) st.role = 'owner'; });
 
+  const hasCloud = initSupabase();
+  if (hasCloud) {
+    await fetchCloudData();
+  }
+
   renderStaffList();
   renderRecent(); renderCustomers(); renderDashboard(); renderRedemptions();
+}
+
+async function fetchCloudData() {
+  if (!supabaseClient) return;
+  try {
+    const { data: custData } = await supabaseClient.from('customers').select('*');
+    if (custData && custData.length) {
+      custData.forEach(row => {
+        customers[row.phone] = {
+          phone: row.phone, name: row.name, totalPoints: Number(row.total_points || 0),
+          totalSpent: Number(row.total_spent || 0), visits: Number(row.visits || 0),
+          firstVisit: row.first_visit, lastVisit: row.last_visit,
+          referralCode: row.referral_code, referredBy: row.referred_by
+        };
+      });
+      persistCustomers();
+    }
+    const { data: txData } = await supabaseClient.from('transactions').select('*').order('date', { ascending: false });
+    if (txData && txData.length) {
+      transactions = txData.map(row => ({
+        id: row.id, billNo: row.bill_no, date: row.date, phone: row.phone,
+        name: row.name, amount: Number(row.amount || 0), earned: Number(row.earned || 0),
+        redeemed: Number(row.redeemed || 0), staffName: row.staff_name || '—'
+      }));
+      persistTransactions();
+    }
+  } catch(err) {
+    console.warn('Cloud sync fetch warning:', err);
+  }
 }
 
 function persistCustomers() { Storage.set('bm-loyalty-customers', customers); }
@@ -817,10 +891,12 @@ document.getElementById('save-bill').addEventListener('click', () => {
 
     c.name = name; c.totalPoints = c.totalPoints - redeem + earned; c.totalSpent += amount; c.visits += 1; c.lastVisit = date;
 
-    transactions.unshift({ id: Date.now().toString(36), billNo: bill, date, phone, name, amount, earned, redeemed: redeem, ts: Date.now(), staffName: currentStaffName || '—' });
+    const newTx = { id: Date.now().toString(36), billNo: bill, date, phone, name, amount, earned, redeemed: redeem, ts: Date.now(), staffName: currentStaffName || '—' };
+    transactions.unshift(newTx);
 
     persistCustomers(); persistTransactions();
-    lastSavedId = transactions[0].id;
+    saveCustomerCloud(c); saveTransactionCloud(newTx);
+    lastSavedId = newTx.id;
 
     document.getElementById('save-status').innerHTML = `Saved — Bill #${bill}, ${earned} points earned. &nbsp; <button class="btn whatsapp" onclick="sendReceipt('${lastSavedId}')"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg> WhatsApp Receipt</button> <button class="btn print" onclick="printReceipt('${lastSavedId}')"><svg class="icon icon-sm" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg> Print</button>`;
     toast('Bill saved successfully');
@@ -1035,6 +1111,51 @@ document.getElementById('save-settings').addEventListener('click', () => {
   document.getElementById('settings-status').textContent = 'Settings saved.';
   toast('Settings saved'); updatePreview();
 });
+
+document.getElementById('save-supa').addEventListener('click', async () => {
+  const url = document.getElementById('s-supa-url').value.trim();
+  const key = document.getElementById('s-supa-key').value.trim();
+  settings.supaUrl = url;
+  settings.supaKey = key;
+  persistSettings();
+
+  const statusEl = document.getElementById('supa-status');
+  statusEl.innerHTML = `<span class="spinner dark"></span> Testing Supabase connection...`;
+
+  const ok = initSupabase();
+  if (ok) {
+    statusEl.style.color = 'var(--accent-emerald)';
+    statusEl.textContent = 'Supabase connected! Fetching live cloud data...';
+    await fetchCloudData();
+    renderCustomers(); renderRecent(); renderDashboard();
+    toast('Supabase Connected & Synced!');
+  } else {
+    statusEl.style.color = 'var(--accent-red)';
+    statusEl.textContent = 'Connection failed. Check URL & Key.';
+  }
+});
+
+async function saveCustomerCloud(c) {
+  if (!supabaseClient) return;
+  try {
+    await supabaseClient.from('customers').upsert({
+      phone: c.phone, name: c.name, total_points: c.totalPoints,
+      total_spent: c.totalSpent, visits: c.visits, first_visit: c.firstVisit,
+      last_visit: c.lastVisit, referral_code: c.referralCode, referred_by: c.referredBy
+    });
+  } catch(e) { console.warn('Supabase customer save failed:', e); }
+}
+
+async function saveTransactionCloud(t) {
+  if (!supabaseClient) return;
+  try {
+    await supabaseClient.from('transactions').insert({
+      id: t.id, bill_no: t.billNo, date: t.date, phone: t.phone,
+      name: t.name, amount: t.amount, earned: t.earned, redeemed: t.redeemed,
+      staff_name: t.staffName
+    });
+  } catch(e) { console.warn('Supabase transaction save failed:', e); }
+}
 
 function renderStaffList() {
   const list = document.getElementById('staff-list');
