@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>B-INDUSTRIES LOYALTY — Smart Rewards Program</title>
-<meta name="theme-color" content="#1A56DB">
+<meta name="theme-color" content="#14202E">
 
 <!-- Google Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -12,45 +12,45 @@
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 
 <style>
-  /* WHITE & BLUE — CLEAN PROFESSIONAL THEME */
+  /* #14202E & WHITE — CLEAN MINIMALIST THEME */
   :root {
-    /* Core Blue Palette */
-    --blue:        #1A56DB;   /* Primary action blue */
-    --blue-dark:   #1240A8;   /* Header, hover */
-    --blue-light:  #E8EFFE;   /* Tinted backgrounds */
-    --blue-mid:    #3B72E8;   /* Lighter blue for accents */
+    /* Core #14202E Ink & White Palette */
+    --ink:         #14202E;   /* Deep Midnight Ink Blue */
+    --ink-hover:   #0B121B;   /* Darker hover state */
+    --ink-light:   #F1F5F9;   /* Soft elevated background */
+    --ink-tint:    #E2E8F0;   /* Subtle tint / border */
 
     /* Backgrounds */
-    --bg-main:          #F0F4FF;
-    --bg-header:        #1240A8;
+    --bg-main:          #F8FAFC;
+    --bg-header:        #14202E;
     --bg-card:          #FFFFFF;
-    --bg-card-elevated: #EEF2FF;
+    --bg-card-elevated: #F1F5F9;
     --bg-input:         #FFFFFF;
 
     /* Borders */
-    --border-color:  #D0DAF8;
-    --border-dark:   #AABAF0;
+    --border-color:  #E2E8F0;
+    --border-dark:   #CBD5E1;
 
     /* Text */
-    --text-main:  #0D1B3E;
-    --text-sub:   #4A5A84;
-    --text-muted: #8A9CC5;
+    --text-main:  #14202E;
+    --text-sub:   #5A6B82;
+    --text-muted: #94A3B8;
 
-    /* Semantic aliases (kept for JS-generated HTML compatibility) */
-    --accent-blue:       var(--blue);
-    --accent-blue-hover: var(--blue-dark);
-    --accent-emerald:    #1E7A45;
-    --accent-red:        #C0392B;
+    /* Semantic aliases */
+    --accent-blue:       #14202E;
+    --accent-blue-hover: #0B121B;
+    --accent-emerald:    #166534;
+    --accent-red:        #991B1B;
 
     /* Badge Tiles */
-    --green-bg:   #D6F0E3;
-    --green-text: #145C38;
-    --amber-bg:   #EEF2FF;
-    --amber-text: #1A56DB;
-    --rose-bg:    #FDEAEA;
-    --rose-text:  #8C1C1C;
+    --green-bg:   #DCFCE7;
+    --green-text: #166534;
+    --amber-bg:   #FEF3C7;
+    --amber-text: #92400E;
+    --rose-bg:    #FEE2E2;
+    --rose-text:  #991B1B;
 
-    --card-shadow: 0 4px 12px -2px rgba(26, 86, 219, 0.08), 0 2px 4px -1px rgba(26, 86, 219, 0.04);
+    --card-shadow: 0 4px 12px -2px rgba(20, 32, 46, 0.06), 0 2px 4px -1px rgba(20, 32, 46, 0.03);
     --radius-sm: 8px;
     --radius-md: 12px;
     --radius-lg: 18px;
@@ -70,9 +70,9 @@
   h1, h2, h3, h4, .brand-font { font-family: 'Outfit', sans-serif; }
   .num, .mono { font-family: 'JetBrains Mono', monospace; }
 
-  /* Top Online Banner — Blue Strip */
+  /* Top Online Banner — #14202E Strip */
   .online-strip {
-    background-color: var(--blue);
+    background-color: var(--ink);
     color: #FFFFFF;
     text-align: center;
     font-size: 12px;
@@ -86,13 +86,13 @@
     width: 7px; height: 7px; background-color: #FFFFFF; border-radius: 50%;
   }
 
-  /* Header Masthead — Solid Blue */
+  /* Header Masthead — Solid #14202E */
   header.masthead {
     background-color: var(--bg-header);
     color: #FFFFFF;
     padding: 18px 24px;
     position: sticky; top: 0; z-index: 40;
-    border-bottom: 2px solid var(--blue);
+    border-bottom: 2px solid rgba(255,255,255,0.1);
   }
   .masthead-row {
     max-width: 950px; margin: 0 auto;
@@ -103,15 +103,15 @@
     width: 46px; height: 46px; border-radius: 12px;
     background-color: #FFFFFF;
     display: flex; align-items: center; justify-content: center;
-    color: var(--blue-dark); font-weight: 900; font-size: 22px; font-family: 'Outfit';
+    color: var(--ink); font-weight: 900; font-size: 22px; font-family: 'Outfit';
   }
   .masthead .tag { font-size: 11px; color: rgba(255,255,255,0.7); letter-spacing: 2.5px; text-transform: uppercase; font-weight: 700; }
   .masthead h1 { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; color: #FFFFFF; }
 
   .stamp {
-    border: 2px solid rgba(255,255,255,0.5);
+    border: 2px solid rgba(255,255,255,0.4);
     color: #FFFFFF;
-    background-color: rgba(255,255,255,0.1);
+    background-color: rgba(255,255,255,0.08);
     border-radius: 50%; width: 56px; height: 56px;
     display: flex; align-items: center; justify-content: center;
     font-family: 'Outfit'; font-weight: 800; font-size: 10px;
@@ -128,11 +128,11 @@
     box-shadow: var(--card-shadow);
   }
   .mode-btn.active {
-    background-color: var(--blue); color: #FFFFFF; border-color: var(--blue);
+    background-color: var(--ink); color: #FFFFFF; border-color: var(--ink);
     font-weight: 800;
   }
   .staff-chip {
-    display: inline-block; background-color: var(--blue-dark);
+    display: inline-block; background-color: rgba(255,255,255,0.2);
     border-radius: 20px; padding: 3px 10px; font-size: 11px; font-weight: 700; color: #FFFFFF; margin-left: 6px;
   }
 
@@ -150,8 +150,8 @@
     box-shadow: var(--card-shadow);
   }
   nav.tabs button.active {
-    background-color: var(--blue); color: #FFFFFF;
-    border-color: var(--blue);
+    background-color: var(--ink); color: #FFFFFF;
+    border-color: var(--ink);
   }
 
   /* Main Container & Cards */
@@ -186,25 +186,25 @@
     outline: none; border-color: var(--accent-blue);
   }
 
-  /* Buttons — Blue Only */
+  /* Buttons — #14202E & White */
   .btn {
     font-family: 'Outfit'; font-weight: 800; font-size: 14px;
     padding: 12px 22px; border-radius: var(--radius-md); border: none; cursor: pointer;
-    background-color: var(--blue); color: #FFFFFF; transition: background-color 0.2s ease;
+    background-color: var(--ink); color: #FFFFFF; transition: background-color 0.2s ease;
     display: inline-flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none;
   }
-  .btn:hover { background-color: var(--blue-dark); }
+  .btn:hover { background-color: var(--ink-hover); }
   .btn.secondary {
     background-color: #FFFFFF; border: 1.5px solid var(--border-dark); color: var(--text-main);
   }
-  .btn.secondary:hover { border-color: var(--blue); color: var(--blue); background-color: var(--blue-light); }
+  .btn.secondary:hover { border-color: var(--ink); color: var(--ink); background-color: var(--ink-light); }
   .btn.danger {
-    background-color: var(--rose-bg); color: var(--rose-text); border: 1px solid rgba(192, 57, 43, 0.25);
+    background-color: var(--rose-bg); color: var(--rose-text); border: 1px solid rgba(153, 27, 27, 0.25);
     padding: 6px 12px; font-size: 12.5px;
   }
   .btn.danger:hover { background-color: var(--accent-red); color: #FFFFFF; }
-  .btn.whatsapp { background-color: #1E7A45; color: #FFFFFF; padding: 8px 16px; font-size: 13px; }
-  .btn.print { background-color: var(--blue-dark); color: #FFFFFF; padding: 8px 16px; font-size: 13px; border: none; }
+  .btn.whatsapp { background-color: #166534; color: #FFFFFF; padding: 8px 16px; font-size: 13px; }
+  .btn.print { background-color: var(--ink); color: #FFFFFF; padding: 8px 16px; font-size: 13px; border: none; }
   .btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
   /* Live Preview Box */
@@ -243,22 +243,22 @@
   .save-status { font-size: 13px; color: var(--accent-emerald); font-weight: 700; text-align: center; margin-top: 10px; }
   .link-btn { background: none; border: none; color: var(--accent-blue); font-weight: 700; cursor: pointer; font-size: 13px; padding: 0; text-decoration: underline; }
 
-  /* Customer Hero Pass Card — Solid Blue */
+  /* Customer Hero Pass Card — Solid #14202E */
   .customer-hero-card {
-    background-color: var(--blue-dark);
+    background-color: var(--ink);
     border-radius: var(--radius-lg);
     padding: 28px; text-align: center; margin-bottom: 20px;
     color: #FFFFFF; box-shadow: var(--card-shadow);
-    border: 1px solid var(--blue);
+    border: 1px solid rgba(255,255,255,0.1);
   }
   .customer-hero-card .balance { font-size: 52px; font-weight: 900; font-family: 'Outfit'; color: #FFFFFF; line-height: 1; }
-  .customer-hero-card .balance-lbl { font-size: 12px; color: rgba(255,255,255,0.65); text-transform: uppercase; letter-spacing: 1.5px; margin-top: 6px; }
+  .customer-hero-card .balance-lbl { font-size: 12px; color: rgba(255,255,255,0.7); text-transform: uppercase; letter-spacing: 1.5px; margin-top: 6px; }
 
   .code-box {
-    background-color: var(--blue-light); border: 2px dashed var(--blue);
+    background-color: var(--bg-card-elevated); border: 2px dashed var(--ink);
     border-radius: var(--radius-md); padding: 18px; text-align: center; margin-top: 16px;
   }
-  .code-box .code { font-family: 'JetBrains Mono'; font-size: 32px; font-weight: 800; letter-spacing: 4px; color: var(--blue-dark); }
+  .code-box .code { font-family: 'JetBrains Mono'; font-size: 32px; font-weight: 800; letter-spacing: 4px; color: var(--ink); }
 
   /* Staff Row Settings */
   .staff-row { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
@@ -266,14 +266,14 @@
 
   .quick-range { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
   .quick-range button { font-size: 12.5px; font-weight: 700; padding: 8px 16px; border-radius: 20px; border: 1.5px solid var(--border-color); background-color: var(--bg-card); color: var(--text-sub); cursor: pointer; }
-  .quick-range button.active { background-color: var(--blue); color: #FFFFFF; border-color: var(--blue); }
+  .quick-range button.active { background-color: var(--ink); color: #FFFFFF; border-color: var(--ink); }
 
-  /* Toast Notification — White on Blue */
+  /* Toast Notification — White on #14202E */
   .toast {
     position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
-    background-color: var(--blue-dark); color: #FFFFFF; border-radius: var(--radius-pill); padding: 12px 26px;
+    background-color: var(--ink); color: #FFFFFF; border-radius: var(--radius-pill); padding: 12px 26px;
     font-size: 13.5px; font-weight: 700; letter-spacing: 0.2px;
-    box-shadow: 0 10px 30px rgba(26, 86, 219, 0.25); opacity: 0; pointer-events: none; transition: all 0.3s ease; z-index: 100;
+    box-shadow: 0 10px 30px rgba(20, 32, 46, 0.25); opacity: 0; pointer-events: none; transition: all 0.3s ease; z-index: 100;
   }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
