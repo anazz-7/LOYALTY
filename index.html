@@ -270,6 +270,18 @@
   .quick-range button { font-size: 12.5px; font-weight: 700; padding: 8px 16px; border-radius: 20px; border: 1.5px solid var(--border-color); background-color: var(--bg-card); color: var(--text-sub); cursor: pointer; }
   .quick-range button.active { background-color: var(--ink); color: #FFFFFF; border-color: var(--ink); }
 
+  /* Quick Amount Tap Buttons */
+  .amt-btn {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 11px; font-weight: 700; padding: 4px 9px;
+    border-radius: var(--radius-sm); border: 1.5px solid var(--border-color);
+    background-color: var(--bg-card-elevated); color: var(--text-main);
+    cursor: pointer; transition: all 0.15s ease;
+  }
+  .amt-btn:hover { border-color: var(--ink); background-color: var(--ink); color: #FFFFFF; }
+  .amt-btn.clear { color: var(--rose-text); border-color: rgba(153, 27, 27, 0.2); }
+  .amt-btn.clear:hover { background-color: var(--rose-bg); color: var(--rose-text); }
+
   /* Animated Spinner Loader */
   .spinner {
     display: inline-block; width: 14px; height: 14px;
@@ -416,7 +428,17 @@
         <div class="field"><label>Date</label><input id="f-date" type="date"></div>
         <div class="field"><label>Customer Phone</label><input id="f-phone" class="mono" placeholder="10-digit number" maxlength="15"></div>
         <div class="field"><label>Customer Name</label><input id="f-name" placeholder="Full name"></div>
-        <div class="field"><label>Bill Amount (₹)</label><input id="f-amount" type="number" min="0" class="mono" placeholder="0"></div>
+        <div class="field">
+          <label>Bill Amount (₹)</label>
+          <input id="f-amount" type="number" min="0" class="mono" placeholder="0">
+          <div class="quick-amt-row" style="display:flex; gap:5px; margin-top:6px; flex-wrap:wrap;">
+            <button type="button" class="amt-btn" onclick="addAmount(100)">+₹100</button>
+            <button type="button" class="amt-btn" onclick="addAmount(200)">+₹200</button>
+            <button type="button" class="amt-btn" onclick="addAmount(500)">+₹500</button>
+            <button type="button" class="amt-btn" onclick="addAmount(1000)">+₹1000</button>
+            <button type="button" class="amt-btn clear" onclick="clearAmount()">Clear</button>
+          </div>
+        </div>
         <div class="field"><label>Redeem Points (optional)</label><input id="f-redeem" type="number" min="0" class="mono" placeholder="0"></div>
         <div class="field" style="grid-column: 1 / -1;"><label>Referral Code (new customers only)</label><input id="f-refcode" class="mono" placeholder="e.g. BIND4521"></div>
       </div>
@@ -426,7 +448,15 @@
         <span>Redeem value: <b id="pv-redeemval">₹0</b></span>
         <span>New balance: <b id="pv-balance">0</b></span>
       </div>
-      <button class="btn" id="save-bill">Save Entry</button>
+      <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+        <button class="btn" id="save-bill">Save Entry</button>
+        <div style="font-size:11px; color:var(--text-sub); display:flex; gap:10px; flex-wrap:wrap;">
+          <span><kbd style="background:var(--bg-card-elevated); border:1px solid var(--border-dark); padding:2px 5px; border-radius:4px; font-family:'JetBrains Mono';">Ctrl+S</kbd> Save</span>
+          <span><kbd style="background:var(--bg-card-elevated); border:1px solid var(--border-dark); padding:2px 5px; border-radius:4px; font-family:'JetBrains Mono';">F1</kbd> New Bill</span>
+          <span><kbd style="background:var(--bg-card-elevated); border:1px solid var(--border-dark); padding:2px 5px; border-radius:4px; font-family:'JetBrains Mono';">F2</kbd> Search</span>
+          <span><kbd style="background:var(--bg-card-elevated); border:1px solid var(--border-dark); padding:2px 5px; border-radius:4px; font-family:'JetBrains Mono';">Esc</kbd> Clear</span>
+        </div>
+      </div>
       <div class="save-status" id="save-status"></div>
     </div>
     <div class="card">
@@ -778,6 +808,64 @@ document.getElementById('save-bill').addEventListener('click', () => {
     document.getElementById('f-bill').value = ''; fPhone.value = ''; fName.value = ''; fAmount.value = ''; fRedeem.value = ''; document.getElementById('f-refcode').value = '';
     updatePreview(); renderRecent();
   }, 250);
+});
+
+// Quick Amount Tap Helpers
+window.addAmount = function(val) {
+  const input = document.getElementById('f-amount');
+  const current = parseFloat(input.value) || 0;
+  input.value = current + val;
+  updatePreview();
+};
+
+window.clearAmount = function() {
+  document.getElementById('f-amount').value = '';
+  updatePreview();
+};
+
+// POS Global Keyboard Shortcuts
+document.addEventListener('keydown', (e) => {
+  // Ctrl + S or Cmd + S -> Save Bill
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+    e.preventDefault();
+    if (staffUnlocked && document.getElementById('tab-entry').style.display !== 'none') {
+      document.getElementById('save-bill').click();
+    }
+  }
+
+  // F1 -> Switch to New Bill Tab & Focus Bill Number
+  if (e.key === 'F1') {
+    e.preventDefault();
+    if (staffUnlocked) {
+      document.querySelector('#staff-app nav.tabs button[data-tab="entry"]').click();
+      setTimeout(() => document.getElementById('f-bill').focus(), 50);
+    }
+  }
+
+  // F2 or Ctrl+F -> Switch to Customers Tab & Focus Search
+  if (e.key === 'F2' || ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f')) {
+    e.preventDefault();
+    if (staffUnlocked) {
+      document.querySelector('#staff-app nav.tabs button[data-tab="customers"]').click();
+      setTimeout(() => document.getElementById('cust-search').focus(), 50);
+    }
+  }
+
+  // Esc -> Clear Form or Search Input
+  if (e.key === 'Escape') {
+    if (document.activeElement && typeof document.activeElement.blur === 'function') {
+      document.activeElement.blur();
+    }
+    if (document.getElementById('cust-search') === document.activeElement) {
+      document.getElementById('cust-search').value = '';
+      renderCustomers();
+    } else {
+      document.getElementById('f-bill').value = '';
+      fPhone.value = ''; fName.value = ''; fAmount.value = ''; fRedeem.value = '';
+      document.getElementById('f-refcode').value = '';
+      updatePreview();
+    }
+  }
 });
 
 function renderRecent() {
