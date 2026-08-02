@@ -1109,6 +1109,8 @@ window.deleteTxn = function(id) {
   if (c) { c.totalPoints = c.totalPoints - t.earned + t.redeemed; c.totalSpent -= t.amount; c.visits = Math.max(0, c.visits - 1); }
   transactions = transactions.filter(x => x.id !== id);
   persistCustomers(); persistTransactions();
+  if (c) saveCustomerCloud(c);
+  deleteTransactionCloud(id);
   toast('Entry deleted'); renderRecent(); renderCustomers(); showCustomer(t.phone);
 };
 
@@ -1150,7 +1152,8 @@ function renderRedemptions() {
 window.fulfillRedemption = function(id) {
   const r = redemptions.find(x => x.id === id); if (!r) return;
   r.status = 'fulfilled'; r.fulfilledAt = Date.now();
-  persistRedemptions(); toast('Marked as applied'); renderRedemptions();
+  persistRedemptions(); saveRedemptionCloud(r);
+  toast('Marked as applied'); renderRedemptions();
 };
 
 window.cancelRedemption = function(id) {
@@ -1159,6 +1162,7 @@ window.cancelRedemption = function(id) {
   if (c) c.totalPoints += r.points;
   r.status = 'cancelled'; r.fulfilledAt = Date.now();
   persistCustomers(); persistRedemptions();
+  saveRedemptionCloud(r); if (c) saveCustomerCloud(c);
   toast('Points refunded to customer'); renderRedemptions(); renderCustomers();
 };
 
@@ -1187,7 +1191,7 @@ document.getElementById('save-settings').addEventListener('click', () => {
   settings.refBonusReferrer = parseFloat(document.getElementById('s-refbonus-referrer').value) || 0;
   settings.refBonusReferee = parseFloat(document.getElementById('s-refbonus-referee').value) || 0;
 
-  persistSettings();
+  persistSettings(); saveSettingsCloud();
   document.getElementById('bizNameHeader').textContent = settings.bizName;
   document.getElementById('settings-status').textContent = 'Settings saved.';
   toast('Settings saved'); updatePreview();
@@ -1317,12 +1321,46 @@ async function saveCustomerCloud(c) {
 async function saveTransactionCloud(t) {
   if (!supabaseClient) return;
   try {
-    await supabaseClient.from('transactions').insert({
+    await supabaseClient.from('transactions').upsert({
       id: t.id, bill_no: t.billNo, date: t.date, phone: t.phone,
       name: t.name, amount: t.amount, earned: t.earned, redeemed: t.redeemed,
       staff_name: t.staffName
     });
   } catch(e) { console.warn('Supabase transaction save failed:', e); }
+}
+
+async function deleteTransactionCloud(id) {
+  if (!supabaseClient) return;
+  try {
+    await supabaseClient.from('transactions').delete().eq('id', id);
+  } catch(e) { console.warn('Supabase transaction delete failed:', e); }
+}
+
+async function saveRedemptionCloud(r) {
+  if (!supabaseClient) return;
+  try {
+    await supabaseClient.from('redemptions').upsert({
+      id: r.id, phone: r.phone, name: r.name,
+      points: r.points, value: r.value, code: r.code,
+      status: r.status, created_at: new Date(r.createdAt).toISOString(),
+      fulfilled_at: r.fulfilledAt ? new Date(r.fulfilledAt).toISOString() : null
+    });
+  } catch(e) { console.warn('Supabase redemption save failed:', e); }
+}
+
+async function saveSettingsCloud() {
+  if (!supabaseClient) return;
+  try {
+    await supabaseClient.from('settings').upsert({
+      id: 1,
+      biz_name: settings.bizName || 'B-INDUSTRIES LOYALTY',
+      rate: settings.rate || 100,
+      redeem_val: settings.redeemVal || 1,
+      country_code: settings.countryCode || '91',
+      ref_bonus_referrer: settings.refBonusReferrer || 20,
+      ref_bonus_referee: settings.refBonusReferee || 10
+    });
+  } catch(e) { console.warn('Supabase settings save failed:', e); }
 }
 
 function renderStaffList() {
@@ -1573,9 +1611,12 @@ document.getElementById('c-lookup').addEventListener('click', () => {
     const value = amt * (settings.redeemVal || 0);
 
     c.totalPoints -= amt;
-    redemptions.unshift({ id: Date.now().toString(36), phone: c.phone, name: c.name, points: amt, value, code, status: 'pending', createdAt: Date.now() });
+    const newRed = { id: Date.now().toString(36), phone: c.phone, name: c.name, points: amt, value, code, status: 'pending', createdAt: Date.now() };
+    redemptions.unshift(newRed);
 
     persistCustomers(); persistRedemptions();
+    saveCustomerCloud(c); saveRedemptionCloud(newRed);
+
     document.getElementById('c-code-box').innerHTML = `
       <div class="code-box">
         <div style="font-size:11.5px; color:var(--text-sub); margin-bottom:4px; font-weight:700;">SHOW THIS CODE AT COUNTER</div>
