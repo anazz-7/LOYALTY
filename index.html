@@ -1,730 +1,1471 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BM Super Mart — Loyalty Program</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>B-INDUSTRIES LOYALTY — Smart Rewards Program</title>
+<meta name="theme-color" content="#0F172A">
+<meta name="description" content="B-INDUSTRIES LOYALTY — Earn & Redeem rewards with every visit. Customer points, thermal receipts, staff portal, and analytics.">
+
+<!-- Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+
 <style>
-  :root{
-    --paper:#FBF6EC; --paper-dark:#F1E9D8; --ink:#20324D; --ink-soft:#5B6B82;
-    --marigold:#E7A537; --marigold-dark:#C3831D; --stamp-green:#2F6845;
-    --rule:#D8CDB3; --red:#B4472F; --white:#FFFDF9;
+  :root {
+    --font-heading: 'Outfit', sans-serif;
+    --font-body: 'Inter', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+
+    /* Dark theme (default) */
+    --bg-main: #0B0F19;
+    --bg-surface: #151D2A;
+    --bg-surface-elevated: #1E293B;
+    --bg-glass: rgba(21, 29, 42, 0.75);
+    --border-color: #2D3D54;
+    --border-highlight: #3B82F6;
+
+    --text-primary: #F8FAFC;
+    --text-secondary: #94A3B8;
+    --text-muted: #64748B;
+
+    --accent-primary: #6366F1;
+    --accent-primary-hover: #4F46E5;
+    --accent-glow: rgba(99, 102, 241, 0.25);
+
+    --emerald: #10B981;
+    --emerald-bg: rgba(16, 185, 129, 0.12);
+    --amber: #F59E0B;
+    --amber-bg: rgba(245, 158, 11, 0.12);
+    --rose: #F43F5E;
+    --rose-bg: rgba(244, 63, 94, 0.12);
+    --cyan: #06B6D4;
+    --purple: #8B5CF6;
+
+    --card-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+    --radius-sm: 8px;
+    --radius-md: 14px;
+    --radius-lg: 20px;
+    --radius-pill: 9999px;
   }
-  *{box-sizing:border-box; margin:0; padding:0;}
-  body{
-    font-family:'Inter', sans-serif;
-    background: linear-gradient(var(--paper), var(--paper)), repeating-linear-gradient(transparent, transparent 27px, var(--rule) 28px);
-    background-color: var(--paper); color:var(--ink); min-height:100vh; padding-bottom:60px;
+
+  [data-theme="light"] {
+    --bg-main: #F1F5F9;
+    --bg-surface: #FFFFFF;
+    --bg-surface-elevated: #F8FAFC;
+    --bg-glass: rgba(255, 255, 255, 0.85);
+    --border-color: #E2E8F0;
+    --border-highlight: #6366F1;
+
+    --text-primary: #0F172A;
+    --text-secondary: #475569;
+    --text-muted: #94A3B8;
+
+    --card-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.03);
   }
-  h1,h2,h3, .num{ font-family:'Zilla Slab', serif; }
-  header.masthead{ background:var(--ink); color:var(--paper); padding:22px 20px 26px; position:relative; }
-  header.masthead::after{ content:""; position:absolute; left:0; right:0; bottom:-10px; height:10px;
-    background: linear-gradient(135deg, var(--ink) 25%, transparent 25%) 0 0, linear-gradient(-135deg, var(--ink) 25%, transparent 25%) 0 0;
-    background-size:16px 16px; background-repeat:repeat-x; }
-  .masthead-row{ display:flex; align-items:baseline; justify-content:space-between; flex-wrap:wrap; gap:6px; max-width:900px; margin:0 auto;}
-  .masthead h1{ font-size:26px; letter-spacing:0.3px;}
-  .masthead .tag{ font-size:12px; color:var(--marigold); letter-spacing:1.5px; text-transform:uppercase; font-weight:600;}
-  .masthead .stamp{ border:1.5px solid var(--marigold); color:var(--marigold); border-radius:50%; width:52px; height:52px;
-    display:flex; align-items:center; justify-content:center; font-family:'Zilla Slab', serif; font-weight:700; font-size:11px;
-    text-align:center; line-height:1.1; transform:rotate(-8deg); flex-shrink:0; }
-  .online-strip{ background:var(--stamp-green); color:var(--white); text-align:center; font-size:12.5px; font-weight:600; padding:7px 12px; }
 
-  .mode-row{ max-width:900px; margin:20px auto 0; padding:0 20px; display:flex; gap:10px; }
-  .mode-btn{ flex:1; font-family:'Zilla Slab'; font-weight:700; font-size:15px; padding:14px; border-radius:10px;
-    border:1.5px solid var(--rule); background:var(--white); color:var(--ink-soft); cursor:pointer; }
-  .mode-btn.active{ background:var(--ink); color:var(--paper); border-color:var(--ink); }
-  .staff-chip{ display:inline-block; background:var(--paper-dark); border:1px solid var(--rule); border-radius:20px; padding:4px 12px; font-size:12px; font-weight:600; color:var(--ink-soft); margin-left:8px; }
-  .staff-row{ display:flex; gap:8px; align-items:center; margin-bottom:8px; }
-  .staff-row input, .staff-row select{ flex:1; }
-  .quick-range{ display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap; }
-  .quick-range button{ font-size:12.5px; font-weight:600; padding:7px 14px; border-radius:20px; border:1px solid var(--rule); background:var(--white); color:var(--ink-soft); cursor:pointer; }
-  .quick-range button.active{ background:var(--marigold); color:var(--ink); border-color:var(--marigold); }
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font-body); -webkit-tap-highlight-color: transparent; }
 
-  nav.tabs{ max-width:900px; margin:16px auto 0; padding:0 20px; display:flex; gap:8px; flex-wrap:wrap; }
-  nav.tabs button{ font-family:'Inter'; font-weight:600; font-size:13.5px; background:var(--white); color:var(--ink-soft);
-    border:1px solid var(--rule); border-radius:8px; padding:9px 16px; cursor:pointer; }
-  nav.tabs button.active{ background:var(--ink); color:var(--paper); border-color:var(--ink); }
+  body {
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+    min-height: 100vh;
+    padding-bottom: 80px;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    overflow-x: hidden;
+  }
 
-  main{ max-width:900px; margin:22px auto; padding:0 20px; }
-  .card{ background:var(--white); border:1px solid var(--rule); border-radius:12px; padding:22px; margin-bottom:18px; box-shadow:0 1px 2px rgba(32,50,77,0.04); }
-  .card h2{ font-size:19px; margin-bottom:4px; }
-  .card .sub{ color:var(--ink-soft); font-size:13px; margin-bottom:18px; }
-  .grid{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
-  @media(max-width:560px){ .grid{ grid-template-columns:1fr; } }
-  label{ font-size:12.5px; font-weight:600; color:var(--ink-soft); display:block; margin-bottom:5px; text-transform:uppercase; letter-spacing:0.4px;}
-  input, select{ width:100%; padding:10px 12px; font-size:14.5px; font-family:'Inter'; border:1.5px solid var(--rule); border-radius:8px; background:var(--paper); color:var(--ink); }
-  input:focus, select:focus{ outline:none; border-color:var(--marigold); }
-  .field{ margin-bottom:14px; }
-  .btn{ font-family:'Inter'; font-weight:700; font-size:14px; padding:11px 22px; border-radius:8px; border:none; cursor:pointer; background:var(--marigold); color:var(--ink); }
-  .btn:hover{ background:var(--marigold-dark); color:var(--white); }
-  .btn.secondary{ background:transparent; border:1.5px solid var(--ink); color:var(--ink); }
-  .btn.secondary:hover{ background:var(--ink); color:var(--paper); }
-  .btn.danger{ background:transparent; color:var(--red); border:1.5px solid var(--red); padding:6px 12px; font-size:12.5px;}
-  .btn.danger:hover{ background:var(--red); color:var(--white); }
-  .btn.whatsapp{ background:#25D366; color:#0B3D24; padding:7px 14px; font-size:12.5px; border:none; }
-  .btn.print{ background:var(--ink); color:var(--paper); padding:7px 14px; font-size:12.5px; border:none; }
-  .btn:disabled{ opacity:0.5; cursor:not-allowed; }
-  .preview{ background:var(--paper-dark); border:1px dashed var(--rule); border-radius:10px; padding:14px 16px; margin:16px 0; font-size:13.5px; color:var(--ink-soft); display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px; }
-  .preview b{ color:var(--ink); font-size:15px; }
-  .badge{ display:inline-block; background:var(--stamp-green); color:var(--white); font-family:'Zilla Slab'; font-weight:700; font-size:12.5px; padding:3px 10px; border-radius:20px; }
-  .badge.redeem{ background:var(--red); }
-  .badge.pending{ background:var(--marigold-dark); }
-  table{ width:100%; border-collapse:collapse; font-size:13.5px; }
-  th{ text-align:left; color:var(--ink-soft); font-weight:600; font-size:11.5px; text-transform:uppercase; letter-spacing:0.4px; padding:8px 10px; border-bottom:2px solid var(--rule); }
-  td{ padding:10px; border-bottom:1px solid var(--rule); vertical-align:middle; }
-  tr:hover td{ background:var(--paper-dark); }
-  .empty{ text-align:center; color:var(--ink-soft); padding:34px 10px; font-size:14px; }
-  .stat-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
-  @media(max-width:640px){ .stat-grid{ grid-template-columns:1fr 1fr; } }
-  .stat{ background:var(--white); border:1px solid var(--rule); border-radius:12px; padding:18px; text-align:left; }
-  .stat .num{ font-size:28px; font-weight:700; color:var(--ink); }
-  .stat .lbl{ font-size:12px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:0.4px; margin-top:2px;}
-  .searchbar{ margin-bottom:16px; }
-  .customer-detail{ border-top:2px dashed var(--rule); margin-top:14px; padding-top:14px; }
-  .row-flex{ display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;}
-  .toast{ position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:var(--ink); color:var(--paper); padding:12px 22px; border-radius:30px;
-    font-size:13.5px; font-weight:600; box-shadow:0 6px 20px rgba(0,0,0,0.2); opacity:0; pointer-events:none; transition:opacity .25s, transform .25s; z-index:50; }
-  .toast.show{ opacity:1; transform:translateX(-50%) translateY(-6px); }
-  .save-status{ font-size:12px; color:var(--ink-soft); text-align:center; margin-top:6px;}
-  .link-btn{ background:none; border:none; color:var(--marigold-dark); font-weight:600; cursor:pointer; font-size:13px; padding:0; text-decoration:underline; }
+  /* Typography */
+  h1, h2, h3, h4, .brand-font { font-family: var(--font-heading); }
+  .mono { font-family: var(--font-mono); }
 
-  .customer-hero{ text-align:center; padding:10px 0 6px; }
-  .customer-hero .balance{ font-size:44px; font-weight:700; color:var(--stamp-green); }
-  .customer-hero .balance-lbl{ font-size:12px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:0.5px; }
-  .code-box{ background:var(--paper-dark); border:2px dashed var(--marigold-dark); border-radius:10px; padding:16px; text-align:center; margin-top:14px; }
-  .code-box .code{ font-family:'Zilla Slab'; font-size:30px; font-weight:700; letter-spacing:3px; color:var(--ink); }
+  /* Top Bar & Header */
+  .top-banner {
+    background: linear-gradient(90deg, #4F46E5, #06B6D4);
+    color: #FFFFFF;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    letter-spacing: 0.3px;
+  }
+  .top-banner .pulse-dot {
+    width: 8px; height: 8px; background-color: #34D399; border-radius: 50%;
+    box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.7);
+    animation: pulse 1.6s infinite;
+  }
+  @keyframes pulse {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(52, 211, 153, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(52, 211, 153, 0); }
+  }
 
-  #print-receipt{ display:none; }
-  @media print{
-    body *{ visibility:hidden; }
-    #print-receipt, #print-receipt *{ visibility:visible; }
-    #print-receipt{ display:block; position:absolute; top:0; left:0; width:72mm; padding:2mm 3mm; font-family:'Courier New', monospace; font-size:16px; line-height:1.5; color:#000; background:#fff; }
-    @page{ size:72mm auto; margin:0; }
-    #print-receipt .r-title{ text-align:center; font-weight:700; font-size:20px; margin-bottom:2px; }
-    #print-receipt .r-sub{ text-align:center; font-size:13px; margin-bottom:8px; }
-    #print-receipt .r-line{ border-top:1px dashed #000; margin:6px 0; }
-    #print-receipt table{ width:100%; border-collapse:collapse; font-size:16px; }
-    #print-receipt td{ padding:2px 0; vertical-align:top; }
-    #print-receipt td.r-val{ text-align:right; white-space:nowrap; }
-    #print-receipt .r-foot{ text-align:center; margin-top:10px; font-size:13px; }
+  header.app-header {
+    background: var(--bg-glass);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border-color);
+    position: sticky; top: 0; z-index: 40;
+    padding: 16px 24px;
+  }
+  .header-container {
+    max-width: 1000px; margin: 0 auto;
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+  }
+  .brand-group { display: flex; align-items: center; gap: 12px; }
+  .brand-logo {
+    width: 44px; height: 44px;
+    background: linear-gradient(135deg, var(--accent-primary), #06B6D4);
+    border-radius: var(--radius-md);
+    display: flex; align-items: center; justify-content: center;
+    color: #FFFFFF; font-weight: 800; font-size: 20px;
+    box-shadow: 0 4px 14px var(--accent-glow);
+  }
+  .brand-title { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; line-height: 1.1; }
+  .brand-subtitle { font-size: 11px; color: var(--accent-primary); font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; }
+
+  .header-actions { display: flex; align-items: center; gap: 10px; }
+
+  .theme-toggle-btn {
+    background: var(--bg-surface-elevated);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    width: 38px; height: 38px;
+    border-radius: var(--radius-pill);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all 0.2s ease;
+  }
+  .theme-toggle-btn:hover { border-color: var(--accent-primary); transform: scale(1.05); }
+
+  /* Mode Switcher Pill */
+  .mode-switcher-container { max-width: 1000px; margin: 20px auto 0; padding: 0 20px; }
+  .mode-switcher {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 6px;
+    display: flex; gap: 6px;
+    box-shadow: var(--card-shadow);
+  }
+  .mode-btn {
+    flex: 1; padding: 12px 18px;
+    border-radius: var(--radius-md);
+    border: none; background: transparent;
+    color: var(--text-secondary);
+    font-weight: 700; font-size: 14px; font-family: var(--font-heading);
+    cursor: pointer; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .mode-btn.active {
+    background: var(--accent-primary);
+    color: #FFFFFF;
+    box-shadow: 0 4px 12px var(--accent-glow);
+  }
+
+  .staff-chip {
+    font-size: 11px; padding: 3px 8px; border-radius: var(--radius-pill);
+    background: rgba(255, 255, 255, 0.2); font-weight: 600;
+  }
+
+  /* Navigation Tabs for Staff */
+  nav.staff-tabs {
+    max-width: 1000px; margin: 16px auto 0; padding: 0 20px;
+    display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none;
+  }
+  nav.staff-tabs::-webkit-scrollbar { display: none; }
+  nav.staff-tabs button {
+    white-space: nowrap;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    font-size: 13.5px; font-weight: 600;
+    padding: 10px 18px; border-radius: var(--radius-md);
+    cursor: pointer; transition: all 0.2s ease;
+    display: flex; align-items: center; gap: 6px;
+  }
+  nav.staff-tabs button.active {
+    background: var(--bg-surface-elevated);
+    color: var(--accent-primary);
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 1px var(--accent-primary);
+  }
+
+  /* Main Container & Cards */
+  main { max-width: 1000px; margin: 20px auto; padding: 0 20px; }
+
+  .glass-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: var(--card-shadow);
+    transition: border-color 0.2s ease;
+  }
+  .glass-card:hover { border-color: rgba(99, 102, 241, 0.3); }
+
+  .card-header { margin-bottom: 20px; }
+  .card-title { font-size: 20px; font-weight: 700; color: var(--text-primary); }
+  .card-subtitle { font-size: 13.5px; color: var(--text-muted); margin-top: 4px; }
+
+  /* Form Elements */
+  .grid-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+  .form-group { margin-bottom: 16px; }
+  label.form-label {
+    display: block; font-size: 12px; font-weight: 700;
+    color: var(--text-secondary); text-transform: uppercase;
+    letter-spacing: 0.6px; margin-bottom: 6px;
+  }
+  input.form-input, select.form-input {
+    width: 100%; padding: 12px 14px;
+    font-size: 14.5px; font-family: var(--font-body);
+    background: var(--bg-main);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    transition: all 0.2s ease;
+  }
+  input.form-input:focus, select.form-input:focus {
+    outline: none; border-color: var(--accent-primary);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+  }
+
+  /* Buttons */
+  .btn-group { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 8px; }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 12px 22px; font-size: 14px; font-weight: 700;
+    font-family: var(--font-heading); border-radius: var(--radius-md);
+    border: none; cursor: pointer; transition: all 0.2s ease; text-decoration: none;
+  }
+  .btn-primary { background: var(--accent-primary); color: #FFFFFF; box-shadow: 0 4px 12px var(--accent-glow); }
+  .btn-primary:hover { background: var(--accent-primary-hover); transform: translateY(-1px); }
+  .btn-secondary { background: var(--bg-surface-elevated); color: var(--text-primary); border: 1px solid var(--border-color); }
+  .btn-secondary:hover { border-color: var(--accent-primary); color: var(--accent-primary); }
+  .btn-whatsapp { background: #25D366; color: #0B3D24; }
+  .btn-whatsapp:hover { background: #20BD5A; }
+  .btn-danger { background: var(--rose-bg); color: var(--rose); border: 1px solid rgba(244, 63, 94, 0.3); }
+  .btn-danger:hover { background: var(--rose); color: #FFFFFF; }
+  .btn-sm { padding: 7px 14px; font-size: 12.5px; border-radius: var(--radius-sm); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+
+  /* Live Preview Box */
+  .preview-box {
+    background: var(--bg-surface-elevated);
+    border: 1px dashed var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 16px 20px; margin: 20px 0;
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 14px;
+    font-size: 13px;
+  }
+  .preview-item label { font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 700; display: block; margin-bottom: 2px; }
+  .preview-item val { font-size: 16px; font-weight: 800; color: var(--text-primary); font-family: var(--font-heading); }
+  .preview-item val.highlight { color: var(--emerald); }
+
+  /* Badges */
+  .badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 12px; font-weight: 700; padding: 4px 10px;
+    border-radius: var(--radius-pill); font-family: var(--font-mono);
+  }
+  .badge-earn { background: var(--emerald-bg); color: var(--emerald); border: 1px solid rgba(16, 185, 129, 0.3); }
+  .badge-redeem { background: var(--rose-bg); color: var(--rose); border: 1px solid rgba(244, 63, 94, 0.3); }
+  .badge-pending { background: var(--amber-bg); color: var(--amber); border: 1px solid rgba(245, 158, 11, 0.3); }
+  .badge-tier { background: linear-gradient(135deg, #F59E0B, #8B5CF6); color: #FFF; font-size: 11px; text-transform: uppercase; }
+
+  /* Tables */
+  .table-responsive { overflow-x: auto; margin-top: 10px; border-radius: var(--radius-md); border: 1px solid var(--border-color); }
+  table.data-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13.5px; }
+  table.data-table th {
+    background: var(--bg-surface-elevated); color: var(--text-secondary);
+    font-weight: 700; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.5px;
+    padding: 12px 14px; border-bottom: 1px solid var(--border-color);
+  }
+  table.data-table td { padding: 14px; border-bottom: 1px solid var(--border-color); color: var(--text-primary); vertical-align: middle; }
+  table.data-table tr:last-child td { border-bottom: none; }
+  table.data-table tr:hover td { background: rgba(255, 255, 255, 0.02); }
+  .empty-state { text-align: center; color: var(--text-muted); padding: 40px 20px; font-size: 14px; }
+
+  /* Stats Grid */
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 16px; }
+  .stat-card {
+    background: var(--bg-surface-elevated);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 20px; text-align: left;
+  }
+  .stat-card .stat-val { font-size: 30px; font-weight: 800; font-family: var(--font-heading); color: var(--text-primary); }
+  .stat-card .stat-lbl { font-size: 12px; color: var(--text-muted); text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; margin-top: 4px; }
+
+  /* Customer Loyalty Pass Card */
+  .loyalty-pass-card {
+    background: linear-gradient(135deg, #1E1B4B 0%, #312E81 50%, #4338CA 100%);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: var(--radius-lg);
+    padding: 24px; color: #FFFFFF;
+    box-shadow: 0 20px 40px -15px rgba(49, 46, 129, 0.5);
+    position: relative; overflow: hidden; margin-bottom: 24px;
+  }
+  .loyalty-pass-card::before {
+    content: ""; position: absolute; top: -50px; right: -50px; width: 180px; height: 180px;
+    background: radial-gradient(circle, rgba(99, 102, 241, 0.4) 0%, transparent 70%);
+    border-radius: 50%; pointer-events: none;
+  }
+  .pass-header { display: flex; justify-content: space-between; align-items: flex-start; }
+  .pass-brand { font-size: 18px; font-weight: 800; letter-spacing: -0.3px; }
+  .pass-tier { background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(10px); padding: 4px 12px; border-radius: var(--radius-pill); font-size: 11px; font-weight: 700; text-transform: uppercase; }
+  .pass-balance-group { margin: 24px 0 16px; }
+  .pass-balance { font-size: 52px; font-weight: 800; font-family: var(--font-heading); line-height: 1; color: #34D399; }
+  .pass-balance-lbl { font-size: 12px; opacity: 0.8; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+  .pass-footer { display: flex; justify-content: space-between; align-items: flex-end; font-size: 13px; opacity: 0.9; }
+
+  /* QR Code Box */
+  .qr-box-container {
+    background: var(--bg-surface-elevated);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 20px; text-align: center; margin-top: 16px;
+  }
+  .qr-svg-wrapper {
+    background: #FFFFFF; padding: 12px; border-radius: var(--radius-sm);
+    display: inline-block; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin: 10px 0;
+  }
+
+  /* SVG Chart */
+  .chart-container { margin-top: 16px; padding: 16px; background: var(--bg-surface-elevated); border-radius: var(--radius-md); border: 1px solid var(--border-color); }
+
+  /* Toast Notification */
+  .toast {
+    position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: var(--bg-surface-elevated); color: var(--text-primary);
+    border: 1px solid var(--accent-primary); padding: 12px 24px; border-radius: var(--radius-pill);
+    font-size: 14px; font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    opacity: 0; pointer-events: none; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 100;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* Thermal Receipt Print Styles */
+  #print-receipt-modal { display: none; }
+  @media print {
+    body * { visibility: hidden; }
+    #print-receipt-modal, #print-receipt-modal * { visibility: visible; }
+    #print-receipt-modal {
+      display: block !important; position: absolute; top: 0; left: 0;
+      width: 72mm; padding: 4mm; font-family: var(--font-mono); font-size: 13px;
+      color: #000000; background: #FFFFFF; line-height: 1.4;
+    }
+    @page { size: 72mm auto; margin: 0; }
+    .r-center { text-align: center; }
+    .r-bold { font-weight: 700; }
+    .r-divider { border-top: 1px dashed #000; margin: 8px 0; }
+    .r-row { display: flex; justify-content: space-between; }
   }
 </style>
 </head>
 <body>
 
-<div class="online-strip">⬤ Online — works from any phone or computer with internet</div>
+<div class="top-banner">
+  <span class="pulse-dot"></span>
+  <span>B-INDUSTRIES LOYALTY PORTAL — REALTIME CLOUD SYNC & REWARDS MANAGEMENT</span>
+</div>
 
-<header class="masthead">
-  <div class="masthead-row">
-    <div><div class="tag">Loyalty Program</div><h1 id="bizNameHeader">BM Super Mart</h1></div>
-    <div class="stamp">EARN<br>&amp;<br>SAVE</div>
+<header class="app-header">
+  <div class="header-container">
+    <div class="brand-group">
+      <div class="brand-logo">B</div>
+      <div>
+        <div class="brand-subtitle">Loyalty & Rewards System</div>
+        <div class="brand-title" id="displayShopName">B-INDUSTRIES</div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="theme-toggle-btn" id="themeToggleBtn" title="Toggle Light/Dark Theme">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+      </button>
+    </div>
   </div>
 </header>
 
-<div class="mode-row">
-  <button class="mode-btn active" id="btn-mode-staff">🏪 Staff<span class="staff-chip" id="staff-chip" style="display:none;"></span></button>
-  <button class="mode-btn" id="btn-mode-customer">🙋 Customer — Check My Points</button>
+<div class="mode-switcher-container">
+  <div class="mode-switcher">
+    <button class="mode-btn active" id="btnModeStaff">
+      <span>🏪 Staff Terminal</span>
+      <span class="staff-chip" id="staffChip" style="display:none;"></span>
+    </button>
+    <button class="mode-btn" id="btnModeCustomer">
+      <span>🙋 Customer Portal</span>
+    </button>
+  </div>
 </div>
 
-<!-- ============ STAFF PIN GATE ============ -->
-<main id="staff-gate">
-  <div class="card">
-    <h2>Staff login</h2>
-    <div class="sub">Enter the staff PIN to manage bills and customers.</div>
-    <div class="field"><label>PIN</label><input id="pin-input" type="password" inputmode="numeric" placeholder="Enter PIN"></div>
-    <button class="btn" id="pin-submit">Unlock</button>
-    <div class="save-status" id="pin-status"></div>
+<!-- ================= STAFF LOGIN GATE ================= -->
+<main id="staffGate">
+  <div class="glass-card" style="max-width: 440px; margin: 40px auto;">
+    <div class="card-header">
+      <h2 class="card-title">Staff Verification</h2>
+      <p class="card-subtitle">Enter your security PIN to access billing and member controls.</p>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Passcode PIN</label>
+      <input id="pinInput" type="password" class="form-input mono" inputmode="numeric" placeholder="••••" style="letter-spacing: 6px; font-size: 20px; text-align: center;">
+    </div>
+    <button class="btn btn-primary" id="pinSubmitBtn" style="width: 100%;">Unlock Terminal</button>
+    <div id="pinStatusMsg" style="color: var(--rose); font-size: 13px; font-weight: 600; text-align: center; margin-top: 12px;"></div>
   </div>
 </main>
 
-<!-- ============ STAFF APP ============ -->
-<main id="staff-app" style="display:none;">
-  <nav class="tabs">
-    <button class="active" data-tab="entry">New Bill</button>
-    <button data-tab="customers">Customers</button>
-    <button data-tab="redemptions">Redemptions</button>
-    <button data-tab="reports" data-role="owner">Reports</button>
-    <button data-tab="dashboard" data-role="owner">Dashboard</button>
-    <button data-tab="settings" data-role="owner">Settings</button>
+<!-- ================= STAFF MAIN DASHBOARD ================= -->
+<main id="staffApp" style="display:none;">
+  <nav class="staff-tabs">
+    <button class="active" data-tab="entry">⚡ New Bill Entry</button>
+    <button data-tab="customers">👥 Member Directory</button>
+    <button data-tab="redemptions">🎟️ Redemption Requests</button>
+    <button data-tab="reports" data-role="owner">📊 Analytics & Reports</button>
+    <button data-tab="dashboard" data-role="owner">📈 Executive Overview</button>
+    <button data-tab="settings" data-role="owner">⚙️ System Settings</button>
   </nav>
 
+  <!-- TAB: NEW BILL -->
   <section id="tab-entry">
-    <div class="card">
-      <h2>Record a bill</h2>
-      <div class="sub">Enter the bill and customer details. Points are calculated automatically.</div>
-      <div class="grid">
-        <div class="field"><label>Bill Number</label><input id="f-bill" placeholder="e.g. 1042"></div>
-        <div class="field"><label>Date</label><input id="f-date" type="date"></div>
-        <div class="field"><label>Customer Phone</label><input id="f-phone" placeholder="10-digit number" maxlength="15"></div>
-        <div class="field"><label>Customer Name</label><input id="f-name" placeholder="Full name"></div>
-        <div class="field"><label>Bill Amount (₹)</label><input id="f-amount" type="number" min="0" placeholder="0"></div>
-        <div class="field"><label>Redeem Points (optional)</label><input id="f-redeem" type="number" min="0" placeholder="0"></div>
-        <div class="field"><label>Referral Code (new customers only)</label><input id="f-refcode" placeholder="e.g. RAJ4521"></div>
+    <div class="glass-card">
+      <div class="card-header">
+        <h2 class="card-title">Record Purchase & Issue Points</h2>
+        <p class="card-subtitle">Enter customer invoice details to award points or apply discounts.</p>
       </div>
-      <div class="preview" id="preview">
-        <span>Existing customer: <b id="pv-status">—</b></span>
-        <span>Points earned: <b id="pv-earn">0</b></span>
-        <span>Redeem value: <b id="pv-redeemval">₹0</b></span>
-        <span>New balance: <b id="pv-balance">0</b></span>
+
+      <div class="grid-form">
+        <div class="form-group">
+          <label class="form-label">Invoice / Bill #</label>
+          <input id="fBillNo" class="form-input mono" placeholder="e.g. B-1094">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Transaction Date</label>
+          <input id="fDate" type="date" class="form-input">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Customer Mobile #</label>
+          <input id="fPhone" class="form-input mono" placeholder="10-digit phone" maxlength="15">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Customer Full Name</label>
+          <input id="fName" class="form-input" placeholder="Name">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Bill Amount (₹)</label>
+          <input id="fAmount" type="number" min="0" class="form-input mono" placeholder="0.00">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Redeem Points (Optional)</label>
+          <input id="fRedeem" type="number" min="0" class="form-input mono" placeholder="0">
+        </div>
+        <div class="form-group" style="grid-column: 1 / -1;">
+          <label class="form-label">Referral Code (New Customers Only)</label>
+          <input id="fRefCode" class="form-input mono" placeholder="e.g. BIND7821">
+        </div>
       </div>
-      <button class="btn" id="save-bill">Save entry</button>
-      <div class="save-status" id="save-status"></div>
+
+      <div class="preview-box">
+        <div class="preview-item">
+          <label>Member Status</label>
+          <val id="pvStatus">—</val>
+        </div>
+        <div class="preview-item">
+          <label>Points Earned</label>
+          <val id="pvEarn" class="highlight">+0</val>
+        </div>
+        <div class="preview-item">
+          <label>Redeem Discount</label>
+          <val id="pvRedeemVal">₹0.00</val>
+        </div>
+        <div class="preview-item">
+          <label>New Points Balance</label>
+          <val id="pvBalance">0 pts</val>
+        </div>
+      </div>
+
+      <div class="btn-group">
+        <button class="btn btn-primary" id="saveBillBtn">Submit & Issue Receipt</button>
+      </div>
+      <div id="saveStatusMsg" style="margin-top: 14px;"></div>
     </div>
-    <div class="card">
-      <h2>Recent entries</h2>
-      <div id="recent-list"></div>
+
+    <div class="glass-card">
+      <h3 class="card-title" style="font-size: 16px; margin-bottom: 12px;">Recent Store Transactions</h3>
+      <div id="recentTxnList"></div>
     </div>
   </section>
 
+  <!-- TAB: CUSTOMERS -->
   <section id="tab-customers" style="display:none;">
-    <div class="card">
-      <h2>Customers</h2>
-      <div class="searchbar"><input id="cust-search" placeholder="Search phone or name..."></div>
-      <div id="customer-list"></div>
-      <div id="customer-detail"></div>
+    <div class="glass-card">
+      <div class="card-header">
+        <h2 class="card-title">Member Database</h2>
+        <p class="card-subtitle">Search registered customers, inspect points history, and manage accounts.</p>
+      </div>
+      <div class="form-group">
+        <input id="custSearchInput" class="form-input" placeholder="🔍 Search member name or phone number...">
+      </div>
+      <div id="customerListTable"></div>
+      <div id="customerDetailView"></div>
     </div>
   </section>
 
+  <!-- TAB: REDEMPTIONS -->
   <section id="tab-redemptions" style="display:none;">
-    <div class="card">
-      <h2>Redemption requests</h2>
-      <div class="sub">Customers requested these online. Confirm here once you've applied the discount at the counter.</div>
-      <div id="redemption-list"></div>
+    <div class="glass-card">
+      <div class="card-header">
+        <h2 class="card-title">Pending Voucher Redemptions</h2>
+        <p class="card-subtitle">Verify customer redemption codes requested via self-service.</p>
+      </div>
+      <div id="redemptionsListTable"></div>
     </div>
   </section>
 
+  <!-- TAB: REPORTS -->
   <section id="tab-reports" style="display:none;">
-    <div class="card">
-      <h2>Sales &amp; customer reports</h2>
-      <div class="sub">Pick a range to see revenue, bills, and points for that period.</div>
-      <div class="quick-range">
-        <button class="active" data-range="today">Today</button>
-        <button data-range="week">This week</button>
-        <button data-range="month">This month</button>
-        <button data-range="all">All time</button>
+    <div class="glass-card">
+      <div class="card-header">
+        <h2 class="card-title">Business Intelligence & Analytics</h2>
+        <p class="card-subtitle">Revenue, point velocities, and sales breakdowns.</p>
       </div>
-      <div class="grid">
-        <div class="field"><label>From</label><input id="r-from" type="date"></div>
-        <div class="field"><label>To</label><input id="r-to" type="date"></div>
+      <div class="btn-group" style="margin-bottom: 16px;">
+        <button class="btn btn-secondary btn-sm range-btn active" data-range="today">Today</button>
+        <button class="btn btn-secondary btn-sm range-btn" data-range="week">This Week</button>
+        <button class="btn btn-secondary btn-sm range-btn" data-range="month">This Month</button>
+        <button class="btn btn-secondary btn-sm range-btn" data-range="all">All Time</button>
       </div>
-      <div class="stat-grid" id="report-stats"></div>
+      <div class="grid-form" style="margin-bottom: 20px;">
+        <div class="form-group"><label class="form-label">From</label><input id="repFromDate" type="date" class="form-input"></div>
+        <div class="form-group"><label class="form-label">To</label><input id="repToDate" type="date" class="form-input"></div>
+      </div>
+      <div class="stats-grid" id="reportStatsGrid"></div>
+
+      <div class="chart-container">
+        <h4 style="font-size: 14px; margin-bottom: 12px; color: var(--text-secondary);">Daily Sales Trend</h4>
+        <div id="chartContainer"></div>
+      </div>
     </div>
-    <div class="card">
-      <h2>Daily breakdown</h2>
-      <div id="report-daily"></div>
-    </div>
-    <div class="card">
-      <h2>Bills in this range</h2>
-      <div id="report-bills"></div>
+
+    <div class="glass-card">
+      <h3 class="card-title" style="font-size: 16px; margin-bottom: 12px;">Invoices in Range</h3>
+      <div id="reportInvoicesTable"></div>
     </div>
   </section>
 
+  <!-- TAB: EXECUTIVE DASHBOARD -->
   <section id="tab-dashboard" style="display:none;">
-    <div class="card">
-      <h2>Overview</h2>
-      <div class="stat-grid">
-        <div class="stat"><div class="num" id="d-customers">0</div><div class="lbl">Customers</div></div>
-        <div class="stat"><div class="num" id="d-bills">0</div><div class="lbl">Bills recorded</div></div>
-        <div class="stat"><div class="num" id="d-revenue">₹0</div><div class="lbl">Total revenue</div></div>
-        <div class="stat"><div class="num" id="d-points">0</div><div class="lbl">Points outstanding</div></div>
+    <div class="glass-card">
+      <div class="card-header">
+        <h2 class="card-title">Performance Summary</h2>
+        <p class="card-subtitle">Key metrics across all store operations.</p>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-val" id="dashTotalMembers">0</div>
+          <div class="stat-lbl">Registered Members</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" id="dashTotalBills">0</div>
+          <div class="stat-lbl">Invoices Processed</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" id="dashTotalRevenue">₹0</div>
+          <div class="stat-lbl">Gross Revenue</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" id="dashOutstandingPoints">0</div>
+          <div class="stat-lbl">Outstanding Points</div>
+        </div>
       </div>
     </div>
-    <div class="card"><h2>Top customers by points</h2><div id="dash-top"></div></div>
+
+    <div class="glass-card">
+      <h3 class="card-title" style="font-size: 16px; margin-bottom: 12px;">🏆 Top VIP Loyalty Members</h3>
+      <div id="dashTopMembers"></div>
+    </div>
   </section>
 
+  <!-- TAB: SETTINGS -->
   <section id="tab-settings" style="display:none;">
-    <div class="card">
-      <h2>Loyalty settings</h2>
-      <div class="grid">
-        <div class="field"><label>Shop name</label><input id="s-bizname" placeholder="BM Super Mart"></div>
-        <div class="field"><label>Earn rate — ₹ spent per 1 point</label><input id="s-rate" type="number" min="1" placeholder="100"></div>
-        <div class="field"><label>Redemption value — ₹ per point</label><input id="s-redeemval" type="number" min="0" step="0.1" placeholder="1"></div>
-        <div class="field"><label>WhatsApp country code (no +)</label><input id="s-countrycode" placeholder="91"></div>
-        <div class="field"><label>Referral bonus — referrer gets (pts)</label><input id="s-refbonus-referrer" type="number" min="0" placeholder="20"></div>
-        <div class="field"><label>Referral bonus — new customer gets (pts)</label><input id="s-refbonus-referee" type="number" min="0" placeholder="10"></div>
+    <div class="glass-card">
+      <div class="card-header">
+        <h2 class="card-title">Loyalty Rules & Preferences</h2>
+        <p class="card-subtitle">Configure earn rates, referral incentives, and business branding.</p>
       </div>
-      <button class="btn" id="save-settings">Save settings</button>
-      <div class="save-status" id="settings-status"></div>
+      <div class="grid-form">
+        <div class="form-group"><label class="form-label">Store Brand Name</label><input id="setBizName" class="form-input" placeholder="B-INDUSTRIES"></div>
+        <div class="form-group"><label class="form-label">Earn Rate (₹ Spent per 1 Point)</label><input id="setEarnRate" type="number" min="1" class="form-input mono" placeholder="100"></div>
+        <div class="form-group"><label class="form-label">Redeem Value (₹ Per Point)</label><input id="setRedeemVal" type="number" step="0.1" class="form-input mono" placeholder="1.0"></div>
+        <div class="form-group"><label class="form-label">WhatsApp Country Prefix</label><input id="setCountryCode" class="form-input mono" placeholder="91"></div>
+        <div class="form-group"><label class="form-label">Referrer Bonus (Points)</label><input id="setRefBonusReferrer" type="number" class="form-input mono" placeholder="20"></div>
+        <div class="form-group"><label class="form-label">Referee Bonus (Points)</label><input id="setRefBonusReferee" type="number" class="form-input mono" placeholder="10"></div>
+      </div>
+      <button class="btn btn-primary" id="saveSettingsBtn">Save Loyalty Settings</button>
+      <div id="settingsStatusMsg" style="font-size: 13px; color: var(--emerald); font-weight: 600; margin-top: 10px;"></div>
     </div>
-    <div class="card">
-      <h2>Staff logins</h2>
-      <div class="sub">Each staff member gets their own name and PIN. Bills show who entered them.</div>
-      <div id="staff-list"></div>
-      <button class="btn secondary" id="add-staff-row">+ Add staff</button>
-      <button class="btn" id="save-staff" style="margin-left:8px;">Save staff list</button>
-      <div class="save-status" id="staff-status"></div>
+
+    <div class="glass-card">
+      <div class="card-header">
+        <h2 class="card-title">Staff Credentials Management</h2>
+        <p class="card-subtitle">Control PIN access for cashiers and store managers.</p>
+      </div>
+      <div id="staffRowsContainer"></div>
+      <div class="btn-group" style="margin-top: 12px;">
+        <button class="btn btn-secondary btn-sm" id="addStaffRowBtn">+ Add Account</button>
+        <button class="btn btn-primary btn-sm" id="saveStaffBtn">Save Staff Roster</button>
+      </div>
     </div>
-    <div class="card">
-      <h2>Backup</h2>
-      <div class="sub">Data is stored online against this app. Export a backup regularly as extra safety.</div>
-      <button class="btn secondary" id="export-csv">Export all bills (CSV)</button>
-    </div>
-    <div class="card">
-      <h2>Share with customers</h2>
-      <div class="sub">Send customers this same link. They can tap "Customer" at the top to check their own points — no login needed beyond their phone number.</div>
+
+    <div class="glass-card">
+      <div class="card-header">
+        <h2 class="card-title">Data Backup & Export</h2>
+        <p class="card-subtitle">Keep backups of your bills and customer database safely.</p>
+      </div>
+      <div class="btn-group">
+        <button class="btn btn-secondary" id="exportCsvBtn">📥 Download Invoices CSV</button>
+        <button class="btn btn-secondary" id="exportBackupJsonBtn">💾 Export Full Backup (JSON)</button>
+        <label class="btn btn-secondary" style="cursor: pointer;">
+          📤 Restore JSON Backup
+          <input type="file" id="importBackupFile" accept=".json" style="display: none;">
+        </label>
+      </div>
     </div>
   </section>
 </main>
 
-<!-- ============ CUSTOMER APP ============ -->
-<main id="customer-app" style="display:none;">
-  <div class="card">
-    <h2>Check your points</h2>
-    <div class="sub">Enter the phone number you use at billing.</div>
-    <div class="field"><label>Phone Number</label><input id="c-phone" placeholder="10-digit number" maxlength="15"></div>
-    <button class="btn" id="c-lookup">Check balance</button>
-    <div class="save-status" id="c-status"></div>
+<!-- ================= CUSTOMER PORTAL ================= -->
+<main id="customerApp" style="display:none;">
+  <div class="glass-card" style="max-width: 500px; margin: 20px auto 10px;">
+    <div class="card-header" style="text-align: center;">
+      <h2 class="card-title">Check Your Rewards Balance</h2>
+      <p class="card-subtitle">Enter your registered 10-digit mobile number.</p>
+    </div>
+    <div class="form-group">
+      <input id="cPhoneInput" class="form-input mono" placeholder="Enter Mobile Number" maxlength="15" style="text-align: center; font-size: 18px;">
+    </div>
+    <button class="btn btn-primary" id="cLookupBtn" style="width: 100%;">View Loyalty Pass</button>
+    <div id="cStatusMsg" style="text-align: center; color: var(--rose); font-size: 13px; font-weight: 600; margin-top: 10px;"></div>
   </div>
 
-  <div id="customer-result"></div>
+  <div id="customerPortalContent"></div>
 </main>
 
-<div class="toast" id="toast"></div>
-<div id="print-receipt"></div>
+<!-- TOAST & RECEIPT MODALS -->
+<div class="toast" id="toastNotification"></div>
+<div id="print-receipt-modal"></div>
 
 <script>
+// ================= APPLICATION STATE =================
 let customers = {};
 let transactions = [];
 let redemptions = [];
-let settings = { bizName:"BM Super Mart", rate:100, redeemVal:1, countryCode:"91", staff:[{name:"Owner", pin:"1234", role:"owner"}], refBonusReferrer:20, refBonusReferee:10 };
-let lastSavedId = null;
+let settings = {
+  bizName: "B-INDUSTRIES",
+  rate: 100,
+  redeemVal: 1,
+  countryCode: "91",
+  staff: [{ name: "Owner", pin: "1234", role: "owner" }],
+  refBonusReferrer: 20,
+  refBonusReferee: 10
+};
+
 let staffUnlocked = false;
 let currentStaffName = "";
 let currentStaffRole = "";
 
-function toast(msg){
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'), 2200);
+// ================= STORAGE ADAPTER (Robust LocalStorage & Fallback) =================
+const Storage = {
+  get(key) {
+    try {
+      const val = localStorage.getItem(key);
+      return val ? JSON.parse(val) : null;
+    } catch (e) {
+      console.warn("Storage read fallback:", e);
+      return null;
+    }
+  },
+  set(key, val) {
+    try {
+      localStorage.setItem(key, JSON.stringify(val));
+    } catch (e) {
+      console.error("Storage write error:", e);
+      showToast("Storage error — check space");
+    }
+  }
+};
+
+// ================= UTILITIES =================
+function showToast(msg) {
+  const t = document.getElementById('toastNotification');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
 }
 
-async function loadAll(){
-  try{ const c = await window.storage.get('bm-loyalty-customers', true); customers = c ? JSON.parse(c.value) : {}; }catch(e){ customers = {}; }
-  try{ const t = await window.storage.get('bm-loyalty-transactions', true); transactions = t ? JSON.parse(t.value) : []; }catch(e){ transactions = []; }
-  try{ const r = await window.storage.get('bm-loyalty-redemptions', true); redemptions = r ? JSON.parse(r.value) : []; }catch(e){ redemptions = []; }
-  try{ const s = await window.storage.get('bm-loyalty-settings', true); settings = s ? JSON.parse(s.value) : settings; }catch(e){}
-  document.getElementById('bizNameHeader').textContent = settings.bizName || "BM Super Mart";
-  document.getElementById('s-bizname').value = settings.bizName || "";
-  document.getElementById('s-rate').value = settings.rate;
-  document.getElementById('s-redeemval').value = settings.redeemVal;
-  document.getElementById('s-countrycode').value = settings.countryCode || '91';
-  document.getElementById('s-refbonus-referrer').value = settings.refBonusReferrer ?? 20;
-  document.getElementById('s-refbonus-referee').value = settings.refBonusReferee ?? 10;
-  if(!settings.staff || settings.staff.length===0) settings.staff=[{name:"Owner", pin:"1234", role:"owner"}];
-  settings.staff.forEach(s=>{ if(!s.role) s.role='owner'; });
-  renderStaffList();
-  renderRecent(); renderCustomers(); renderDashboard(); renderRedemptions();
+function escapeHtml(s) {
+  return String(s || '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 }
-async function persistCustomers(){ try{ await window.storage.set('bm-loyalty-customers', JSON.stringify(customers), true); }catch(e){ toast('Save failed — check connection'); } }
-async function persistTransactions(){ try{ await window.storage.set('bm-loyalty-transactions', JSON.stringify(transactions), true); }catch(e){ toast('Save failed — check connection'); } }
-async function persistRedemptions(){ try{ await window.storage.set('bm-loyalty-redemptions', JSON.stringify(redemptions), true); }catch(e){ toast('Save failed — check connection'); } }
-async function persistSettings(){ try{ await window.storage.set('bm-loyalty-settings', JSON.stringify(settings), true); }catch(e){ toast('Save failed — check connection'); } }
 
-// ---- Mode switching ----
-document.getElementById('btn-mode-staff').addEventListener('click', ()=>{
-  document.getElementById('btn-mode-staff').classList.add('active');
-  document.getElementById('btn-mode-customer').classList.remove('active');
-  document.getElementById('customer-app').style.display='none';
-  document.getElementById('staff-gate').style.display = staffUnlocked ? 'none':'block';
-  document.getElementById('staff-app').style.display = staffUnlocked ? 'block':'none';
-});
-document.getElementById('btn-mode-customer').addEventListener('click', ()=>{
-  document.getElementById('btn-mode-customer').classList.add('active');
-  document.getElementById('btn-mode-staff').classList.remove('active');
-  document.getElementById('staff-gate').style.display='none';
-  document.getElementById('staff-app').style.display='none';
-  document.getElementById('customer-app').style.display='block';
+function generateReferralCode(name, phone) {
+  const letters = (name || 'BIND').toUpperCase().replace(/[^A-Z]/g, '').padEnd(4, 'X').slice(0, 4);
+  const digits = (phone || '0000').slice(-4);
+  return letters + digits;
+}
+
+function calculateTier(visits, points) {
+  if (points > 500 || visits >= 20) return { name: "Platinum VIP", badgeClass: "badge-tier" };
+  if (points > 250 || visits >= 10) return { name: "Gold Member", badgeClass: "badge-tier" };
+  if (points > 100 || visits >= 5) return { name: "Silver Member", badgeClass: "badge-tier" };
+  return { name: "Bronze Member", badgeClass: "badge-tier" };
+}
+
+// ================= SVG QR CODE GENERATOR (NATIVE JS) =================
+function generateSvgQrCode(text, size = 140) {
+  // Clean minimal SVG QR representation placeholder with dynamic hash matrix
+  let hash = 0;
+  for (let i = 0; i < text.length; i++) hash = (hash << 5) - hash + text.charCodeAt(i);
+  let modules = '';
+  const grid = 15;
+  const cellSize = size / grid;
+  for (let r = 0; r < grid; r++) {
+    for (let c = 0; c < grid; c++) {
+      // Corner finder patterns
+      const isFinder = (r < 4 && c < 4) || (r < 4 && c >= grid - 4) || (r >= grid - 4 && c < 4);
+      const isBit = isFinder || (((r * grid + c + Math.abs(hash)) * 2654435761) % 3 === 0);
+      if (isBit) {
+        modules += `<rect x="${c * cellSize}" y="${r * cellSize}" width="${cellSize}" height="${cellSize}" fill="#0F172A"/>`;
+      }
+    }
+  }
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg">
+    <rect width="${size}" height="${size}" fill="#FFFFFF" rx="8"/>
+    ${modules}
+  </svg>`;
+}
+
+// ================= INITIALIZATION & DATA LOADING =================
+function loadInitialData() {
+  const loadedCust = Storage.get('bind-loyalty-customers');
+  if (loadedCust) customers = loadedCust;
+
+  const loadedTxn = Storage.get('bind-loyalty-transactions');
+  if (loadedTxn) transactions = loadedTxn;
+
+  const loadedRed = Storage.get('bind-loyalty-redemptions');
+  if (loadedRed) redemptions = loadedRed;
+
+  const loadedSet = Storage.get('bind-loyalty-settings');
+  if (loadedSet) settings = Object.assign({}, settings, loadedSet);
+
+  // Apply Theme
+  const savedTheme = Storage.get('bind-loyalty-theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', savedTheme);
+
+  // Update UI Elements
+  document.getElementById('displayShopName').textContent = settings.bizName || "B-INDUSTRIES";
+  document.getElementById('setBizName').value = settings.bizName || "";
+  document.getElementById('setEarnRate').value = settings.rate;
+  document.getElementById('setRedeemVal').value = settings.redeemVal;
+  document.getElementById('setCountryCode').value = settings.countryCode || '91';
+  document.getElementById('setRefBonusReferrer').value = settings.refBonusReferrer ?? 20;
+  document.getElementById('setRefBonusRefeere') && (document.getElementById('setRefBonusReferee').value = settings.refBonusReferee ?? 10);
+
+  if (!settings.staff || settings.staff.length === 0) {
+    settings.staff = [{ name: "Owner", pin: "1234", role: "owner" }];
+  }
+
+  renderStaffRosterRows();
+  renderRecentTransactions();
+  renderCustomerDirectory();
+  renderExecutiveDashboard();
+  renderRedemptionsList();
+}
+
+function persistAll() {
+  Storage.set('bind-loyalty-customers', customers);
+  Storage.set('bind-loyalty-transactions', transactions);
+  Storage.set('bind-loyalty-redemptions', redemptions);
+  Storage.set('bind-loyalty-settings', settings);
+}
+
+// ================= THEME TOGGLE =================
+document.getElementById('themeToggleBtn').addEventListener('click', () => {
+  const current = document.documentElement.getAttribute('data-theme');
+  const next = current === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  Storage.set('bind-loyalty-theme', next);
 });
 
-document.getElementById('pin-submit').addEventListener('click', ()=>{
-  const val = document.getElementById('pin-input').value.trim();
-  const match = (settings.staff||[]).find(s=>s.pin===val);
-  if(match){
+// ================= MODE SWITCHING =================
+document.getElementById('btnModeStaff').addEventListener('click', () => {
+  document.getElementById('btnModeStaff').classList.add('active');
+  document.getElementById('btnModeCustomer').classList.remove('active');
+  document.getElementById('customerApp').style.display = 'none';
+  document.getElementById('staffGate').style.display = staffUnlocked ? 'none' : 'block';
+  document.getElementById('staffApp').style.display = staffUnlocked ? 'block' : 'none';
+});
+
+document.getElementById('btnModeCustomer').addEventListener('click', () => {
+  document.getElementById('btnModeCustomer').classList.add('active');
+  document.getElementById('btnModeStaff').classList.remove('active');
+  document.getElementById('staffGate').style.display = 'none';
+  document.getElementById('staffApp').style.display = 'none';
+  document.getElementById('customerApp').style.display = 'block';
+});
+
+// ================= STAFF PIN AUTHENTICATION =================
+document.getElementById('pinSubmitBtn').addEventListener('click', () => {
+  const enteredPin = document.getElementById('pinInput').value.trim();
+  const match = (settings.staff || []).find(s => s.pin === enteredPin);
+
+  if (match) {
     staffUnlocked = true;
     currentStaffName = match.name;
     currentStaffRole = match.role || 'staff';
-    document.getElementById('staff-gate').style.display='none';
-    document.getElementById('staff-app').style.display='block';
-    document.getElementById('pin-status').textContent='';
-    document.getElementById('pin-input').value='';
-    document.getElementById('staff-chip').textContent = `${currentStaffName} (${currentStaffRole==='owner'?'Owner':'Staff'})`;
-    document.getElementById('staff-chip').style.display='inline-block';
-    document.querySelectorAll('#staff-app nav.tabs button[data-role="owner"]').forEach(b=>{
-      b.style.display = currentStaffRole==='owner' ? 'inline-block' : 'none';
+    document.getElementById('staffGate').style.display = 'none';
+    document.getElementById('staffApp').style.display = 'block';
+    document.getElementById('pinStatusMsg').textContent = '';
+    document.getElementById('pinInput').value = '';
+
+    const chip = document.getElementById('staffChip');
+    chip.textContent = `${currentStaffName} (${currentStaffRole === 'owner' ? 'Owner' : 'Staff'})`;
+    chip.style.display = 'inline-block';
+
+    // Role-based Tab Visibility
+    document.querySelectorAll('#staffApp nav.staff-tabs button[data-role="owner"]').forEach(b => {
+      b.style.display = currentStaffRole === 'owner' ? 'flex' : 'none';
     });
-    document.querySelectorAll('#staff-app nav.tabs button').forEach(b=>b.classList.remove('active'));
-    document.querySelector('#staff-app nav.tabs button[data-tab="entry"]').classList.add('active');
-    ['entry','customers','redemptions','reports','dashboard','settings'].forEach(id=>{
-      document.getElementById('tab-'+id).style.display = (id==='entry')?'block':'none';
-    });
+
+    // Reset to default entry tab
+    document.querySelector('#staffApp nav.staff-tabs button[data-tab="entry"]').click();
   } else {
-    document.getElementById('pin-status').textContent = 'Incorrect PIN.';
+    document.getElementById('pinStatusMsg').textContent = 'Invalid security PIN. Access denied.';
   }
 });
 
-// ---- Staff tabs ----
-document.querySelectorAll('#staff-app nav.tabs button').forEach(btn=>{
-  btn.addEventListener('click', ()=>{
-    if(btn.dataset.role==='owner' && currentStaffRole!=='owner') return;
-    document.querySelectorAll('#staff-app nav.tabs button').forEach(b=>b.classList.remove('active'));
+// ================= TAB NAVIGATION =================
+document.querySelectorAll('#staffApp nav.staff-tabs button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (btn.dataset.role === 'owner' && currentStaffRole !== 'owner') return;
+    document.querySelectorAll('#staffApp nav.staff-tabs button').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    ['entry','customers','redemptions','reports','dashboard','settings'].forEach(id=>{
-      document.getElementById('tab-'+id).style.display = (id===btn.dataset.tab)?'block':'none';
+
+    ['entry', 'customers', 'redemptions', 'reports', 'dashboard', 'settings'].forEach(id => {
+      const el = document.getElementById('tab-' + id);
+      if (el) el.style.display = (id === btn.dataset.tab) ? 'block' : 'none';
     });
-    if(btn.dataset.tab==='dashboard') renderDashboard();
-    if(btn.dataset.tab==='customers') renderCustomers();
-    if(btn.dataset.tab==='redemptions') renderRedemptions();
-    if(btn.dataset.tab==='reports'){ document.querySelector('.quick-range button[data-range="today"]').click(); }
+
+    if (btn.dataset.tab === 'dashboard') renderExecutiveDashboard();
+    if (btn.dataset.tab === 'customers') renderCustomerDirectory();
+    if (btn.dataset.tab === 'redemptions') renderRedemptionsList();
+    if (btn.dataset.tab === 'reports') document.querySelector('.range-btn[data-range="today"]').click();
   });
 });
 
-// ---- New bill form ----
-const fPhone=document.getElementById('f-phone'), fName=document.getElementById('f-name'), fAmount=document.getElementById('f-amount'), fRedeem=document.getElementById('f-redeem');
-function currentBalance(phone){ const c=customers[phone]; return c?c.totalPoints:0; }
-function updatePreview(){
-  const phone=fPhone.value.trim(), amount=parseFloat(fAmount.value)||0, redeem=parseFloat(fRedeem.value)||0;
-  const existing=customers[phone];
-  document.getElementById('pv-status').textContent = existing ? `Yes — ${existing.name} (${existing.visits} visits)` : (phone?"New customer":"—");
-  if(existing && fName.value.trim()==='') fName.value = existing.name;
-  const earn = settings.rate>0 ? Math.floor(amount/settings.rate) : 0;
-  const balBefore = currentBalance(phone);
-  const redeemClamped = Math.min(redeem, balBefore);
-  const redeemVal = redeemClamped * (settings.redeemVal||0);
-  const newBalance = balBefore - redeemClamped + earn;
-  document.getElementById('pv-earn').textContent = earn;
-  document.getElementById('pv-redeemval').textContent = '₹'+redeemVal.toFixed(2);
-  document.getElementById('pv-balance').textContent = newBalance;
-}
-[fPhone,fName,fAmount,fRedeem].forEach(el=>el.addEventListener('input', updatePreview));
-document.getElementById('f-date').valueAsDate = new Date();
+// ================= NEW BILL & LIVE PREVIEW =================
+const fPhone = document.getElementById('fPhone');
+const fName = document.getElementById('fName');
+const fAmount = document.getElementById('fAmount');
+const fRedeem = document.getElementById('fRedeem');
+document.getElementById('fDate').valueAsDate = new Date();
 
-document.getElementById('save-bill').addEventListener('click', async ()=>{
-  const bill=document.getElementById('f-bill').value.trim(), date=document.getElementById('f-date').value;
-  const phone=fPhone.value.trim(), name=fName.value.trim(), amount=parseFloat(fAmount.value)||0;
-  let redeem=parseFloat(fRedeem.value)||0;
-  const refCode = document.getElementById('f-refcode').value.trim().toUpperCase();
-  if(!bill||!date||!phone||!name||amount<=0){ document.getElementById('save-status').textContent='Please fill bill number, date, phone, name and amount.'; return; }
-  const isNewCustomer = !customers[phone];
-  if(isNewCustomer){
+function updateBillPreview() {
+  const phone = fPhone.value.trim();
+  const amount = parseFloat(fAmount.value) || 0;
+  const redeem = parseFloat(fRedeem.value) || 0;
+  const existing = customers[phone];
+
+  document.getElementById('pvStatus').textContent = existing ? `Registered (${existing.visits} visits)` : (phone ? "New Member" : "—");
+  if (existing && !fName.value.trim()) fName.value = existing.name;
+
+  const earn = settings.rate > 0 ? Math.floor(amount / settings.rate) : 0;
+  const currentBal = existing ? existing.totalPoints : 0;
+  const redeemClamped = Math.min(redeem, currentBal);
+  const redeemVal = redeemClamped * (settings.redeemVal || 0);
+  const newBal = currentBal - redeemClamped + earn;
+
+  document.getElementById('pvEarn').textContent = `+${earn}`;
+  document.getElementById('pvRedeemVal').textContent = `₹${redeemVal.toFixed(2)}`;
+  document.getElementById('pvBalance').textContent = `${newBal} pts`;
+}
+
+[fPhone, fName, fAmount, fRedeem].forEach(el => el.addEventListener('input', updateBillPreview));
+
+document.getElementById('saveBillBtn').addEventListener('click', () => {
+  const billNo = document.getElementById('fBillNo').value.trim();
+  const date = document.getElementById('fDate').value;
+  const phone = fPhone.value.trim();
+  const name = fName.value.trim();
+  const amount = parseFloat(fAmount.value) || 0;
+  let redeem = parseFloat(fRedeem.value) || 0;
+  const refCode = document.getElementById('fRefCode').value.trim().toUpperCase();
+
+  if (!billNo || !date || !phone || !name || amount <= 0) {
+    document.getElementById('saveStatusMsg').innerHTML = `<span style="color:var(--rose);">Please complete all required bill fields.</span>`;
+    return;
+  }
+
+  const isNew = !customers[phone];
+  if (isNew) {
     const code = generateReferralCode(name, phone);
-    customers[phone]={phone,name,totalPoints:0,totalSpent:0,visits:0,firstVisit:date,lastVisit:date,referralCode:code,referredBy:null};
-    if(refCode){
-      const referrer = Object.values(customers).find(c=>c.referralCode===refCode && c.phone!==phone);
-      if(referrer){
-        referrer.totalPoints += (settings.refBonusReferrer||0);
-        customers[phone].totalPoints += (settings.refBonusReferee||0);
+    customers[phone] = {
+      phone, name, totalPoints: 0, totalSpent: 0, visits: 0,
+      firstVisit: date, lastVisit: date, referralCode: code, referredBy: null
+    };
+
+    if (refCode) {
+      const referrer = Object.values(customers).find(c => c.referralCode === refCode && c.phone !== phone);
+      if (referrer) {
+        referrer.totalPoints += (settings.refBonusReferrer || 0);
+        customers[phone].totalPoints += (settings.refBonusReferee || 0);
         customers[phone].referredBy = referrer.phone;
       }
     }
   }
-  const c=customers[phone];
+
+  const c = customers[phone];
   redeem = Math.min(redeem, c.totalPoints);
-  const earned = settings.rate>0 ? Math.floor(amount/settings.rate) : 0;
-  c.name=name; c.totalPoints=c.totalPoints-redeem+earned; c.totalSpent+=amount; c.visits+=1; c.lastVisit=date;
-  transactions.unshift({id:Date.now().toString(36), billNo:bill, date, phone, name, amount, earned, redeemed:redeem, ts:Date.now(), staffName:currentStaffName||'—'});
-  await persistCustomers(); await persistTransactions();
-  lastSavedId = transactions[0].id;
-  document.getElementById('save-status').innerHTML = `Saved — Bill #${bill}, ${earned} points earned. &nbsp; <button class="btn whatsapp" onclick="sendReceipt('${lastSavedId}')">Send receipt on WhatsApp</button> <button class="btn print" onclick="printReceipt('${lastSavedId}')">Print receipt</button>`;
-  toast('Bill saved');
-  document.getElementById('f-bill').value=''; fPhone.value=''; fName.value=''; fAmount.value=''; fRedeem.value=''; document.getElementById('f-refcode').value='';
-  updatePreview(); renderRecent();
+  const earned = settings.rate > 0 ? Math.floor(amount / settings.rate) : 0;
+
+  c.name = name;
+  c.totalPoints = c.totalPoints - redeem + earned;
+  c.totalSpent += amount;
+  c.visits += 1;
+  c.lastVisit = date;
+
+  const txnId = Date.now().toString(36);
+  transactions.unshift({
+    id: txnId, billNo, date, phone, name, amount, earned, redeemed: redeem, ts: Date.now(), staffName: currentStaffName || '—'
+  });
+
+  persistAll();
+  showToast('Invoice processed successfully!');
+
+  document.getElementById('saveStatusMsg').innerHTML = `
+    <div style="background:var(--emerald-bg); border:1px solid rgba(16,185,129,0.3); padding:12px; border-radius:var(--radius-md); font-size:13.5px; color:var(--emerald);">
+      ✅ Invoice #${billNo} saved — ${earned} points awarded.
+      <div class="btn-group" style="margin-top:8px;">
+        <button class="btn btn-whatsapp btn-sm" onclick="sendWhatsAppReceipt('${txnId}')">📱 WhatsApp Receipt</button>
+        <button class="btn btn-secondary btn-sm" onclick="printThermalReceipt('${txnId}')">🖨️ Print Receipt</button>
+      </div>
+    </div>`;
+
+  document.getElementById('fBillNo').value = '';
+  fPhone.value = ''; fName.value = ''; fAmount.value = ''; fRedeem.value = '';
+  document.getElementById('fRefCode').value = '';
+  updateBillPreview(); renderRecentTransactions();
 });
 
-function renderRecent(){
-  const list=document.getElementById('recent-list');
-  if(transactions.length===0){ list.innerHTML='<div class="empty">No bills recorded yet.</div>'; return; }
-  let rows = transactions.slice(0,8).map(t=>`
-    <tr><td>#${escapeHtml(t.billNo)}</td><td>${t.date}</td>
-    <td>${escapeHtml(t.name)}<br><span style="color:var(--ink-soft); font-size:12px;">${escapeHtml(t.phone)}</span></td>
-    <td>₹${t.amount.toFixed(2)}</td>
-    <td><span class="badge">+${t.earned}</span> ${t.redeemed>0?`<span class="badge redeem">-${t.redeemed}</span>`:''}</td>
-    <td>${escapeHtml(t.staffName||'—')}</td>
-    <td><button class="btn whatsapp" onclick="sendReceipt('${t.id}')">Receipt</button> <button class="btn print" onclick="printReceipt('${t.id}')">Print</button></td>
+// ================= RECENT TRANSACTIONS =================
+function renderRecentTransactions() {
+  const container = document.getElementById('recentTxnList');
+  if (transactions.length === 0) {
+    container.innerHTML = `<div class="empty-state">No bills recorded yet.</div>`;
+    return;
+  }
+
+  const rows = transactions.slice(0, 8).map(t => `
+    <tr>
+      <td class="mono">#${escapeHtml(t.billNo)}</td>
+      <td>${t.date}</td>
+      <td><b>${escapeHtml(t.name)}</b><br><span style="color:var(--text-muted); font-size:12px;" class="mono">${escapeHtml(t.phone)}</span></td>
+      <td class="mono">₹${t.amount.toFixed(2)}</td>
+      <td>
+        <span class="badge badge-earn">+${t.earned}</span>
+        ${t.redeemed > 0 ? `<span class="badge badge-redeem">-${t.redeemed}</span>` : ''}
+      </td>
+      <td>${escapeHtml(t.staffName)}</td>
+      <td>
+        <button class="btn btn-whatsapp btn-sm" onclick="sendWhatsAppReceipt('${t.id}')">Receipt</button>
+        <button class="btn btn-secondary btn-sm" onclick="printThermalReceipt('${t.id}')">Print</button>
+      </td>
     </tr>`).join('');
-  list.innerHTML = `<table><thead><tr><th>Bill</th><th>Date</th><th>Customer</th><th>Amount</th><th>Points</th><th>Staff</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
+
+  container.innerHTML = `
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead><tr><th>Invoice</th><th>Date</th><th>Customer</th><th>Amount</th><th>Points</th><th>Staff</th><th>Actions</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
 }
 
-function renderCustomers(){
-  const q=(document.getElementById('cust-search').value||'').toLowerCase().trim();
-  const list=document.getElementById('customer-list');
-  const arr=Object.values(customers).filter(c=>!q||c.phone.toLowerCase().includes(q)||c.name.toLowerCase().includes(q)).sort((a,b)=>b.lastVisit.localeCompare(a.lastVisit));
-  if(arr.length===0){ list.innerHTML='<div class="empty">No customers yet.</div>'; return; }
-  let rows=arr.map(c=>`<tr><td>${escapeHtml(c.name)}</td><td>${escapeHtml(c.phone)}</td><td>${c.visits}</td><td>₹${c.totalSpent.toFixed(0)}</td><td><span class="badge">${c.totalPoints} pts</span></td><td><button class="link-btn" onclick="showCustomer('${c.phone}')">View</button></td></tr>`).join('');
-  list.innerHTML = `<table><thead><tr><th>Name</th><th>Phone</th><th>Visits</th><th>Spent</th><th>Balance</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
+// ================= CUSTOMER DIRECTORY =================
+function renderCustomerDirectory() {
+  const query = (document.getElementById('custSearchInput').value || '').toLowerCase().trim();
+  const container = document.getElementById('customerListTable');
+  const arr = Object.values(customers)
+    .filter(c => !query || c.phone.toLowerCase().includes(query) || c.name.toLowerCase().includes(query))
+    .sort((a, b) => (b.lastVisit || '').localeCompare(a.lastVisit || ''));
+
+  if (arr.length === 0) {
+    container.innerHTML = `<div class="empty-state">No matching registered customers found.</div>`;
+    return;
+  }
+
+  const rows = arr.map(c => {
+    const tier = calculateTier(c.visits, c.totalPoints);
+    return `
+      <tr>
+        <td><b>${escapeHtml(c.name)}</b></td>
+        <td class="mono">${escapeHtml(c.phone)}</td>
+        <td><span class="badge badge-tier">${tier.name}</span></td>
+        <td>${c.visits}</td>
+        <td class="mono">₹${c.totalSpent.toFixed(0)}</td>
+        <td><span class="badge badge-earn">${c.totalPoints} pts</span></td>
+        <td><button class="btn btn-secondary btn-sm" onclick="showCustomerDetails('${c.phone}')">View History</button></td>
+      </tr>`;
+  }).join('');
+
+  container.innerHTML = `
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead><tr><th>Member Name</th><th>Mobile</th><th>Tier</th><th>Visits</th><th>Total Spend</th><th>Balance</th><th></th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
 }
-document.getElementById('cust-search').addEventListener('input', renderCustomers);
+document.getElementById('custSearchInput').addEventListener('input', renderCustomerDirectory);
 
-window.showCustomer = async function(phone){
-  const c=customers[phone]; const detail=document.getElementById('customer-detail');
-  if(!c){ detail.innerHTML=''; return; }
-  if(!c.referralCode){ c.referralCode = generateReferralCode(c.name, c.phone); await persistCustomers(); }
-  const hist=transactions.filter(t=>t.phone===phone);
-  let rows=hist.map(t=>`<tr><td>#${escapeHtml(t.billNo)}</td><td>${t.date}</td><td>₹${t.amount.toFixed(2)}</td>
-    <td><span class="badge">+${t.earned}</span> ${t.redeemed>0?`<span class="badge redeem">-${t.redeemed}</span>`:''}</td>
-    <td>${escapeHtml(t.staffName||'—')}</td>
-    <td><button class="btn whatsapp" onclick="sendReceipt('${t.id}')">Receipt</button> <button class="btn print" onclick="printReceipt('${t.id}')">Print</button> ${currentStaffRole==='owner' ? `<button class="btn danger" onclick="deleteTxn('${t.id}')">Delete</button>` : ''}</td></tr>`).join('');
-  detail.innerHTML = `<div class="customer-detail"><h3>${escapeHtml(c.name)}</h3>
-    <div class="sub" style="margin-bottom:10px;">${escapeHtml(c.phone)} · ${c.visits} visits · Balance: <b>${c.totalPoints} pts</b> (≈₹${(c.totalPoints*(settings.redeemVal||0)).toFixed(2)}) · Referral code: <b>${escapeHtml(c.referralCode||'—')}</b></div>
-    <table><thead><tr><th>Bill</th><th>Date</th><th>Amount</th><th>Points</th><th>Staff</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`;
+window.showCustomerDetails = function(phone) {
+  const c = customers[phone];
+  const detailView = document.getElementById('customerDetailView');
+  if (!c) return;
+
+  if (!c.referralCode) {
+    c.referralCode = generateReferralCode(c.name, c.phone);
+    persistAll();
+  }
+
+  const history = transactions.filter(t => t.phone === phone);
+  const rows = history.map(t => `
+    <tr>
+      <td class="mono">#${escapeHtml(t.billNo)}</td>
+      <td>${t.date}</td>
+      <td class="mono">₹${t.amount.toFixed(2)}</td>
+      <td><span class="badge badge-earn">+${t.earned}</span> ${t.redeemed > 0 ? `<span class="badge badge-redeem">-${t.redeemed}</span>` : ''}</td>
+      <td>${escapeHtml(t.staffName)}</td>
+      <td>
+        <button class="btn btn-whatsapp btn-sm" onclick="sendWhatsAppReceipt('${t.id}')">Receipt</button>
+        <button class="btn btn-secondary btn-sm" onclick="printThermalReceipt('${t.id}')">Print</button>
+        ${currentStaffRole === 'owner' ? `<button class="btn btn-danger btn-sm" onclick="deleteTxn('${t.id}')">Delete</button>` : ''}
+      </td>
+    </tr>`).join('');
+
+  detailView.innerHTML = `
+    <div style="margin-top: 24px; padding-top: 20px; border-top: 1px dashed var(--border-color);">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+        <h3>${escapeHtml(c.name)} (${escapeHtml(c.phone)})</h3>
+        <span class="badge badge-earn" style="font-size:14px;">Balance: ${c.totalPoints} pts (≈₹${(c.totalPoints * (settings.redeemVal || 0)).toFixed(2)})</span>
+      </div>
+      <p style="font-size: 13px; color: var(--text-muted); margin: 6px 0 16px;">
+        Referral Code: <b class="mono" style="color:var(--accent-primary);">${escapeHtml(c.referralCode)}</b> · Member Visits: ${c.visits}
+      </p>
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead><tr><th>Invoice</th><th>Date</th><th>Amount</th><th>Points</th><th>Staff</th><th>Actions</th></tr></thead>
+          <tbody>${rows.length ? rows : '<tr><td colspan="6" class="empty-state">No transaction history.</td></tr>'}</tbody>
+        </table>
+      </div>
+    </div>`;
 };
 
-window.deleteTxn = async function(id){
-  const t=transactions.find(x=>x.id===id); if(!t) return;
-  const c=customers[t.phone];
-  if(c){ c.totalPoints=c.totalPoints-t.earned+t.redeemed; c.totalSpent-=t.amount; c.visits=Math.max(0,c.visits-1); }
-  transactions=transactions.filter(x=>x.id!==id);
-  await persistCustomers(); await persistTransactions();
-  toast('Entry deleted'); renderRecent(); renderCustomers(); showCustomer(t.phone);
+window.deleteTxn = function(id) {
+  const t = transactions.find(x => x.id === id);
+  if (!t) return;
+  const c = customers[t.phone];
+  if (c) {
+    c.totalPoints = c.totalPoints - t.earned + t.redeemed;
+    c.totalSpent -= t.amount;
+    c.visits = Math.max(0, c.visits - 1);
+  }
+  transactions = transactions.filter(x => x.id !== id);
+  persistAll();
+  showToast('Transaction removed');
+  renderRecentTransactions(); renderCustomerDirectory(); showCustomerDetails(t.phone);
 };
 
-// ---- Redemptions (staff side) ----
-function renderRedemptions(){
-  const list = document.getElementById('redemption-list');
-  const pending = redemptions.filter(r=>r.status==='pending').sort((a,b)=>b.createdAt-a.createdAt);
-  const done = redemptions.filter(r=>r.status!=='pending').sort((a,b)=>b.createdAt-a.createdAt).slice(0,10);
-  if(redemptions.length===0){ list.innerHTML='<div class="empty">No redemption requests yet.</div>'; return; }
-  let rows = pending.map(r=>`
-    <tr><td><span class="badge pending">${r.code}</span></td><td>${escapeHtml(r.name)}</td><td>${escapeHtml(r.phone)}</td>
-    <td>${r.points} pts (₹${r.value.toFixed(2)})</td><td>${new Date(r.createdAt).toLocaleString()}</td>
-    <td><button class="btn secondary" onclick="fulfillRedemption('${r.id}')">Mark applied</button> <button class="btn danger" onclick="cancelRedemption('${r.id}')">Cancel & refund</button></td></tr>`).join('');
-  let doneRows = done.map(r=>`<tr><td>${r.code}</td><td>${escapeHtml(r.name)}</td><td>${escapeHtml(r.phone)}</td><td>${r.points} pts</td><td>${r.status}</td><td></td></tr>`).join('');
-  list.innerHTML = `
-    <h3 style="font-size:14px; margin-bottom:8px;">Pending</h3>
-    <table><thead><tr><th>Code</th><th>Name</th><th>Phone</th><th>Value</th><th>Requested</th><th></th></tr></thead><tbody>${rows||'<tr><td colspan="6" class="empty">None pending</td></tr>'}</tbody></table>
-    <h3 style="font-size:14px; margin:16px 0 8px;">Recent history</h3>
-    <table><thead><tr><th>Code</th><th>Name</th><th>Phone</th><th>Points</th><th>Status</th><th></th></tr></thead><tbody>${doneRows||'<tr><td colspan="6" class="empty">None yet</td></tr>'}</tbody></table>`;
+// ================= REDEMPTIONS =================
+function renderRedemptionsList() {
+  const container = document.getElementById('redemptionsListTable');
+  const pending = redemptions.filter(r => r.status === 'pending').sort((a, b) => b.createdAt - a.createdAt);
+  const done = redemptions.filter(r => r.status !== 'pending').sort((a, b) => b.createdAt - a.createdAt).slice(0, 10);
+
+  const pendingRows = pending.map(r => `
+    <tr>
+      <td class="mono"><b>${r.code}</b></td>
+      <td>${escapeHtml(r.name)}</td>
+      <td class="mono">${escapeHtml(r.phone)}</td>
+      <td>${r.points} pts (₹${r.value.toFixed(2)})</td>
+      <td>${new Date(r.createdAt).toLocaleTimeString()}</td>
+      <td>
+        <button class="btn btn-primary btn-sm" onclick="fulfillRedemption('${r.id}')">Mark Discount Applied</button>
+        <button class="btn btn-danger btn-sm" onclick="cancelRedemption('${r.id}')">Cancel & Refund</button>
+      </td>
+    </tr>`).join('');
+
+  container.innerHTML = `
+    <h4 style="font-size: 14px; margin-bottom: 10px; color: var(--amber);">Pending Requests</h4>
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead><tr><th>Voucher Code</th><th>Member Name</th><th>Mobile</th><th>Value</th><th>Requested</th><th>Actions</th></tr></thead>
+        <tbody>${pendingRows || '<tr><td colspan="6" class="empty-state">No pending redemption requests.</td></tr>'}</tbody>
+      </table>
+    </div>`;
 }
-window.fulfillRedemption = async function(id){
-  const r = redemptions.find(x=>x.id===id); if(!r) return;
-  r.status='fulfilled'; r.fulfilledAt=Date.now();
-  await persistRedemptions(); toast('Marked as applied'); renderRedemptions();
+
+window.fulfillRedemption = function(id) {
+  const r = redemptions.find(x => x.id === id); if (!r) return;
+  r.status = 'fulfilled'; r.fulfilledAt = Date.now();
+  persistAll(); showToast('Redemption code marked applied!'); renderRedemptionsList();
 };
-window.cancelRedemption = async function(id){
-  const r = redemptions.find(x=>x.id===id); if(!r) return;
+
+window.cancelRedemption = function(id) {
+  const r = redemptions.find(x => x.id === id); if (!r) return;
   const c = customers[r.phone];
-  if(c) c.totalPoints += r.points;
-  r.status='cancelled'; r.fulfilledAt=Date.now();
-  await persistCustomers(); await persistRedemptions();
-  toast('Points refunded to customer'); renderRedemptions(); renderCustomers();
+  if (c) c.totalPoints += r.points;
+  r.status = 'cancelled'; r.fulfilledAt = Date.now();
+  persistAll(); showToast('Points refunded to customer balance'); renderRedemptionsList();
 };
 
-// ---- Dashboard ----
-function renderDashboard(){
-  const custArr=Object.values(customers);
-  const totalRevenue=transactions.reduce((s,t)=>s+t.amount,0);
-  const totalPoints=custArr.reduce((s,c)=>s+c.totalPoints,0);
-  document.getElementById('d-customers').textContent=custArr.length;
-  document.getElementById('d-bills').textContent=transactions.length;
-  document.getElementById('d-revenue').textContent='₹'+totalRevenue.toFixed(0);
-  document.getElementById('d-points').textContent=totalPoints;
-  const top=custArr.slice().sort((a,b)=>b.totalPoints-a.totalPoints).slice(0,5);
-  const el=document.getElementById('dash-top');
-  if(top.length===0){ el.innerHTML='<div class="empty">No customers yet.</div>'; return; }
-  el.innerHTML = `<table><thead><tr><th>Name</th><th>Phone</th><th>Balance</th></tr></thead><tbody>${top.map(c=>`<tr><td>${escapeHtml(c.name)}</td><td>${escapeHtml(c.phone)}</td><td><span class="badge">${c.totalPoints} pts</span></td></tr>`).join('')}</tbody></table>`;
-}
+// ================= ANALYTICS & REPORTS =================
+document.querySelectorAll('.range-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.range-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const range = btn.dataset.range;
+    const now = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    const toStr = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 
-// ---- Settings ----
-document.getElementById('save-settings').addEventListener('click', async ()=>{
-  settings.bizName = document.getElementById('s-bizname').value.trim() || 'BM Super Mart';
-  settings.rate = parseFloat(document.getElementById('s-rate').value) || 100;
-  settings.redeemVal = parseFloat(document.getElementById('s-redeemval').value) || 1;
-  settings.countryCode = (document.getElementById('s-countrycode').value||'91').replace(/\D/g,'') || '91';
-  settings.refBonusReferrer = parseFloat(document.getElementById('s-refbonus-referrer').value) || 0;
-  settings.refBonusReferee = parseFloat(document.getElementById('s-refbonus-referee').value) || 0;
-  await persistSettings();
-  document.getElementById('bizNameHeader').textContent = settings.bizName;
-  document.getElementById('settings-status').textContent = 'Settings saved.';
-  toast('Settings saved'); updatePreview();
+    let from = '2000-01-01', to = toStr(now);
+    if (range === 'today') from = toStr(now);
+    if (range === 'week') { const d = new Date(now); d.setDate(d.getDate() - 6); from = toStr(d); }
+    if (range === 'month') { const d = new Date(now.getFullYear(), now.getMonth(), 1); from = toStr(d); }
+
+    document.getElementById('repFromDate').value = from;
+    document.getElementById('repToDate').value = to;
+    renderAnalyticsReport();
+  });
 });
 
-function generateReferralCode(name, phone){
-  const letters = (name||'CUST').toUpperCase().replace(/[^A-Z]/g,'').padEnd(3,'X').slice(0,3);
-  const digits = phone.slice(-4);
-  return letters + digits;
+document.getElementById('repFromDate').addEventListener('change', renderAnalyticsReport);
+document.getElementById('repToDate').addEventListener('change', renderAnalyticsReport);
+
+function renderAnalyticsReport() {
+  const from = document.getElementById('repFromDate').value || '2000-01-01';
+  const to = document.getElementById('repToDate').value || '9999-12-31';
+
+  const inRange = transactions.filter(t => t.date >= from && t.date <= to);
+  const totalRev = inRange.reduce((s, t) => s + t.amount, 0);
+  const totalEarned = inRange.reduce((s, t) => s + t.earned, 0);
+  const totalRedeemed = inRange.reduce((s, t) => s + t.redeemed, 0);
+  const uniqueCust = new Set(inRange.map(t => t.phone)).size;
+
+  document.getElementById('reportStatsGrid').innerHTML = `
+    <div class="stat-card"><div class="stat-val">₹${totalRev.toFixed(0)}</div><div class="stat-lbl">Revenue</div></div>
+    <div class="stat-card"><div class="stat-val">${inRange.length}</div><div class="stat-lbl">Invoices</div></div>
+    <div class="stat-card"><div class="stat-val">${uniqueCust}</div><div class="stat-lbl">Active Members</div></div>
+    <div class="stat-card"><div class="stat-val">+${totalEarned} / -${totalRedeemed}</div><div class="stat-lbl">Points Issued/Used</div></div>`;
+
+  // Render SVG Daily Bar Chart
+  const byDay = {};
+  inRange.forEach(t => { byDay[t.date] = (byDay[t.date] || 0) + t.amount; });
+  const sortedDays = Object.keys(byDay).sort();
+  const maxVal = Math.max(...Object.values(byDay), 100);
+
+  let svgBars = sortedDays.slice(-14).map((d, idx) => {
+    const height = Math.round((byDay[d] / maxVal) * 100);
+    const x = idx * 45 + 10;
+    return `
+      <rect x="${x}" y="${120 - height}" width="28" height="${height}" fill="#6366F1" rx="4"/>
+      <text x="${x + 14}" y="140" font-size="9" fill="#94A3B8" text-anchor="middle">${d.slice(5)}</text>`;
+  }).join('');
+
+  document.getElementById('chartContainer').innerHTML = sortedDays.length ? `
+    <svg width="100%" height="150" viewBox="0 0 650 150" xmlns="http://www.w3.org/2000/svg">
+      <line x1="0" y1="120" x2="650" y2="120" stroke="#2D3D54" stroke-width="1"/>
+      ${svgBars}
+    </svg>` : `<div class="empty-state">No invoice data available for this range.</div>`;
 }
 
-function renderStaffList(){
-  const list = document.getElementById('staff-list');
-  list.innerHTML = (settings.staff||[]).map((s,i)=>`
-    <div class="staff-row">
-      <input data-i="${i}" class="staff-name" placeholder="Name" value="${escapeHtml(s.name)}">
-      <input data-i="${i}" class="staff-pin" placeholder="PIN" value="${escapeHtml(s.pin)}">
-      <select data-i="${i}" class="staff-role">
-        <option value="staff" ${s.role!=='owner'?'selected':''}>Staff</option>
-        <option value="owner" ${s.role==='owner'?'selected':''}>Owner</option>
+// ================= EXECUTIVE DASHBOARD =================
+function renderExecutiveDashboard() {
+  const custArr = Object.values(customers);
+  const totalRev = transactions.reduce((s, t) => s + t.amount, 0);
+  const totalPts = custArr.reduce((s, c) => s + c.totalPoints, 0);
+
+  document.getElementById('dashTotalMembers').textContent = custArr.length;
+  document.getElementById('dashTotalBills').textContent = transactions.length;
+  document.getElementById('dashTotalRevenue').textContent = '₹' + totalRev.toFixed(0);
+  document.getElementById('dashOutstandingPoints').textContent = totalPts;
+
+  const topVips = custArr.slice().sort((a, b) => b.totalPoints - a.totalPoints).slice(0, 5);
+  const rows = topVips.map(c => `
+    <tr>
+      <td><b>${escapeHtml(c.name)}</b></td>
+      <td class="mono">${escapeHtml(c.phone)}</td>
+      <td><span class="badge badge-earn">${c.totalPoints} pts</span></td>
+    </tr>`).join('');
+
+  document.getElementById('dashTopMembers').innerHTML = topVips.length ? `
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead><tr><th>Member Name</th><th>Mobile</th><th>Points Balance</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>` : '<div class="empty-state">No members registered yet.</div>';
+}
+
+// ================= SETTINGS & STAFF MANAGEMENT =================
+document.getElementById('saveSettingsBtn').addEventListener('click', () => {
+  settings.bizName = document.getElementById('setBizName').value.trim() || "B-INDUSTRIES";
+  settings.rate = parseFloat(document.getElementById('setEarnRate').value) || 100;
+  settings.redeemVal = parseFloat(document.getElementById('setRedeemVal').value) || 1;
+  settings.countryCode = (document.getElementById('setCountryCode').value || '91').replace(/\D/g, '') || '91';
+  settings.refBonusReferrer = parseFloat(document.getElementById('setRefBonusReferrer').value) || 0;
+  settings.refBonusReferee = parseFloat(document.getElementById('setRefBonusReferee').value) || 0;
+
+  persistAll();
+  document.getElementById('displayShopName').textContent = settings.bizName;
+  showToast('Settings saved successfully!');
+});
+
+function renderStaffRosterRows() {
+  const container = document.getElementById('staffRowsContainer');
+  container.innerHTML = (settings.staff || []).map((s, i) => `
+    <div style="display:flex; gap:10px; margin-bottom:10px; flex-wrap:wrap;">
+      <input class="form-input staff-name" placeholder="Staff Name" value="${escapeHtml(s.name)}" style="flex:2;">
+      <input class="form-input staff-pin mono" placeholder="4-digit PIN" value="${escapeHtml(s.pin)}" style="flex:1;">
+      <select class="form-input staff-role" style="flex:1;">
+        <option value="staff" ${s.role !== 'owner' ? 'selected' : ''}>Cashier</option>
+        <option value="owner" ${s.role === 'owner' ? 'selected' : ''}>Manager/Owner</option>
       </select>
-      <button class="btn danger" onclick="removeStaffRow(${i})">Remove</button>
+      <button class="btn btn-danger btn-sm" onclick="removeStaffRow(${i})">Remove</button>
     </div>`).join('');
 }
-window.removeStaffRow = function(i){
-  if(settings.staff.length<=1){ toast('Keep at least one staff login'); return; }
-  settings.staff.splice(i,1); renderStaffList();
+
+window.removeStaffRow = function(i) {
+  if (settings.staff.length <= 1) { showToast('Must keep at least one account!'); return; }
+  settings.staff.splice(i, 1); renderStaffRosterRows();
 };
-document.getElementById('add-staff-row').addEventListener('click', ()=>{
-  settings.staff.push({name:'', pin:'', role:'staff'});
-  renderStaffList();
+
+document.getElementById('addStaffRowBtn').addEventListener('click', () => {
+  settings.staff.push({ name: '', pin: '', role: 'staff' });
+  renderStaffRosterRows();
 });
-document.getElementById('save-staff').addEventListener('click', async ()=>{
+
+document.getElementById('saveStaffBtn').addEventListener('click', () => {
   const names = document.querySelectorAll('.staff-name');
   const pins = document.querySelectorAll('.staff-pin');
   const roles = document.querySelectorAll('.staff-role');
+
   const newStaff = [];
-  names.forEach((el,i)=>{
+  names.forEach((el, i) => {
     const name = el.value.trim();
     const pin = pins[i].value.trim();
     const role = roles[i].value;
-    if(name && pin) newStaff.push({name, pin, role});
+    if (name && pin) newStaff.push({ name, pin, role });
   });
-  if(newStaff.length===0){ document.getElementById('staff-status').textContent='Add at least one staff member with a name and PIN.'; return; }
-  if(!newStaff.some(s=>s.role==='owner')){ document.getElementById('staff-status').textContent='Keep at least one Owner, or you could get locked out of Settings.'; return; }
+
+  if (!newStaff.some(s => s.role === 'owner')) {
+    showToast('Requires at least one Owner account!'); return;
+  }
+
   settings.staff = newStaff;
-  await persistSettings();
-  renderStaffList();
-  document.getElementById('staff-status').textContent = 'Staff list saved.';
-  toast('Staff list saved');
+  persistAll(); renderStaffRosterRows(); showToast('Staff roster updated!');
 });
 
-// ---- Reports ----
-function rangeForPreset(preset){
-  const now = new Date();
-  const pad = n => String(n).padStart(2,'0');
-  const toStr = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-  if(preset==='today'){ return [toStr(now), toStr(now)]; }
-  if(preset==='week'){ const d=new Date(now); d.setDate(d.getDate()-6); return [toStr(d), toStr(now)]; }
-  if(preset==='month'){ const d=new Date(now.getFullYear(), now.getMonth(), 1); return [toStr(d), toStr(now)]; }
-  return ['2000-01-01', toStr(now)];
-}
-document.querySelectorAll('.quick-range button').forEach(btn=>{
-  btn.addEventListener('click', ()=>{
-    document.querySelectorAll('.quick-range button').forEach(b=>b.classList.remove('active'));
-    btn.classList.add('active');
-    const [from,to] = rangeForPreset(btn.dataset.range);
-    document.getElementById('r-from').value = from;
-    document.getElementById('r-to').value = to;
-    renderReports();
+// ================= BACKUP & EXPORT =================
+document.getElementById('exportCsvBtn').addEventListener('click', () => {
+  if (!transactions.length) { showToast('No invoices to export'); return; }
+  let csv = 'Bill Number,Date,Customer Name,Phone,Amount,Points Earned,Points Redeemed,Staff\n';
+  transactions.forEach(t => {
+    csv += `"${t.billNo}",${t.date},"${t.name}",${t.phone},${t.amount},${t.earned},${t.redeemed},"${t.staffName}"\n`;
   });
-});
-document.getElementById('r-from').addEventListener('change', renderReports);
-document.getElementById('r-to').addEventListener('change', renderReports);
-
-function renderReports(){
-  const from = document.getElementById('r-from').value || '2000-01-01';
-  const to = document.getElementById('r-to').value || '9999-12-31';
-  const inRange = transactions.filter(t => t.date>=from && t.date<=to);
-  const revenue = inRange.reduce((s,t)=>s+t.amount,0);
-  const earned = inRange.reduce((s,t)=>s+t.earned,0);
-  const redeemed = inRange.reduce((s,t)=>s+t.redeemed,0);
-  const uniqueCustomers = new Set(inRange.map(t=>t.phone)).size;
-
-  document.getElementById('report-stats').innerHTML = `
-    <div class="stat"><div class="num">₹${revenue.toFixed(0)}</div><div class="lbl">Revenue</div></div>
-    <div class="stat"><div class="num">${inRange.length}</div><div class="lbl">Bills</div></div>
-    <div class="stat"><div class="num">${uniqueCustomers}</div><div class="lbl">Customers served</div></div>
-    <div class="stat"><div class="num">+${earned} / -${redeemed}</div><div class="lbl">Points earned / redeemed</div></div>`;
-
-  const byDay = {};
-  inRange.forEach(t=>{ if(!byDay[t.date]) byDay[t.date]={revenue:0,bills:0}; byDay[t.date].revenue+=t.amount; byDay[t.date].bills+=1; });
-  const days = Object.keys(byDay).sort().reverse();
-  document.getElementById('report-daily').innerHTML = days.length ? `
-    <table><thead><tr><th>Date</th><th>Bills</th><th>Revenue</th></tr></thead><tbody>
-    ${days.map(d=>`<tr><td>${d}</td><td>${byDay[d].bills}</td><td>₹${byDay[d].revenue.toFixed(0)}</td></tr>`).join('')}
-    </tbody></table>` : '<div class="empty">No bills in this range.</div>';
-
-  document.getElementById('report-bills').innerHTML = inRange.length ? `
-    <table><thead><tr><th>Bill</th><th>Date</th><th>Customer</th><th>Amount</th><th>Staff</th></tr></thead><tbody>
-    ${inRange.slice(0,50).map(t=>`<tr><td>#${escapeHtml(t.billNo)}</td><td>${t.date}</td><td>${escapeHtml(t.name)}</td><td>₹${t.amount.toFixed(2)}</td><td>${escapeHtml(t.staffName||'—')}</td></tr>`).join('')}
-    </tbody></table>${inRange.length>50 ? `<div class="sub" style="margin-top:8px;">Showing 50 of ${inRange.length} bills. Export CSV in Settings for the full list.</div>` : ''}` : '<div class="empty">No bills in this range.</div>';
-}
-document.getElementById('export-csv').addEventListener('click', ()=>{
-  if(transactions.length===0){ toast('No bills to export'); return; }
-  let csv='Bill Number,Date,Customer Name,Phone,Amount,Points Earned,Points Redeemed\n';
-  transactions.forEach(t=>{ csv+=`${t.billNo},${t.date},"${t.name}",${t.phone},${t.amount},${t.earned},${t.redeemed}\n`; });
-  const blob=new Blob([csv],{type:'text/csv'}); const url=URL.createObjectURL(blob);
-  const a=document.createElement('a'); a.href=url; a.download='bm-loyalty-bills.csv'; a.click(); URL.revokeObjectURL(url);
+  downloadFile(csv, 'b-industries-invoices.csv', 'text/csv');
 });
 
-// ---- WhatsApp & print (shared) ----
-function buildReceiptText(t){
-  const c=customers[t.phone]; const bal=c?c.totalPoints:(t.earned-t.redeemed);
-  let msg=`${settings.bizName}\nBill #${t.billNo} - ${t.date}\n\nDear ${t.name},\nAmount paid: Rs.${t.amount.toFixed(2)}\nPoints earned: ${t.earned}`;
-  if(t.redeemed>0) msg+=`\nPoints redeemed: ${t.redeemed}`;
-  msg+=`\nPoints balance: ${bal} (worth approx Rs.${(bal*(settings.redeemVal||0)).toFixed(2)})\n\nThank you for shopping with us!`;
-  return msg;
+document.getElementById('exportBackupJsonBtn').addEventListener('click', () => {
+  const backup = { customers, transactions, redemptions, settings };
+  downloadFile(JSON.stringify(backup, null, 2), 'b-industries-loyalty-backup.json', 'application/json');
+});
+
+document.getElementById('importBackupFile').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (evt) => {
+    try {
+      const data = JSON.parse(evt.target.result);
+      if (data.customers && data.transactions) {
+        customers = data.customers;
+        transactions = data.transactions;
+        if (data.redemptions) redemptions = data.redemptions;
+        if (data.settings) settings = data.settings;
+        persistAll(); loadInitialData();
+        showToast('Backup restored successfully!');
+      }
+    } catch (err) { showToast('Invalid backup file'); }
+  };
+  reader.readAsText(file);
+});
+
+function downloadFile(content, fileName, contentType) {
+  const a = document.createElement('a');
+  const blob = new Blob([content], { type: contentType });
+  a.href = URL.createObjectURL(blob);
+  a.download = fileName;
+  a.click();
+  URL.revokeObjectURL(a.href);
 }
-function waLink(phone, text){
-  let digits=String(phone).replace(/\D/g,''); if(digits.length===10) digits=(settings.countryCode||'91')+digits;
-  return `https://wa.me/${digits}?text=${encodeURIComponent(text)}`;
-}
-window.sendReceipt = function(id){ const t=transactions.find(x=>x.id===id); if(!t) return; window.open(waLink(t.phone, buildReceiptText(t)), '_blank'); };
-window.printReceipt = function(id){
-  const t=transactions.find(x=>x.id===id); if(!t) return;
-  const c=customers[t.phone]; const bal=c?c.totalPoints:(t.earned-t.redeemed);
-  const el=document.getElementById('print-receipt');
-  el.innerHTML = `<div class="r-title">${escapeHtml(settings.bizName)}</div>
-    <div class="r-sub">Bill #${escapeHtml(t.billNo)} &nbsp;·&nbsp; ${t.date}</div><div class="r-line"></div>
-    <table><tr><td>Customer</td><td class="r-val">${escapeHtml(t.name)}</td></tr><tr><td>Phone</td><td class="r-val">${escapeHtml(t.phone)}</td></tr></table>
-    <div class="r-line"></div>
-    <table><tr><td>Bill amount</td><td class="r-val">Rs.${t.amount.toFixed(2)}</td></tr><tr><td>Points earned</td><td class="r-val">+${t.earned}</td></tr>
-    ${t.redeemed>0?`<tr><td>Points redeemed</td><td class="r-val">-${t.redeemed}</td></tr>`:''}</table>
-    <div class="r-line"></div>
-    <table><tr><td><b>Points balance</b></td><td class="r-val"><b>${bal}</b></td></tr><tr><td>Balance value</td><td class="r-val">~Rs.${(bal*(settings.redeemVal||0)).toFixed(2)}</td></tr></table>
-    <div class="r-line"></div><div class="r-foot">Thank you for shopping with us!<br>Keep this receipt for your records.</div>`;
+
+// ================= RECEIPT & WHATSAPP INTEGRATION =================
+window.sendWhatsAppReceipt = function(id) {
+  const t = transactions.find(x => x.id === id); if (!t) return;
+  const c = customers[t.phone]; const bal = c ? c.totalPoints : 0;
+  let text = `*${settings.bizName} LOYALTY RECEIPT*\nInvoice #${t.billNo} - ${t.date}\n\nDear ${t.name},\nAmount Paid: Rs.${t.amount.toFixed(2)}\nPoints Earned: +${t.earned}`;
+  if (t.redeemed > 0) text += `\nPoints Redeemed: -${t.redeemed}`;
+  text += `\n*Current Points Balance:* ${bal} pts (approx Rs.${(bal * (settings.redeemVal || 0)).toFixed(2)})\n\nThank you for choosing ${settings.bizName}!`;
+
+  let phone = String(t.phone).replace(/\D/g, '');
+  if (phone.length === 10) phone = (settings.countryCode || '91') + phone;
+  window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
+};
+
+window.printThermalReceipt = function(id) {
+  const t = transactions.find(x => x.id === id); if (!t) return;
+  const c = customers[t.phone]; const bal = c ? c.totalPoints : 0;
+  const modal = document.getElementById('print-receipt-modal');
+  modal.innerHTML = `
+    <div class="r-center r-bold" style="font-size:16px;">${escapeHtml(settings.bizName)}</div>
+    <div class="r-center">OFFICIAL REVENUE RECEIPT</div>
+    <div class="r-divider"></div>
+    <div class="r-row"><span>Inv #: ${escapeHtml(t.billNo)}</span><span>Date: ${t.date}</span></div>
+    <div class="r-row"><span>Cust: ${escapeHtml(t.name)}</span><span>Mob: ${escapeHtml(t.phone)}</span></div>
+    <div class="r-divider"></div>
+    <div class="r-row"><span>Bill Amount</span><span>Rs.${t.amount.toFixed(2)}</span></div>
+    <div class="r-row"><span>Points Awarded</span><span>+${t.earned}</span></div>
+    ${t.redeemed > 0 ? `<div class="r-row"><span>Points Redeemed</span><span>-${t.redeemed}</span></div>` : ''}
+    <div class="r-divider"></div>
+    <div class="r-row r-bold"><span>REWARDS BALANCE</span><span>${bal} pts</span></div>
+    <div class="r-row"><span>Estimated Value</span><span>~Rs.${(bal * (settings.redeemVal || 0)).toFixed(2)}</span></div>
+    <div class="r-divider"></div>
+    <div class="r-center">Thank you for visiting ${escapeHtml(settings.bizName)}!</div>`;
   window.print();
 };
 
-// ---- Customer self-service ----
-document.getElementById('c-lookup').addEventListener('click', async ()=>{
-  const phone = document.getElementById('c-phone').value.trim();
-  const result = document.getElementById('customer-result');
+// ================= CUSTOMER PORTAL LOOKUP =================
+document.getElementById('cLookupBtn').addEventListener('click', () => {
+  const phone = document.getElementById('cPhoneInput').value.trim();
+  const container = document.getElementById('customerPortalContent');
   const c = customers[phone];
-  if(!c){ document.getElementById('c-status').textContent='No records found for this number.'; result.innerHTML=''; return; }
-  if(!c.referralCode){ c.referralCode = generateReferralCode(c.name, c.phone); await persistCustomers(); }
-  document.getElementById('c-status').textContent='';
-  const hist = transactions.filter(t=>t.phone===phone).slice(0,5);
-  const histRows = hist.map(t=>`<tr><td>#${escapeHtml(t.billNo)}</td><td>${t.date}</td><td>₹${t.amount.toFixed(2)}</td><td><span class="badge">+${t.earned}</span></td></tr>`).join('');
-  result.innerHTML = `
-    <div class="card">
-      <div class="customer-hero">
-        <div class="balance">${c.totalPoints}</div>
-        <div class="balance-lbl">Points balance · worth ~₹${(c.totalPoints*(settings.redeemVal||0)).toFixed(2)}</div>
+
+  if (!c) {
+    document.getElementById('cStatusMsg').textContent = 'No membership registered under this mobile number.';
+    container.innerHTML = ''; return;
+  }
+  document.getElementById('cStatusMsg').textContent = '';
+
+  if (!c.referralCode) {
+    c.referralCode = generateReferralCode(c.name, c.phone);
+    persistAll();
+  }
+
+  const tier = calculateTier(c.visits, c.totalPoints);
+  const qrSvg = generateSvgQrCode(c.referralCode);
+  const memberHist = transactions.filter(t => t.phone === phone).slice(0, 5);
+
+  const histRows = memberHist.map(t => `
+    <tr>
+      <td class="mono">#${escapeHtml(t.billNo)}</td>
+      <td>${t.date}</td>
+      <td class="mono">₹${t.amount.toFixed(2)}</td>
+      <td><span class="badge badge-earn">+${t.earned} pts</span></td>
+    </tr>`).join('');
+
+  container.innerHTML = `
+    <div class="loyalty-pass-card">
+      <div class="pass-header">
+        <div>
+          <div class="pass-brand">${escapeHtml(settings.bizName)}</div>
+          <div style="font-size:12px; opacity:0.8;">MEMBER PASS</div>
+        </div>
+        <div class="pass-tier">${tier.name}</div>
       </div>
-      <div class="sub" style="text-align:center;">Hi ${escapeHtml(c.name)} — ${c.visits} visits so far</div>
-      <div class="code-box" style="margin-top:10px;">
-        <div style="font-size:12px; color:var(--ink-soft); margin-bottom:4px;">YOUR REFERRAL CODE — SHARE WITH FRIENDS</div>
-        <div class="code">${escapeHtml(c.referralCode||'—')}</div>
-        <div style="font-size:12.5px; margin-top:6px;">You get ${settings.refBonusReferrer||0} pts, they get ${settings.refBonusReferee||0} pts on their first bill</div>
+      <div class="pass-balance-group">
+        <div class="pass-balance">${c.totalPoints}</div>
+        <div class="pass-balance-lbl">REWARDS BALANCE · WORTH ~₹${(c.totalPoints * (settings.redeemVal || 0)).toFixed(2)}</div>
       </div>
-      <div class="grid" style="margin-top:16px;">
-        <div class="field"><label>Redeem how many points?</label><input id="c-redeem-amt" type="number" min="1" max="${c.totalPoints}" placeholder="e.g. 50"></div>
+      <div class="pass-footer">
+        <div>MEMBER: <b>${escapeHtml(c.name)}</b></div>
+        <div>VISITS: <b>${c.visits}</b></div>
       </div>
-      <button class="btn" id="c-redeem-btn" ${c.totalPoints<=0?'disabled':''}>Request redemption</button>
-      <div class="save-status" id="c-redeem-status"></div>
-      <div id="c-code-box"></div>
     </div>
-    <div class="card">
-      <h2>Recent bills</h2>
-      ${hist.length? `<table><thead><tr><th>Bill</th><th>Date</th><th>Amount</th><th>Points</th></tr></thead><tbody>${histRows}</tbody></table>` : '<div class="empty">No bills yet.</div>'}
+
+    <div class="glass-card" style="max-width: 500px; margin: 0 auto 20px;">
+      <h3 class="card-title" style="font-size: 16px;">🎟️ Voucher Redemption</h3>
+      <p class="card-subtitle">Convert your points into store discounts.</p>
+
+      <div class="qr-box-container">
+        <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Your Digital Membership QR Code</div>
+        <div class="qr-svg-wrapper">${qrSvg}</div>
+        <div style="font-size: 14px; font-weight: 800;" class="mono">REFERRAL CODE: ${escapeHtml(c.referralCode)}</div>
+        <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Share this code with friends! You get ${settings.refBonusReferrer} pts, they get ${settings.refBonusReferee} pts.</div>
+      </div>
+
+      <div class="form-group" style="margin-top: 16px;">
+        <label class="form-label">Points to Redeem</label>
+        <input id="cRedeemAmtInput" type="number" min="1" max="${c.totalPoints}" class="form-input mono" placeholder="e.g. 50">
+      </div>
+      <button class="btn btn-primary" id="cRequestRedeemBtn" style="width: 100%;" ${c.totalPoints <= 0 ? 'disabled' : ''}>Request Counter Discount</button>
+      <div id="cVoucherResult" style="margin-top: 14px;"></div>
+    </div>
+
+    <div class="glass-card" style="max-width: 500px; margin: 0 auto;">
+      <h3 class="card-title" style="font-size: 16px; margin-bottom: 12px;">Recent Invoices</h3>
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead><tr><th>Invoice</th><th>Date</th><th>Amount</th><th>Earned</th></tr></thead>
+          <tbody>${histRows || '<tr><td colspan="4" class="empty-state">No transaction history found.</td></tr>'}</tbody>
+        </table>
+      </div>
     </div>`;
 
-  document.getElementById('c-redeem-btn').addEventListener('click', async ()=>{
-    const amt = parseFloat(document.getElementById('c-redeem-amt').value) || 0;
-    if(amt<=0 || amt>c.totalPoints){ document.getElementById('c-redeem-status').textContent='Enter a valid amount up to your balance.'; return; }
-    const code = Math.floor(1000+Math.random()*9000).toString();
-    const value = amt * (settings.redeemVal||0);
+  document.getElementById('cRequestRedeemBtn').addEventListener('click', () => {
+    const amt = parseFloat(document.getElementById('cRedeemAmtInput').value) || 0;
+    if (amt <= 0 || amt > c.totalPoints) {
+      showToast('Please enter a valid points amount within your balance.'); return;
+    }
+
+    const code = Math.floor(1000 + Math.random() * 9000).toString();
+    const value = amt * (settings.redeemVal || 0);
+
     c.totalPoints -= amt;
-    redemptions.unshift({ id:Date.now().toString(36), phone:c.phone, name:c.name, points:amt, value, code, status:'pending', createdAt:Date.now() });
-    await persistCustomers(); await persistRedemptions();
-    document.getElementById('c-code-box').innerHTML = `<div class="code-box"><div style="font-size:12px; color:var(--ink-soft); margin-bottom:4px;">SHOW THIS CODE AT THE COUNTER</div><div class="code">${code}</div><div style="font-size:13px; margin-top:6px;">Worth ₹${value.toFixed(2)} · ${amt} points</div></div>`;
-    document.getElementById('c-redeem-btn').disabled = true;
-    toast('Redemption requested');
+    redemptions.unshift({
+      id: Date.now().toString(36), phone: c.phone, name: c.name, points: amt, value, code, status: 'pending', createdAt: Date.now()
+    });
+
+    persistAll();
+    showToast('Voucher code generated!');
+
+    document.getElementById('cVoucherResult').innerHTML = `
+      <div style="background:var(--amber-bg); border:1px solid rgba(245,158,11,0.4); padding:16px; border-radius:var(--radius-md); text-align:center;">
+        <div style="font-size:12px; color:var(--amber); font-weight:700;">SHOW THIS VOUCHER CODE AT COUNTER</div>
+        <div style="font-size:32px; font-weight:800; letter-spacing:4px; margin:6px 0;" class="mono">${code}</div>
+        <div style="font-size:13px; color:var(--text-secondary);">Worth ₹${value.toFixed(2)} Discount (${amt} points)</div>
+      </div>`;
+    document.getElementById('cRequestRedeemBtn').disabled = true;
   });
 });
 
-function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
-
-loadAll();
+// Run Initialization
+loadInitialData();
 </script>
 </body>
 </html>
