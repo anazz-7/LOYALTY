@@ -730,7 +730,6 @@ async function loadAll() {
     }, 4000);
   }
 }
-}
 
 async function fetchCloudData() {
   if (!supabaseClient) return;
@@ -828,6 +827,12 @@ document.getElementById('pin-submit').addEventListener('click', () => {
       document.getElementById('pin-status').textContent = 'Incorrect PIN. Try 1234 or click Reset below.';
     }
   }, 250);
+});
+
+document.getElementById('pin-input').addEventListener('keyup', (e) => {
+  if (e.key === 'Enter') {
+    document.getElementById('pin-submit').click();
+  }
 });
 
 window.resetPinToDefault = function() {
