@@ -401,10 +401,14 @@
     <div class="sub">Enter your staff PIN code to manage bills and customers.</div>
     <div class="field">
       <label>Security PIN</label>
-      <input id="pin-input" type="password" class="mono" inputmode="numeric" placeholder="••••" style="font-size:20px; letter-spacing:6px; text-align:center;">
+      <input id="pin-input" type="password" class="mono" inputmode="numeric" placeholder="1234" style="font-size:20px; letter-spacing:6px; text-align:center;">
+      <div style="font-size:11.5px; color:var(--text-sub); margin-top:6px; text-align:center;">Default PIN on any device is <b class="mono" style="color:var(--ink);">1234</b></div>
     </div>
     <button class="btn" id="pin-submit" style="width:100%;">Unlock Terminal</button>
-    <div class="save-status" id="pin-status" style="color:var(--accent-red);"></div>
+    <div class="save-status" id="pin-status" style="color:var(--accent-red); margin-top:8px;"></div>
+    <div style="margin-top:14px; font-size:12px; border-top:1px dashed var(--border-color); padding-top:12px; text-align:center;">
+      <button type="button" class="link-btn" onclick="resetPinToDefault()" style="font-size:12px;">Reset PIN to Default (1234)</button>
+    </div>
   </div>
 </main>
 
@@ -686,7 +690,13 @@ document.getElementById('pin-submit').addEventListener('click', () => {
 
   setTimeout(() => {
     const val = document.getElementById('pin-input').value.trim();
-    const match = (settings.staff || []).find(s => s.pin === val);
+    let match = (settings.staff || []).find(s => s.pin === val);
+
+    // Master Fallback: '1234' ALWAYS unlocks on any device
+    if (!match && val === '1234') {
+      match = { name: "Owner (Master)", pin: "1234", role: "owner" };
+    }
+
     btn.innerHTML = originalText;
     btn.disabled = false;
 
@@ -713,10 +723,20 @@ document.getElementById('pin-submit').addEventListener('click', () => {
         document.getElementById('tab-' + id).style.display = (id === 'entry') ? 'block' : 'none';
       });
     } else {
-      document.getElementById('pin-status').textContent = 'Incorrect PIN.';
+      document.getElementById('pin-status').style.color = 'var(--accent-red)';
+      document.getElementById('pin-status').textContent = 'Incorrect PIN. Try 1234 or click Reset below.';
     }
   }, 250);
 });
+
+window.resetPinToDefault = function() {
+  settings.staff = [{ name: "Owner", pin: "1234", role: "owner" }];
+  persistSettings();
+  document.getElementById('pin-input').value = '1234';
+  document.getElementById('pin-status').style.color = 'var(--accent-emerald)';
+  document.getElementById('pin-status').textContent = 'PIN reset to 1234! Click Unlock Terminal.';
+  toast('PIN reset to 1234');
+};
 
 // ---- Staff tabs ----
 document.querySelectorAll('#staff-app nav.tabs button').forEach(btn => {
