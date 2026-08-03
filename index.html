@@ -1093,6 +1093,11 @@ function generateReferralCode(name, phone) {
   return letters + digits;
 }
 
+function get10DigitPhone(p) {
+  const digits = String(p || '').replace(/\D/g, '');
+  return digits.length >= 10 ? digits.slice(-10) : digits;
+}
+
 async function loadAll() {
   // Show loading overlay
   const loadingEl = document.getElementById('app-loading');
@@ -1802,11 +1807,6 @@ function renderCustomers() {
     <div class="mobile-only">${cards}</div>`;
 }
 document.getElementById('cust-search').addEventListener('input', renderCustomers);
-
-function get10DigitPhone(p) {
-  const digits = String(p || '').replace(/\D/g, '');
-  return digits.length >= 10 ? digits.slice(-10) : digits;
-}
 
 window.showCustomer = function(phone) {
   const c = customers[phone]; const detail = document.getElementById('customer-detail');
