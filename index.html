@@ -891,6 +891,21 @@
 window.SUPABASE_URL = window.SUPABASE_URL || "https://jitcqekaptvfxvzshiki.supabase.co";
 window.SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || "sb_publishable_2o6UC2Ppx7r3G5R7gXjhGQ__tvN2eoS";
 
+// Robust Storage Abstraction Layer with Supabase Cloud Sync Fallback
+const Storage = {
+  get(key) {
+    try { const val = localStorage.getItem(key); return val ? JSON.parse(val) : null; }
+    catch(e) { return null; }
+  },
+  set(key, val) {
+    try { localStorage.setItem(key, JSON.stringify(val)); }
+    catch(e) { if (typeof toast === 'function') toast('Storage write failed'); }
+  },
+  remove(key) {
+    try { localStorage.removeItem(key); } catch(e) {}
+  }
+};
+
 let customers = {};
 let transactions = [];
 let redemptions = [];
@@ -1020,17 +1035,7 @@ window.clearActivityLogs = function() {
   }
 };
 
-// Robust Storage Abstraction Layer with Supabase Cloud Sync Fallback
-const Storage = {
-  get(key) {
-    try { const val = localStorage.getItem(key); return val ? JSON.parse(val) : null; }
-    catch(e) { return null; }
-  },
-  set(key, val) {
-    try { localStorage.setItem(key, JSON.stringify(val)); }
-    catch(e) { toast('Storage write failed'); }
-  }
-};
+
 
 function initSupabase() {
   const url = settings.supaUrl || window.SUPABASE_URL || '';
