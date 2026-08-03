@@ -603,6 +603,7 @@
     <button data-tab="redemptions" onclick="switchTab('redemptions')"><svg class="icon icon-sm" viewBox="0 0 24 24"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/></svg> Redemptions</button>
     <button data-tab="reports" data-role="owner" onclick="switchTab('reports')"><svg class="icon icon-sm" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> Reports</button>
     <button data-tab="dashboard" data-role="owner" onclick="switchTab('dashboard')"><svg class="icon icon-sm" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg> Dashboard</button>
+    <button data-tab="activity" onclick="switchTab('activity')"><svg class="icon icon-sm" viewBox="0 0 24 24"><polyline points="12 8 12 12 14 14"/><path d="M3.05 11a9 9 0 1 1 .5 4m-.5 5v-5h5"/></svg> Activity Log</button>
     <button data-tab="settings" data-role="owner" onclick="switchTab('settings')"><svg class="icon icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> Settings</button>
   </nav>
 
@@ -841,6 +842,22 @@
       </div>
     </div>
   </section>
+
+  <section id="tab-activity" style="display:none;">
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:14px;">
+        <div>
+          <h2>System Activity &amp; Audit Log</h2>
+          <div class="sub" style="margin:0;">Real-time timeline of store bills, redemptions, staff actions, and customer logins.</div>
+        </div>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <input id="activity-search" placeholder="Search logs..." style="max-width:200px; padding:6px 12px; font-size:13px;" onkeyup="renderActivityLogs()">
+          <button class="btn secondary" onclick="clearActivityLogs()" style="padding:6px 12px; font-size:12px;">Clear Logs</button>
+        </div>
+      </div>
+      <div id="activity-log-container"></div>
+    </div>
+  </section>
 </main>
 
 <!-- ============ CUSTOMER APP ============ -->
@@ -894,6 +911,114 @@ let staffUnlocked = false;
 let currentStaffName = "";
 let currentStaffRole = "";
 let supabaseClient = null;
+
+let activityLogs = Storage.get('bm-loyalty-activity-logs') || [];
+
+function logActivity(type, title, description, details = {}) {
+  const newLog = {
+    id: (typeof generateUUID === 'function') ? generateUUID() : Date.now().toString(),
+    type: type || 'system',
+    title: title || 'System Event',
+    description: description || '',
+    staffName: currentStaffName || details.staffName || 'System',
+    phone: details.phone || null,
+    amount: details.amount || null,
+    timestamp: Date.now(),
+    dateStr: new Date().toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' })
+  };
+
+  activityLogs.unshift(newLog);
+  if (activityLogs.length > 300) activityLogs = activityLogs.slice(0, 300);
+
+  try { localStorage.setItem('bm-loyalty-activity-logs', JSON.stringify(activityLogs)); } catch(e) {}
+
+  if (supabaseClient) {
+    try {
+      supabaseClient.from('activity_logs').insert([{
+        id: newLog.id,
+        type: newLog.type,
+        title: newLog.title,
+        description: newLog.description,
+        staff_name: newLog.staffName,
+        phone: newLog.phone,
+        created_at: new Date(newLog.timestamp).toISOString()
+      }]).then(() => {}).catch(() => {});
+    } catch(err) {}
+  }
+
+  const actSec = document.getElementById('tab-activity');
+  if (actSec && actSec.style.display !== 'none') {
+    renderActivityLogs();
+  }
+}
+
+window.renderActivityLogs = function() {
+  const container = document.getElementById('activity-log-container');
+  if (!container) return;
+
+  const query = (document.getElementById('activity-search')?.value || '').toLowerCase().trim();
+
+  let logsToDisplay = activityLogs;
+
+  if (!logsToDisplay || logsToDisplay.length === 0) {
+    logsToDisplay = (transactions || []).map(t => ({
+      id: t.id,
+      type: 'bill',
+      title: `Bill #${t.billNo} Saved`,
+      description: `Bill of ₹${t.amount} recorded for ${t.name || 'Customer'} (${t.phone}). Earned +${t.earned} pts.`,
+      staffName: t.staffName || 'Staff',
+      dateStr: t.date || new Date(t.ts || Date.now()).toLocaleDateString()
+    }));
+  }
+
+  if (query) {
+    logsToDisplay = logsToDisplay.filter(l => 
+      String(l.title||'').toLowerCase().includes(query) ||
+      String(l.description||'').toLowerCase().includes(query) ||
+      String(l.staffName||'').toLowerCase().includes(query)
+    );
+  }
+
+  if (!logsToDisplay || logsToDisplay.length === 0) {
+    container.innerHTML = '<div class="empty">No activity logs recorded yet.</div>';
+    return;
+  }
+
+  const badgeColors = {
+    bill: { bg: '#EFF6FF', text: '#1D4ED8', border: '#BFDBFE', label: 'BILL' },
+    redemption: { bg: '#FEF3C7', text: '#D97706', border: '#FDE68A', label: 'REDEEM' },
+    customer: { bg: '#F0FDF4', text: '#15803D', border: '#BBF7D0', label: 'CUSTOMER' },
+    staff: { bg: '#F3E8FF', text: '#7E22CE', border: '#E9D5FF', label: 'STAFF' },
+    system: { bg: '#F1F5F9', text: '#475569', border: '#CBD5E1', label: 'SYSTEM' }
+  };
+
+  container.innerHTML = logsToDisplay.slice(0, 80).map(l => {
+    const meta = badgeColors[l.type] || badgeColors.system;
+    return `
+      <div style="display:flex; gap:12px; align-items:flex-start; padding:12px 14px; background:var(--bg-card-elevated); border:1.5px solid var(--border-color); border-radius:12px; margin-bottom:10px;">
+        <div style="background:${meta.bg}; color:${meta.text}; border:1px solid ${meta.border}; font-size:10px; font-weight:800; padding:4px 8px; border-radius:6px; flex-shrink:0; letter-spacing:0.06em; margin-top:2px;">
+          ${meta.label}
+        </div>
+        <div style="flex:1;">
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;">
+            <div style="font-weight:800; font-size:13.5px; color:var(--text-main);">${escapeHtml(l.title)}</div>
+            <div style="font-size:11.5px; color:var(--text-sub);" class="mono">${escapeHtml(l.dateStr || '')}</div>
+          </div>
+          <div style="font-size:12.5px; color:var(--text-sub); margin-top:4px; line-height:1.4;">${escapeHtml(l.description)}</div>
+          <div style="font-size:11px; color:var(--text-sub); margin-top:6px;">By <b style="color:var(--text-main);">${escapeHtml(l.staffName || 'Staff')}</b></div>
+        </div>
+      </div>`;
+  }).join('');
+};
+
+window.clearActivityLogs = function() {
+  if (confirm('Clear activity logs from view?')) {
+    activityLogs = [];
+    try { localStorage.removeItem('bm-loyalty-activity-logs'); } catch(e) {}
+    renderActivityLogs();
+    toast('Activity logs cleared');
+  }
+};
 
 // Robust Storage Abstraction Layer with Supabase Cloud Sync Fallback
 const Storage = {
@@ -1199,9 +1324,10 @@ document.getElementById('pin-submit').addEventListener('click', () => {
       document.querySelectorAll('#staff-app nav.tabs button').forEach(b => b.classList.remove('active'));
       document.querySelector('#staff-app nav.tabs button[data-tab="entry"]').classList.add('active');
 
-      ['entry', 'customers', 'redemptions', 'reports', 'dashboard', 'settings'].forEach(id => {
+      ['entry', 'customers', 'redemptions', 'reports', 'dashboard', 'settings', 'activity'].forEach(id => {
         document.getElementById('tab-' + id).style.display = (id === 'entry') ? 'block' : 'none';
       });
+      logActivity('staff', 'Staff Login', `${currentStaffName} (${currentStaffRole}) unlocked terminal.`);
     } else {
       document.getElementById('pin-status').style.color = 'var(--accent-red)';
       document.getElementById('pin-status').textContent = 'Incorrect Security PIN.';
@@ -1263,11 +1389,13 @@ window.switchTab = function(tabName) {
   document.querySelectorAll('#staff-app nav.tabs button').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
 
-  const tabs = ['entry', 'customers', 'redemptions', 'reports', 'dashboard', 'settings'];
+  const tabs = ['entry', 'customers', 'redemptions', 'reports', 'dashboard', 'settings', 'activity'];
   tabs.forEach(id => {
     const sec = document.getElementById('tab-' + id);
     if (sec) sec.style.display = (id === tabName) ? 'block' : 'none';
   });
+
+  if (tabName === 'activity') renderActivityLogs();
 
   if (tabName === 'dashboard') renderDashboard();
   if (tabName === 'customers') renderCustomers();
@@ -1462,6 +1590,7 @@ document.getElementById('save-bill').addEventListener('click', async () => {
       staffName: currentStaffName || '—'
     };
     transactions.unshift(newTx);
+    logActivity('bill', `Bill #${bill} Saved`, `Bill of ₹${amount} recorded for ${name} (${phone}). Earned +${earned} pts.`, { phone, amount });
 
     persistCustomers();
     persistTransactions();
