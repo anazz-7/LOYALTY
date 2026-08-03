@@ -642,6 +642,7 @@
         <button class="btn" id="save-supa">Save &amp; Connect Supabase</button>
         <button class="btn secondary" type="button" onclick="testSupabaseConnection()">Run Diagnostic Test</button>
         <button class="btn secondary" type="button" onclick="syncAllLocalToCloud()">Upload Local Data to Cloud</button>
+        <button class="btn" type="button" style="background:var(--accent-emerald); color:#fff;" onclick="rebuildHistoricalTransactions()">&#9881; Rebuild Old Bill Records</button>
         <span id="supa-status-badge" class="badge pending">Local Mode (Offline)</span>
       </div>
       <div class="save-status" id="supa-status" style="margin-top:10px; font-size:13px;"></div>
@@ -663,14 +664,19 @@
 
     <div class="card">
       <h2>Backup &amp; Data Tools</h2>
-      <div class="sub">Safely export bills to CSV or download full JSON database backups.</div>
-      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+      <div class="sub">Export bills to CSV, download JSON backups, or restore from a previous backup file.</div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px;">
         <button class="btn secondary" id="export-csv">Export Bills (CSV)</button>
         <button class="btn secondary" id="export-json">Export Database (JSON)</button>
         <label class="btn secondary" style="cursor:pointer;">
           Restore Database (JSON)
           <input type="file" id="import-json" accept=".json" style="display:none;">
         </label>
+      </div>
+      <div style="background:rgba(16,185,129,0.08); border:1.5px solid var(--accent-emerald); border-radius:10px; padding:12px;">
+        <div style="font-weight:700; font-size:13px; color:var(--accent-emerald); margin-bottom:6px;">&#9881; Rebuild Historical Bill Records</div>
+        <div style="font-size:12.5px; color:var(--text-sub); margin-bottom:10px;">If your old customer accounts show points &amp; visits but <b>Reports</b> and <b>Ledger Passbook</b> show no bills, click this button. It reconstructs historical bill records from each customer's account summary and uploads them to Supabase.</div>
+        <button class="btn" style="background:var(--accent-emerald); color:#fff;" onclick="rebuildHistoricalTransactions()">Run Historical Rebuild Now</button>
       </div>
     </div>
   </section>
@@ -1845,26 +1851,133 @@ document.getElementById('export-json').addEventListener('click', () => {
   downloadFile(JSON.stringify(backup, null, 2), 'b-industries-database-backup.json', 'application/json');
 });
 
-document.getElementById('import-json').addEventListener('change', (e) => {
+document.getElementById('import-json').addEventListener('change', async (e) => {
   const file = e.target.files[0];
   if (!file) return;
   const reader = new FileReader();
-  reader.onload = (evt) => {
+  reader.onload = async (evt) => {
     try {
       const data = JSON.parse(evt.target.result);
       if (data.customers && data.transactions) {
         customers = data.customers;
-        transactions = data.transactions;
-        if (data.redemptions) redemptions = data.redemptions;
-        if (data.settings) settings = data.settings;
-        persistCustomers(); persistTransactions(); persistRedemptions(); persistSettings();
-        loadAll();
-        toast('Database restored!');
+        // Sanitize all transaction IDs — convert non-UUID IDs to valid UUIDs
+        transactions = (data.transactions || []).map(t => ({
+          ...t,
+          id: /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(t.id || '')) ? t.id : generateUUID()
+        }));
+        if (data.redemptions) redemptions = (data.redemptions || []).map(r => ({
+          ...r,
+          id: /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(r.id || '')) ? r.id : generateUUID()
+        }));
+        if (data.settings) settings = { ...settings, ...data.settings };
+
+        // Push all restored data to Supabase Cloud immediately
+        if (supabaseClient) {
+          toast('Restoring to Supabase Cloud...');
+          try {
+            // Customers
+            const custRows = Object.values(customers).map(c => ({
+              phone: c.phone, name: c.name, total_points: c.totalPoints || 0,
+              total_spent: c.totalSpent || 0, visits: c.visits || 0,
+              first_visit: c.firstVisit, last_visit: c.lastVisit,
+              referral_code: c.referralCode, referred_by: c.referredBy
+            }));
+            if (custRows.length) await supabaseClient.from('customers').upsert(custRows);
+            // Transactions (UUID-safe)
+            const txRows = transactions.map(t => ({
+              id: t.id, bill_no: t.billNo || t.bill_no || 'IMPORT',
+              date: t.date, phone: t.phone, name: t.name,
+              amount: Number(t.amount || 0), earned: Number(t.earned || 0),
+              redeemed: Number(t.redeemed || 0), staff_name: t.staffName || t.staff_name || 'Import'
+            }));
+            if (txRows.length) await supabaseClient.from('transactions').upsert(txRows);
+            toast(`Restored! ${custRows.length} customers & ${txRows.length} bills synced to cloud.`);
+          } catch(syncErr) {
+            toast('Local restored. Cloud sync failed: ' + syncErr.message);
+          }
+        } else {
+          toast('Database restored locally!');
+        }
+        renderCustomers(); renderRecent(); renderDashboard();
+      } else {
+        toast('Invalid backup: missing customers or transactions');
       }
-    } catch (err) { toast('Invalid JSON backup file'); }
+    } catch (err) { toast('Invalid JSON backup file: ' + err.message); }
   };
   reader.readAsText(file);
 });
+
+// Rebuild historical transactions from customer summary data (for old accounts with no bill rows)
+window.rebuildHistoricalTransactions = async function() {
+  if (!supabaseClient) { toast('Supabase not connected'); return; }
+  const custArr = Object.values(customers).filter(c => (c.totalSpent > 0 || c.visits > 0));
+  if (!custArr.length) { toast('No customer data to rebuild from'); return; }
+
+  const statusEl = document.getElementById('supa-status');
+  statusEl.innerHTML = `<span class="spinner dark"></span> Rebuilding historical transactions from ${custArr.length} customer accounts...`;
+
+  let builtCount = 0;
+  const txRows = [];
+
+  custArr.forEach(c => {
+    // Check if this customer already has transaction rows in memory
+    const existing = transactions.filter(t => {
+      const t10 = get10DigitPhone(t.phone); const c10 = get10DigitPhone(c.phone);
+      return (t10 && c10 && t10 === c10) || String(t.name||'').toLowerCase() === String(c.name||'').toLowerCase();
+    });
+    if (existing.length > 0) return; // already has real bills, skip
+
+    // Synthesize one bill row per visit, spread across first→last visit date
+    const visits = Math.max(1, c.visits || 1);
+    const totalSpent = Number(c.totalSpent || 0);
+    const totalPoints = Number(c.totalPoints || 0);
+    const amtPerVisit = totalSpent / visits;
+    const ptsPerVisit = Math.floor(totalPoints / visits);
+
+    const start = c.firstVisit ? new Date(c.firstVisit) : new Date();
+    const end = c.lastVisit ? new Date(c.lastVisit) : new Date();
+    const dayRange = Math.max(0, Math.round((end - start) / (1000 * 60 * 60 * 24)));
+    const step = visits > 1 ? Math.floor(dayRange / (visits - 1)) : 0;
+
+    for (let i = 0; i < visits; i++) {
+      const d = new Date(start); d.setDate(d.getDate() + i * step);
+      const dateStr = d.toISOString().slice(0, 10);
+      const uid = generateUUID();
+      const newTx = {
+        id: uid, billNo: 'H-' + String(builtCount + 1).padStart(4, '0'),
+        date: dateStr, phone: c.phone, name: c.name,
+        amount: Math.round(amtPerVisit * 100) / 100,
+        earned: ptsPerVisit, redeemed: 0, staffName: 'Historical Import'
+      };
+      txRows.push({
+        id: uid, bill_no: newTx.billNo, date: dateStr, phone: c.phone, name: c.name,
+        amount: newTx.amount, earned: newTx.earned, redeemed: 0, staff_name: 'Historical Import'
+      });
+      transactions.unshift(newTx);
+      builtCount++;
+    }
+  });
+
+  if (!txRows.length) {
+    statusEl.style.color = 'var(--accent-emerald)';
+    statusEl.innerHTML = '<span class="badge">All Good</span> All customers already have transaction records!';
+    return;
+  }
+
+  try {
+    // Upload in batches of 100
+    for (let i = 0; i < txRows.length; i += 100) {
+      await supabaseClient.from('transactions').upsert(txRows.slice(i, i + 100));
+    }
+    statusEl.style.color = 'var(--accent-emerald)';
+    statusEl.innerHTML = `<span class="badge">Rebuild Complete</span> Created ${builtCount} historical bill records for ${custArr.length} customer accounts. Reports & Ledger now fully populated!`;
+    toast(`Historical rebuild done! ${builtCount} bill records created.`);
+    renderRecent(); renderCustomers(); renderDashboard();
+  } catch(err) {
+    statusEl.style.color = 'var(--accent-red)';
+    statusEl.innerHTML = `<span class="badge redeem">Rebuild Failed</span> ${err.message}`;
+  }
+};
 
 function downloadFile(content, fileName, contentType) {
   const blob = new Blob([content], { type: contentType }); const url = URL.createObjectURL(blob);
