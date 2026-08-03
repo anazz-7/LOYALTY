@@ -389,7 +389,9 @@
 <div class="mode-row">
   <button class="mode-btn active" id="btn-mode-staff">
     <svg class="icon" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-    Staff Terminal<span class="staff-chip" id="staff-chip" style="display:none;"></span>
+    Staff Terminal
+    <span class="staff-chip" id="staff-chip" style="display:none;"></span>
+    <button class="btn secondary" id="btn-lock-terminal" style="display:none; padding:3px 9px; font-size:11px; margin-left:8px;" onclick="lockTerminal()">Lock Terminal</button>
   </button>
   <button class="mode-btn" id="btn-mode-customer">
     <svg class="icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -836,11 +838,11 @@ document.getElementById('pin-submit').addEventListener('click', () => {
 
   setTimeout(() => {
     const val = document.getElementById('pin-input').value.trim();
-    let match = (settings.staff || []).find(s => s.pin === val);
+    let match = (settings.staff || []).find(s => String(s.pin).trim() === val);
 
-    // Master Fallback: '1234' ALWAYS unlocks on any device
-    if (!match && val === '1234') {
-      match = { name: "Owner (Master)", pin: "1234", role: "owner" };
+    // Emergency Master Fallback if no custom staff configured
+    if (!match && val === '1234' && (!settings.staff || settings.staff.length === 0 || settings.staff.some(s => s.pin === '1234'))) {
+      match = { name: "Owner", pin: "1234", role: "owner" };
     }
 
     btn.innerHTML = originalText;
@@ -849,18 +851,18 @@ document.getElementById('pin-submit').addEventListener('click', () => {
     if (match) {
       staffUnlocked = true;
       currentStaffName = match.name;
-      currentStaffRole = match.role || 'staff';
+      currentStaffRole = match.role === 'owner' ? 'owner' : 'staff';
+      
       document.getElementById('staff-gate').style.display = 'none';
       document.getElementById('staff-app').style.display = 'block';
       document.getElementById('pin-status').textContent = '';
       document.getElementById('pin-input').value = '';
 
-      document.getElementById('staff-chip').textContent = `${currentStaffName} (${currentStaffRole === 'owner' ? 'Owner' : 'Staff'})`;
+      document.getElementById('staff-chip').textContent = `${currentStaffName} (${currentStaffRole === 'owner' ? '👑 Owner' : '👤 Staff'})`;
       document.getElementById('staff-chip').style.display = 'inline-block';
+      document.getElementById('btn-lock-terminal').style.display = 'inline-flex';
 
-      document.querySelectorAll('#staff-app nav.tabs button[data-role="owner"]').forEach(b => {
-        b.style.display = currentStaffRole === 'owner' ? 'inline-block' : 'none';
-      });
+      applyRoleRestrictions();
 
       document.querySelectorAll('#staff-app nav.tabs button').forEach(b => b.classList.remove('active'));
       document.querySelector('#staff-app nav.tabs button[data-tab="entry"]').classList.add('active');
@@ -870,10 +872,43 @@ document.getElementById('pin-submit').addEventListener('click', () => {
       });
     } else {
       document.getElementById('pin-status').style.color = 'var(--accent-red)';
-      document.getElementById('pin-status').textContent = 'Incorrect PIN. Try 1234 or click Reset below.';
+      document.getElementById('pin-status').textContent = 'Incorrect Security PIN.';
     }
   }, 250);
 });
+
+function applyRoleRestrictions() {
+  const isOwner = (currentStaffRole === 'owner');
+
+  // Hide/Show Owner-only Tabs
+  document.querySelectorAll('#staff-app nav.tabs button[data-role="owner"]').forEach(b => {
+    b.style.display = isOwner ? 'inline-block' : 'none';
+  });
+
+  // If a Staff member clicks or ends up on an owner tab, redirect to New Bill
+  const activeBtn = document.querySelector('#staff-app nav.tabs button.active');
+  if (activeBtn && activeBtn.dataset.role === 'owner' && !isOwner) {
+    document.querySelector('#staff-app nav.tabs button[data-tab="entry"]').click();
+  }
+
+  // Hide owner-only actions like Delete transaction or Cancel/Refund redemption
+  document.querySelectorAll('.owner-only').forEach(el => {
+    el.style.display = isOwner ? '' : 'none';
+  });
+}
+
+window.lockTerminal = function() {
+  staffUnlocked = false;
+  currentStaffName = "";
+  currentStaffRole = "";
+  document.getElementById('staff-gate').style.display = 'block';
+  document.getElementById('staff-app').style.display = 'none';
+  document.getElementById('staff-chip').style.display = 'none';
+  document.getElementById('btn-lock-terminal').style.display = 'none';
+  document.getElementById('pin-input').value = '';
+  document.getElementById('pin-status').textContent = '';
+  toast('Terminal Locked');
+};
 
 document.getElementById('pin-input').addEventListener('keyup', (e) => {
   if (e.key === 'Enter') {
@@ -893,7 +928,10 @@ window.resetPinToDefault = function() {
 // ---- Staff tabs ----
 document.querySelectorAll('#staff-app nav.tabs button').forEach(btn => {
   btn.addEventListener('click', () => {
-    if (btn.dataset.role === 'owner' && currentStaffRole !== 'owner') return;
+    if (btn.dataset.role === 'owner' && currentStaffRole !== 'owner') {
+      toast('Access Restricted to Owner');
+      return;
+    }
     document.querySelectorAll('#staff-app nav.tabs button').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
 
