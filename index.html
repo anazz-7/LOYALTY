@@ -639,7 +639,15 @@
     </div>
 
     <div class="card">
-      <h2>Backup &amp; Data Tools</h2>
+      <h2>Security &amp; Access Controls</h2>
+      <div class="sub">Configure security authentication rules for customer portals and terminals.</div>
+      <div class="field" style="margin-top:10px;">
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+          <input type="checkbox" id="s-enable-otp" style="width:18px; height:18px;">
+          <span>Require 4-Digit Security OTP for Customer Account Lookups &amp; Redemptions</span>
+        </label>
+      </div>
+    </div>
       <div class="sub">Safely export bills to CSV or download full JSON database backups.</div>
       <div style="display:flex; gap:10px; flex-wrap:wrap;">
         <button class="btn secondary" id="export-csv">Export Bills (CSV)</button>
@@ -668,6 +676,21 @@
 
 <div class="toast" id="toast"></div>
 <div id="print-receipt"></div>
+
+<!-- Customer OTP Verification Modal -->
+<div id="otp-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:99999; align-items:center; justify-content:center; padding:16px;">
+  <div class="card" style="width:100%; max-width:400px; margin:0; text-align:center;">
+    <h2>Security OTP Verification</h2>
+    <div class="sub">Enter the 4-digit security code sent to <b class="mono" id="otp-phone-lbl" style="color:var(--ink);"></b>.</div>
+    <div class="field" style="margin:20px 0;">
+      <input id="otp-input" type="password" class="mono" inputmode="numeric" placeholder="••••" maxlength="4" style="font-size:24px; letter-spacing:10px; text-align:center;">
+    </div>
+    <button class="btn" id="otp-verify-btn" style="width:100%;">Verify &amp; Access Account</button>
+    <div class="save-status" id="otp-status" style="margin-top:8px;"></div>
+    <div style="font-size:12px; color:var(--text-sub); margin-top:12px; border-top:1px dashed var(--border-color); padding-top:10px;" id="otp-demo-hint"></div>
+    <button class="btn secondary" type="button" onclick="closeOTPModal()" style="width:100%; margin-top:10px;">Cancel</button>
+  </div>
+</div>
 
 <!-- Camera QR Code Scanner Overlay Modal -->
 <div id="qr-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:99999; align-items:center; justify-content:center; padding:16px;">
@@ -782,6 +805,7 @@ async function loadAll() {
   document.getElementById('s-refbonus-referee').value = settings.refBonusReferee ?? 10;
   document.getElementById('s-supa-url').value = settings.supaUrl || '';
   document.getElementById('s-supa-key').value = settings.supaKey || '';
+  document.getElementById('s-enable-otp').checked = settings.enableOTP ?? true;
 
   if (!settings.staff || settings.staff.length === 0) {
     settings.staff = [{ name: "Owner", pin: "1234", role: "owner" }];
@@ -1383,6 +1407,7 @@ document.getElementById('save-settings').addEventListener('click', () => {
   settings.countryCode = (document.getElementById('s-countrycode').value || '91').replace(/\D/g, '') || '91';
   settings.refBonusReferrer = parseFloat(document.getElementById('s-refbonus-referrer').value) || 0;
   settings.refBonusReferee = parseFloat(document.getElementById('s-refbonus-referee').value) || 0;
+  settings.enableOTP = document.getElementById('s-enable-otp').checked;
 
   persistSettings(); saveSettingsCloud();
   document.getElementById('bizNameHeader').textContent = settings.bizName;
@@ -1906,30 +1931,81 @@ window.installPWA = function() {
   }
 };
 
+// Customer OTP Verification Engine
+let activeOTP = null;
+let otpTargetPhone = null;
+let onOTPSuccessCallback = null;
+
+function generateOTP() {
+  return Math.floor(1000 + Math.random() * 9000).toString();
+}
+
+window.openOTPModal = function(phone, callback) {
+  otpTargetPhone = phone;
+  onOTPSuccessCallback = callback;
+  activeOTP = generateOTP();
+
+  document.getElementById('otp-phone-lbl').textContent = phone;
+  document.getElementById('otp-input').value = '';
+  document.getElementById('otp-status').textContent = '';
+  document.getElementById('otp-demo-hint').innerHTML = `Verification OTP Code: <b class="mono" style="color:var(--accent-blue); font-size:16px;">${activeOTP}</b>`;
+
+  document.getElementById('otp-modal').style.display = 'flex';
+  document.getElementById('otp-input').focus();
+
+  toast(`OTP sent: ${activeOTP}`);
+};
+
+window.closeOTPModal = function() {
+  document.getElementById('otp-modal').style.display = 'none';
+  activeOTP = null;
+  otpTargetPhone = null;
+  onOTPSuccessCallback = null;
+};
+
+document.getElementById('otp-verify-btn').addEventListener('click', () => {
+  const entered = document.getElementById('otp-input').value.trim();
+  if (entered === activeOTP) {
+    toast('OTP Verified Successfully!');
+    const cb = onOTPSuccessCallback;
+    closeOTPModal();
+    if (cb) cb();
+  } else {
+    document.getElementById('otp-status').style.color = 'var(--accent-red)';
+    document.getElementById('otp-status').textContent = 'Incorrect OTP Code. Try again.';
+  }
+});
+
+document.getElementById('otp-input').addEventListener('keyup', (e) => {
+  if (e.key === 'Enter') {
+    document.getElementById('otp-verify-btn').click();
+  }
+});
+
 // ---- Customer Self-Service ----
 document.getElementById('c-lookup').addEventListener('click', () => {
+  const phone = document.getElementById('c-phone').value.trim();
+  if (!phone) { document.getElementById('c-status').textContent = 'Please enter your phone number.'; return; }
+
+  const c = customers[phone];
+  if (!c) { document.getElementById('c-status').textContent = 'No records found for this number.'; return; }
+
+  const requireOTP = settings.enableOTP ?? true;
+  if (requireOTP) {
+    openOTPModal(phone, () => renderCustomerPortal(c));
+  } else {
+    renderCustomerPortal(c);
+  }
+});
+
+function renderCustomerPortal(c) {
   const btn = document.getElementById('c-lookup');
-  const originalText = btn.innerHTML;
-  btn.innerHTML = `<span class="spinner"></span> Checking...`;
-  btn.disabled = true;
+  const result = document.getElementById('customer-result');
+  document.getElementById('c-status').textContent = '';
 
-  setTimeout(() => {
-    btn.innerHTML = originalText;
-    btn.disabled = false;
+  if (!c.referralCode) { c.referralCode = generateReferralCode(c.name, c.phone); persistCustomers(); }
 
-    const phone = document.getElementById('c-phone').value.trim();
-    const result = document.getElementById('customer-result');
-    const c = customers[phone];
-
-    if (!c) {
-      document.getElementById('c-status').textContent = 'No records found for this number.';
-      result.innerHTML = ''; return;
-    }
-
-    if (!c.referralCode) { c.referralCode = generateReferralCode(c.name, c.phone); persistCustomers(); }
-    document.getElementById('c-status').textContent = '';
-
-  const hist = transactions.filter(t => t.phone === phone).slice(0, 5);
+  const hist = transactions.filter(t => t.phone === c.phone).slice(0, 5);
   const histRows = hist.map(t => `<tr><td class="mono">#${escapeHtml(t.billNo)}</td><td>${t.date}</td><td class="mono">₹${t.amount.toFixed(2)}</td><td><span class="badge">+${t.earned}</span></td></tr>`).join('');
 
   result.innerHTML = `
