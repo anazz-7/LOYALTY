@@ -823,6 +823,15 @@
     </div>
 
     <div class="card">
+      <h2>POS Audio &amp; Sound FX</h2>
+      <div class="sub">Enable or disable audio sound feedback for bill saving, voucher redemptions, and error alerts.</div>
+      <div style="margin-top:12px; display:flex; align-items:center; gap:10px;">
+        <input type="checkbox" id="s-sound-fx" style="width:20px; height:20px; cursor:pointer;" checked>
+        <label for="s-sound-fx" style="font-weight:700; cursor:pointer; font-size:14px; color:var(--text-main);">Enable POS Sound Effects &amp; Audio Feedback (Cash Register, Redemption Chimes &amp; Alert Tones)</label>
+      </div>
+    </div>
+
+    <div class="card">
       <h2>Backup &amp; Data Tools</h2>
       <div class="sub">Export bills to CSV, download JSON backups, or restore from a previous backup file.</div>
       <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px;">
@@ -948,7 +957,8 @@ let settings = {
   refBonusReferrer: 20,
   refBonusReferee: 10,
   supaUrl: "https://jitcqekaptvfxvzshiki.supabase.co",
-  supaKey: "sb_publishable_2o6UC2Ppx7r3G5R7gXjhGQ__tvN2eoS"
+  supaKey: "sb_publishable_2o6UC2Ppx7r3G5R7gXjhGQ__tvN2eoS",
+  soundFxEnabled: true
 };
 
 let lastSavedId = null;
@@ -1212,6 +1222,72 @@ if ('BroadcastChannel' in window) {
   } catch(e) {}
 }
 
+// Web Audio API Sound Effects Engine (Zero External Audio File Dependencies)
+let audioCtx = null;
+function getAudioContext() {
+  if (!audioCtx) {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (AudioCtx) audioCtx = new AudioCtx();
+  }
+  if (audioCtx && audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+  return audioCtx;
+}
+
+window.playSound = function(type) {
+  if (settings.soundFxEnabled === false) return;
+  try {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+
+    if (type === 'success' || type === 'bill') {
+      // Crisp POS Cash Register / Coin Tone
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(523.25, now); // C5
+      osc.frequency.exponentialRampToValueAtTime(1046.50, now + 0.12); // C6
+      gain.gain.setValueAtTime(0.25, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.35);
+    } else if (type === 'redeem' || type === 'celebration') {
+      // Celebratory Arpeggio Chord (C - E - G - C)
+      const freqs = [523.25, 659.25, 783.99, 1046.50];
+      freqs.forEach((freq, idx) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        const noteTime = now + (idx * 0.07);
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, noteTime);
+        gain.gain.setValueAtTime(0.3, noteTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, noteTime + 0.3);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(noteTime);
+        osc.stop(noteTime + 0.3);
+      });
+    } else if (type === 'error') {
+      // Low Soft Error Tone
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(220, now);
+      osc.frequency.linearRampToValueAtTime(140, now + 0.2);
+      gain.gain.setValueAtTime(0.2, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.25);
+    }
+  } catch(e) { console.warn('Audio FX notice:', e); }
+};
+
 window.generateUUID = function generateUUID() {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
     try { return crypto.randomUUID(); } catch(e) {}
@@ -1260,6 +1336,8 @@ async function loadAll() {
   document.getElementById('s-supa-url').value = settings.supaUrl || '';
   document.getElementById('s-supa-key').value = settings.supaKey || '';
   document.getElementById('s-verification-mode').value = settings.verificationMode || 'qr';
+  const soundInput = document.getElementById('s-sound-fx');
+  if (soundInput) soundInput.checked = settings.soundFxEnabled !== false;
 
   if (!settings.staff || settings.staff.length === 0) {
     settings.staff = [{ name: "Owner", pin: "1234", role: "owner" }];
@@ -1484,9 +1562,11 @@ document.getElementById('pin-submit').addEventListener('click', () => {
         document.getElementById('tab-' + id).style.display = (id === 'entry') ? 'block' : 'none';
       });
       logActivity('staff', 'Staff Login', `${currentStaffName} (${currentStaffRole}) unlocked terminal.`);
+      playSound('success');
     } else {
       document.getElementById('pin-status').style.color = 'var(--accent-red)';
       document.getElementById('pin-status').textContent = 'Incorrect Security PIN.';
+      playSound('error');
     }
   }, 250);
 });
@@ -1685,6 +1765,7 @@ document.getElementById('save-bill').addEventListener('click', async () => {
     statusEl.innerHTML = '⚠️ Please enter a valid <b>Bill Amount (₹)</b> greater than 0.';
     fAmount.focus();
     toast('Enter Bill Amount (₹)');
+    playSound('error');
     return;
   }
 
@@ -1767,6 +1848,7 @@ document.getElementById('save-bill').addEventListener('click', async () => {
     statusEl.style.color = 'var(--accent-emerald)';
     statusEl.innerHTML = `Saved — Bill #${bill}, +${earned} pts. &nbsp; <button class="btn sms" onclick="sendSMSReceipt('${lastSavedId}')"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> SMS Receipt</button> <button class="btn print" onclick="printReceipt('${lastSavedId}')"><svg class="icon icon-sm" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg> Print</button>`;
     toast('Bill saved successfully!');
+    playSound('success');
 
     // Reset inputs for next bill
     document.getElementById('f-bill').value = '';
@@ -2146,6 +2228,8 @@ document.getElementById('save-settings').addEventListener('click', () => {
   settings.refBonusReferrer = parseFloat(document.getElementById('s-refbonus-referrer').value) || 0;
   settings.refBonusReferee = parseFloat(document.getElementById('s-refbonus-referee').value) || 0;
   settings.verificationMode = document.getElementById('s-verification-mode').value;
+  const soundInput = document.getElementById('s-sound-fx');
+  settings.soundFxEnabled = soundInput ? soundInput.checked : true;
 
   persistSettings(); saveSettingsCloud();
   document.getElementById('bizNameHeader').textContent = settings.bizName;
@@ -2890,6 +2974,7 @@ window.shareReferralSMS = function(code) {
 };
 
 window.triggerConfetti = function() {
+  playSound('redeem');
   if (typeof confetti === 'function') {
     confetti({ particleCount: 90, spread: 70, origin: { y: 0.6 } });
   }
