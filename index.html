@@ -27,6 +27,9 @@
 <!-- Camera Barcode & QR Code Scanner Library for Cashier -->
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
+<!-- Tesseract.js Client-Side OCR Engine for Tally Sales Bill Scanning -->
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+
 <!-- Canvas Confetti Celebration Library -->
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
 <style>
@@ -607,10 +610,24 @@
 
   <section id="tab-entry">
     <div class="card">
-      <h2>Record a Bill</h2>
-      <div class="sub">Enter bill details to calculate customer points automatically.</div>
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
+        <div>
+          <h2 style="margin:0;">Record a Bill</h2>
+          <div class="sub" style="margin:0;">Enter bill details to calculate customer points automatically.</div>
+        </div>
+        <button class="btn secondary" type="button" onclick="openTallyOCRScanner()" style="padding:6px 14px; font-size:12.5px; display:inline-flex; align-items:center; gap:6px; border-color:#38BDF8; color:#38BDF8; background:rgba(56,189,248,0.1); border-radius:10px; font-weight:700;">
+          <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          📷 Scan Tally Sales Bill
+        </button>
+      </div>
       <div class="grid">
-        <div class="field"><label>Bill Number</label><input id="f-bill" class="mono" placeholder="e.g. 1042"></div>
+        <div class="field">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <label>Bill Number</label>
+            <button class="btn secondary" type="button" onclick="openTallyOCRScanner()" style="padding:2px 6px; font-size:11px; color:#38BDF8; border:none; background:none; cursor:pointer;" title="Scan Tally Sales Invoice text">📷 Scan Bill</button>
+          </div>
+          <input id="f-bill" class="mono" placeholder="e.g. 1042">
+        </div>
         <div class="field"><label>Date</label><input id="f-date" type="date"></div>
         <div class="field" style="position:relative;">
           <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -883,6 +900,51 @@
 
 <div class="toast" id="toast"></div>
 <div id="print-receipt"></div>
+
+<!-- Camera Tally Sales Bill OCR Scanner Modal -->
+<div id="tally-ocr-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); z-index:99999; align-items:center; justify-content:center; padding:16px;">
+  <div class="card" style="width:100%; max-width:480px; margin:0; text-align:center; position:relative; background:#14202E; border:1px solid rgba(255,255,255,0.18); box-shadow:0 24px 60px rgba(0,0,0,0.7); border-radius:24px; color:#fff; overflow:hidden;">
+    <button type="button" onclick="closeTallyOCRScanner()" style="position:absolute; top:14px; right:14px; background:rgba(255,255,255,0.15); border:none; color:#fff; width:34px; height:34px; border-radius:50%; font-size:18px; cursor:pointer; z-index:10;">✕</button>
+
+    <div style="padding:20px 20px 10px 20px;">
+      <h2 style="color:#fff; font-size:20px; font-weight:800; margin-bottom:4px;">Scan Tally Sales Invoice / Bill</h2>
+      <div style="font-size:12.5px; color:rgba(255,255,255,0.7);">Point camera at Tally Prime / ERP Sales bill. Aligns invoice number &amp; total amount.</div>
+    </div>
+
+    <!-- Video Feed with Alignment Guide Frame -->
+    <div style="position:relative; width:100%; background:#000; min-height:280px; max-height:340px; overflow:hidden; display:flex; align-items:center; justify-content:center;">
+      <video id="tally-ocr-video" autoplay playsinline style="width:100%; height:100%; object-fit:cover;"></video>
+      <canvas id="tally-ocr-canvas" style="display:none;"></canvas>
+
+      <!-- Targeted Scan Box Frame -->
+      <div style="position:absolute; width:85%; height:75%; border:2px dashed #38BDF8; border-radius:16px; box-shadow:0 0 0 9999px rgba(0,0,0,0.5); pointer-events:none; display:flex; flex-direction:column; justify-content:space-between; padding:12px; box-sizing:border-box;">
+        <div style="display:flex; justify-content:space-between; font-size:10px; font-weight:800; color:#38BDF8; letter-spacing:0.1em; text-transform:uppercase;">
+          <span>Align Tally Bill Here</span>
+          <span>TALLY PRIME / ERP</span>
+        </div>
+        <div style="font-size:11px; color:#4ADE80; font-weight:700; background:rgba(0,0,0,0.6); padding:4px 8px; border-radius:6px; align-self:center;">
+          Reads Bill # &amp; Total Amount (₹)
+        </div>
+      </div>
+    </div>
+
+    <!-- Upload Image File Option & Capture Button -->
+    <div style="padding:16px 20px;">
+      <div id="tally-ocr-status" style="font-size:13px; font-weight:700; color:#38BDF8; margin-bottom:12px; min-height:20px;">Ready to scan Tally invoice...</div>
+
+      <div style="display:flex; gap:10px;">
+        <button class="btn" id="btn-capture-tally" type="button" onclick="captureAndProcessTallyBill()" style="flex:2; background:linear-gradient(135deg,#1d4ed8,#3b82f6); color:#fff; font-size:14px; font-weight:800;">
+          <svg class="icon icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+          Capture &amp; Read Bill
+        </button>
+        <label class="btn secondary" style="flex:1; cursor:pointer; font-size:12px; border-color:rgba(255,255,255,0.2); color:#fff; display:inline-flex; align-items:center; justify-content:center;">
+          Upload File
+          <input type="file" id="tally-file-input" accept="image/*" style="display:none;" onchange="handleTallyImageFile(event)">
+        </label>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- Sticky Floating Bottom Session & Logout Bar -->
 <footer id="bottom-session-bar" style="display:none; position:fixed; bottom:0; left:0; right:0; background:rgba(20, 32, 46, 0.96); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); border-top:1px solid rgba(255,255,255,0.15); padding:10px 16px; z-index:9999; color:#fff; box-shadow:0 -6px 24px rgba(0,0,0,0.35);">
@@ -2883,6 +2945,182 @@ window.closeQRScanner = function() {
   if (html5QrScanner) {
     try { html5QrScanner.stop(); } catch(e) {}
   }
+};
+
+// ---- Tally Sales Bill OCR Camera & File Scanner ----
+let tallyStream = null;
+
+window.openTallyOCRScanner = async function() {
+  const modal = document.getElementById('tally-ocr-modal');
+  const video = document.getElementById('tally-ocr-video');
+  const status = document.getElementById('tally-ocr-status');
+  if (!modal || !video) return;
+
+  modal.style.display = 'flex';
+  if (status) {
+    status.style.color = '#38BDF8';
+    status.textContent = 'Initializing camera...';
+  }
+
+  try {
+    tallyStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
+    });
+    video.srcObject = tallyStream;
+    await video.play();
+    if (status) status.textContent = 'Align Tally Sales Bill inside box and tap Capture.';
+  } catch(err) {
+    console.warn('Camera access warning:', err);
+    if (status) {
+      status.style.color = '#F87171';
+      status.textContent = 'Camera unavailable. Use Upload File button below.';
+    }
+  }
+};
+
+window.closeTallyOCRScanner = function() {
+  const modal = document.getElementById('tally-ocr-modal');
+  if (modal) modal.style.display = 'none';
+  if (tallyStream) {
+    tallyStream.getTracks().forEach(t => t.stop());
+    tallyStream = null;
+  }
+};
+
+function parseTallyBillText(text) {
+  console.log('Raw Scanned Tally Bill OCR Text:', text);
+  let extractedBillNo = '';
+  let extractedAmount = 0;
+
+  const billPatterns = [
+    /(?:vch\s*no|voucher\s*no|inv\s*no|invoice\s*no|bill\s*no|invoice|sl\s*no|ref\s*no)\s*[:#.-]?\s*([A-Za-z0-9/-]+)/i,
+    /(?:sales|vch|inv|bill)\s*[:#.-]?\s*(\d+)/i,
+    /no\.\s*([A-Za-z0-9/-]+)/i
+  ];
+
+  for (const pattern of billPatterns) {
+    const match = text.match(pattern);
+    if (match && match[1]) {
+      const candidate = match[1].trim();
+      if (candidate.length >= 1 && candidate.length <= 20) {
+        extractedBillNo = candidate;
+        break;
+      }
+    }
+  }
+
+  const amountPatterns = [
+    /(?:grand\s*total|net\s*amount|total\s*amount|amount\s*payable|sub\s*total|total|total\s*amt)\s*[:#.-]?\s*(?:rs\.?|₹)?\s*([0-9,]+(?:\.\d{1,2})?)/i,
+    /(?:rs\.?|₹)\s*([0-9,]+(?:\.\d{1,2})?)/i,
+    /total\s*([0-9,]+(?:\.\d{1,2})?)/i
+  ];
+
+  for (const pattern of amountPatterns) {
+    const match = text.match(pattern);
+    if (match && match[1]) {
+      const numStr = match[1].replace(/,/g, '');
+      const parsedVal = parseFloat(numStr);
+      if (!isNaN(parsedVal) && parsedVal > 0) {
+        extractedAmount = parsedVal;
+        break;
+      }
+    }
+  }
+
+  if (!extractedAmount) {
+    const numbers = text.match(/\b\d+(?:\.\d{2})\b/g);
+    if (numbers && numbers.length > 0) {
+      const validNums = numbers.map(n => parseFloat(n)).filter(n => n > 0 && n < 1000000);
+      if (validNums.length > 0) {
+        extractedAmount = Math.max(...validNums);
+      }
+    }
+  }
+
+  if (!extractedBillNo) {
+    const standaloneDigits = text.match(/\b\d{3,6}\b/);
+    if (standaloneDigits) extractedBillNo = standaloneDigits[0];
+  }
+
+  return { billNo: extractedBillNo, amount: extractedAmount };
+}
+
+window.processImageCanvasForOCR = async function(canvas) {
+  const status = document.getElementById('tally-ocr-status');
+  if (status) {
+    status.style.color = '#FBBF24';
+    status.textContent = '⏳ Reading Tally bill text with OCR...';
+  }
+
+  try {
+    if (typeof Tesseract === 'undefined') {
+      if (status) status.textContent = 'Loading Tesseract OCR engine...';
+    }
+
+    const worker = await Tesseract.createWorker('eng');
+    const ret = await worker.recognize(canvas);
+    await worker.terminate();
+
+    const ocrText = ret.data.text || '';
+    const result = parseTallyBillText(ocrText);
+
+    if (result.billNo || result.amount > 0) {
+      if (result.billNo) document.getElementById('f-bill').value = result.billNo;
+      if (result.amount > 0) document.getElementById('f-amount').value = result.amount;
+
+      updatePreview();
+      if (typeof window.playSound === 'function') window.playSound('success');
+
+      let msg = `Extracted `;
+      if (result.billNo) msg += `Bill #${result.billNo} `;
+      if (result.amount > 0) msg += `Amount: ₹${result.amount.toFixed(2)}`;
+
+      toast(msg);
+      closeTallyOCRScanner();
+    } else {
+      if (status) {
+        status.style.color = '#F87171';
+        status.textContent = '❌ Could not find Bill No or Amount. Please adjust camera or type manually.';
+      }
+      toast('Could not detect Tally bill details. Try again.');
+    }
+  } catch(err) {
+    console.error('Tally OCR Error:', err);
+    if (status) {
+      status.style.color = '#F87171';
+      status.textContent = 'OCR Error: ' + err.message;
+    }
+    toast('OCR processing error: ' + err.message);
+  }
+};
+
+window.captureAndProcessTallyBill = function() {
+  const video = document.getElementById('tally-ocr-video');
+  const canvas = document.getElementById('tally-ocr-canvas');
+  if (!video || !canvas) return;
+
+  canvas.width = video.videoWidth || 1280;
+  canvas.height = video.videoHeight || 720;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+  processImageCanvasForOCR(canvas);
+};
+
+window.handleTallyImageFile = function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const img = new Image();
+  img.onload = () => {
+    const canvas = document.createElement('canvas');
+    canvas.width = img.width;
+    canvas.height = img.height;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0);
+    processImageCanvasForOCR(canvas);
+  };
+  img.src = URL.createObjectURL(file);
 };
 
 // PWA Service Worker Registration
