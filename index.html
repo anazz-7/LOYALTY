@@ -913,7 +913,8 @@ async function fetchCloudData() {
           phone: row.phone, name: row.name || 'Customer', totalPoints: Number(row.total_points || 0),
           totalSpent: Number(row.total_spent || 0), visits: Number(row.visits || 0),
           firstVisit: row.first_visit, lastVisit: row.last_visit,
-          referralCode: row.referral_code, referredBy: row.referred_by
+          referralCode: row.referral_code, referredBy: row.referred_by,
+          pin: row.pin || null
         };
       });
     }
@@ -1750,7 +1751,8 @@ async function saveCustomerCloud(c) {
     const { error } = await supabaseClient.from('customers').upsert({
       phone: c.phone, name: c.name, total_points: c.totalPoints,
       total_spent: c.totalSpent, visits: c.visits, first_visit: c.firstVisit,
-      last_visit: c.lastVisit, referral_code: c.referralCode, referred_by: c.referredBy
+      last_visit: c.lastVisit, referral_code: c.referralCode, referred_by: c.referredBy,
+      pin: c.pin || null
     });
     if (error) console.warn('Supabase customer error:', error.message);
   } catch(e) { console.warn('Supabase customer save failed:', e); }
@@ -2286,42 +2288,45 @@ document.getElementById('c-lookup').addEventListener('click', () => {
   const c = customers[phone10] || customers[phone];
   if (!c) { document.getElementById('c-status').textContent = 'No records found for this number.'; return; }
 
-  // If customer has a PIN, ask for it before showing balance
-  if (c.pin) {
-    document.getElementById('c-status').textContent = '';
-    document.getElementById('customer-result').innerHTML = `
-      <div class="card" style="max-width:500px; margin:0 auto;">
-        <h2 style="margin-bottom:6px;">Enter Your Security PIN</h2>
-        <div class="sub" style="margin-bottom:14px;">Enter your 4-digit loyalty account PIN to view your balance.</div>
-        <div class="field">
-          <label>4-Digit Security PIN</label>
-          <input id="c-pin-input" type="password" inputmode="numeric" maxlength="4" class="mono" placeholder="••••" style="font-size:24px; letter-spacing:10px; text-align:center;">
-        </div>
-        <button class="btn" id="c-pin-submit" style="width:100%; margin-top:8px;">Verify &amp; View Balance</button>
-        <div class="save-status" id="c-pin-status" style="color:var(--accent-red); margin-top:8px;"></div>
-      </div>`;
-    setTimeout(() => {
-      const pinInput = document.getElementById('c-pin-input');
-      const pinSubmit = document.getElementById('c-pin-submit');
-      if (pinInput) pinInput.focus();
-      const verify = () => {
-        const entered = (document.getElementById('c-pin-input').value || '').trim();
-        if (entered === String(c.pin)) {
-          renderCustomerPortal(c);
-        } else {
-          document.getElementById('c-pin-status').textContent = 'Incorrect PIN. Please try again.';
-          document.getElementById('c-pin-input').value = '';
-          document.getElementById('c-pin-input').focus();
-        }
-      };
-      if (pinSubmit) pinSubmit.addEventListener('click', verify);
-      if (pinInput) pinInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') verify(); });
-    }, 50);
-  } else {
-    // No PIN set yet — show balance directly
-    renderCustomerPortal(c);
+  // Auto-generate PIN if customer doesn't have one, then save it
+  if (!c.pin) {
+    c.pin = generateCustomerPin();
+    saveCustomerCloud(c);
   }
+
+  // Always show PIN entry screen
+  document.getElementById('c-status').textContent = '';
+  document.getElementById('customer-result').innerHTML = `
+    <div class="card" style="max-width:500px; margin:0 auto;">
+      <h2 style="margin-bottom:6px;">Enter Your Security PIN</h2>
+      <div class="sub" style="margin-bottom:14px;">Enter your 4-digit loyalty account PIN to view your balance. Your PIN was sent with your first bill receipt.</div>
+      <div class="field">
+        <label>4-Digit Security PIN</label>
+        <input id="c-pin-input" type="password" inputmode="numeric" maxlength="4" class="mono" placeholder="••••" style="font-size:28px; letter-spacing:12px; text-align:center;">
+      </div>
+      <button class="btn" id="c-pin-submit" style="width:100%; margin-top:8px;">Verify &amp; View Balance</button>
+      <div class="save-status" id="c-pin-status" style="color:var(--accent-red); margin-top:8px;"></div>
+    </div>`;
+
+  setTimeout(() => {
+    const pinInput = document.getElementById('c-pin-input');
+    const pinSubmit = document.getElementById('c-pin-submit');
+    if (pinInput) pinInput.focus();
+    const verify = () => {
+      const entered = (document.getElementById('c-pin-input').value || '').trim();
+      if (entered === String(c.pin)) {
+        renderCustomerPortal(c);
+      } else {
+        document.getElementById('c-pin-status').textContent = 'Incorrect PIN. Please try again.';
+        document.getElementById('c-pin-input').value = '';
+        document.getElementById('c-pin-input').focus();
+      }
+    };
+    if (pinSubmit) pinSubmit.addEventListener('click', verify);
+    if (pinInput) pinInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') verify(); });
+  }, 50);
 });
+
 
 function renderCustomerPortal(c) {
   const result = document.getElementById('customer-result');
