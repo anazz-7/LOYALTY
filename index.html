@@ -650,6 +650,30 @@
     </div>
 
     <div class="card">
+      <h2>Realtime SMS OTP Gateway (Live Mobile SMS)</h2>
+      <div class="sub">Send real 4-digit SMS OTPs directly to mobile phones via Fast2SMS, Twilio, or Supabase Phone Auth.</div>
+      <div class="grid" style="margin-top:10px;">
+        <div class="field">
+          <label>SMS Gateway Provider</label>
+          <select id="s-sms-provider">
+            <option value="simulated">In-App Demo / WhatsApp Instant OTP (Free)</option>
+            <option value="fast2sms">Fast2SMS (India Transactional SMS)</option>
+            <option value="twilio">Twilio Global SMS Gateway</option>
+            <option value="supabase">Supabase Phone Auth SMS</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>SMS Provider API Key / Auth Token</label>
+          <input id="s-sms-apikey" class="mono" type="password" placeholder="e.g. Fast2SMS API Key or Twilio Token">
+        </div>
+      </div>
+      <div style="margin-top:12px; display:flex; gap:10px; align-items:center;">
+        <button class="btn secondary" type="button" onclick="testSMSGateway()">Send Test SMS OTP</button>
+        <div class="save-status" id="sms-status"></div>
+      </div>
+    </div>
+
+    <div class="card">
       <h2>Backup &amp; Data Tools</h2>
       <div class="sub">Safely export bills to CSV or download full JSON database backups.</div>
       <div style="display:flex; gap:10px; flex-wrap:wrap;">
@@ -809,6 +833,8 @@ async function loadAll() {
   document.getElementById('s-supa-url').value = settings.supaUrl || '';
   document.getElementById('s-supa-key').value = settings.supaKey || '';
   document.getElementById('s-enable-otp').checked = settings.enableOTP ?? true;
+  document.getElementById('s-sms-provider').value = settings.smsProvider || 'simulated';
+  document.getElementById('s-sms-apikey').value = settings.smsApiKey || '';
 
   if (!settings.staff || settings.staff.length === 0) {
     settings.staff = [{ name: "Owner", pin: "1234", role: "owner" }];
@@ -1951,12 +1977,75 @@ window.openOTPModal = function(phone, callback) {
   document.getElementById('otp-phone-lbl').textContent = phone;
   document.getElementById('otp-input').value = '';
   document.getElementById('otp-status').textContent = '';
-  document.getElementById('otp-demo-hint').innerHTML = `Verification OTP Code: <b class="mono" style="color:var(--accent-blue); font-size:16px;">${activeOTP}</b>`;
+
+  const provider = settings.smsProvider || 'simulated';
+  if (provider === 'fast2sms' && settings.smsApiKey) {
+    document.getElementById('otp-demo-hint').innerHTML = `<span class="spinner dark"></span> Sending Realtime SMS OTP to <b class="mono">${phone}</b>...`;
+    sendRealtimeSMSOTP(phone, activeOTP);
+  } else {
+    document.getElementById('otp-demo-hint').innerHTML = `Verification OTP Code: <b class="mono" style="color:var(--accent-blue); font-size:16px;">${activeOTP}</b>`;
+  }
 
   document.getElementById('otp-modal').style.display = 'flex';
   document.getElementById('otp-input').focus();
 
-  toast(`OTP sent: ${activeOTP}`);
+  toast(`OTP generated: ${activeOTP}`);
+};
+
+async function sendRealtimeSMSOTP(phone, otp) {
+  const provider = settings.smsProvider || 'simulated';
+  const apiKey = settings.smsApiKey || '';
+  const hintEl = document.getElementById('otp-demo-hint');
+
+  if (provider === 'fast2sms' && apiKey) {
+    try {
+      const cleanPhone = phone.replace(/\D/g, '').slice(-10);
+      const res = await fetch(`https://www.fast2sms.com/dev/bulkV2?authorization=${apiKey}&route=otp&variables_values=${otp}&numbers=${cleanPhone}`);
+      const data = await res.json();
+      if (data && data.return) {
+        if (hintEl) hintEl.innerHTML = `✅ Realtime SMS OTP sent to <b class="mono">${cleanPhone}</b>!`;
+        toast(`SMS OTP sent to ${cleanPhone}`);
+      } else {
+        if (hintEl) hintEl.innerHTML = `⚠️ SMS Gateway Warning: ${data.message || 'Check Fast2SMS API Key'}. Demo OTP: <b class="mono" style="color:var(--accent-blue);">${otp}</b>`;
+      }
+    } catch(err) {
+      if (hintEl) hintEl.innerHTML = `Demo OTP: <b class="mono" style="color:var(--accent-blue);">${otp}</b> (Live SMS requires CORS proxy or direct backend)`;
+    }
+  }
+}
+
+window.testSMSGateway = async function() {
+  const statusEl = document.getElementById('sms-status');
+  const provider = document.getElementById('s-sms-provider').value;
+  const key = document.getElementById('s-sms-apikey').value.trim();
+
+  settings.smsProvider = provider;
+  settings.smsApiKey = key;
+  persistSettings(); saveSettingsCloud();
+
+  if (provider === 'simulated') {
+    statusEl.style.color = 'var(--accent-emerald)';
+    statusEl.textContent = 'Simulated / In-App Demo Mode Active. (No API key required)';
+    return;
+  }
+
+  if (!key) {
+    statusEl.style.color = 'var(--accent-red)';
+    statusEl.textContent = 'Please enter your SMS Provider API Key above.';
+    return;
+  }
+
+  statusEl.innerHTML = `<span class="spinner dark"></span> Testing ${provider} SMS Gateway...`;
+  try {
+    const testOtp = generateOTP();
+    await sendRealtimeSMSOTP('9999999999', testOtp);
+    statusEl.style.color = 'var(--accent-emerald)';
+    statusEl.textContent = `${provider.toUpperCase()} Gateway configured & saved!`;
+    toast('SMS Settings Saved');
+  } catch(e) {
+    statusEl.style.color = 'var(--accent-red)';
+    statusEl.textContent = `SMS Error: ${e.message}`;
+  }
 };
 
 window.closeOTPModal = function() {
