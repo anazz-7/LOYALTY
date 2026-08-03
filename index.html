@@ -1386,9 +1386,17 @@ window.showCustomer = function(phone) {
   if (!c.referralCode) { c.referralCode = generateReferralCode(c.name, c.phone); persistCustomers(); }
   if (!c.pin) { c.pin = generateCustomerPin(); persistCustomers(); saveCustomerCloud(c); }
 
-  const hist = transactions.filter(t => t.phone === phone).sort((a, b) => a.ts - b.ts);
+  const cleanPhone = String(phone || '').trim().toLowerCase();
+  const cleanName = String(c.name || '').trim().toLowerCase();
+
+  const hist = transactions.filter(t => {
+    const tPhone = String(t.phone || '').trim().toLowerCase();
+    const tName = String(t.name || '').trim().toLowerCase();
+    return (cleanPhone && tPhone === cleanPhone) || (cleanName && tName === cleanName);
+  }).sort((a, b) => (a.ts || 0) - (b.ts || 0));
+
   let runningBal = 0;
-  let rows = hist.map(t => {
+  let tableRows = hist.map(t => {
     const amt = Number(t.amount || 0);
     const earned = Number(t.earned || 0);
     const redeemed = Number(t.redeemed || 0);
@@ -1409,6 +1417,29 @@ window.showCustomer = function(phone) {
       </tr>`;
   }).join('');
 
+  let cardBal = 0;
+  let cards = hist.map(t => {
+    const amt = Number(t.amount || 0);
+    const earned = Number(t.earned || 0);
+    const redeemed = Number(t.redeemed || 0);
+    cardBal = cardBal + earned - redeemed;
+    return `
+      <div style="background:var(--bg-card); border:1.5px solid var(--border-color); border-radius:12px; padding:12px; margin-bottom:8px;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div style="font-weight:700; font-size:13.5px;">Bill #${escapeHtml(t.billNo || '—')} · ${t.date}</div>
+          <span class="badge">+${earned} pts</span>
+        </div>
+        <div style="font-size:12px; color:var(--text-sub); margin-top:6px; display:flex; justify-content:space-between; align-items:center;">
+          <span class="mono" style="font-weight:800; font-size:14px; color:var(--text-main);">₹${amt.toFixed(2)}</span>
+          <span>Running Bal: <b class="mono" style="color:var(--ink);">${cardBal} pts</b></span>
+        </div>
+        <div style="margin-top:8px; display:flex; gap:6px; justify-content:flex-end;">
+          <button class="btn whatsapp" style="padding:3px 8px; font-size:11px;" onclick="sendReceipt('${t.id}')">Receipt</button>
+          ${currentStaffRole === 'owner' ? `<button class="btn danger" style="padding:3px 8px; font-size:11px;" onclick="deleteTxn('${t.id}')">Delete</button>` : ''}
+        </div>
+      </div>`;
+  }).join('');
+
   detail.innerHTML = `
     <div class="customer-detail">
       <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
@@ -1421,13 +1452,20 @@ window.showCustomer = function(phone) {
           <div style="font-size:12px; color:var(--text-sub);">Closing Cash Liability: <b class="mono" style="color:var(--accent-emerald);">₹${(c.totalPoints * (settings.redeemVal || 0)).toFixed(2)}</b></div>
         </div>
       </div>
-      <div class="table-responsive">
-        <table>
-          <thead>
-            <tr><th>Bill #</th><th>Date</th><th>Bill Amount</th><th>Credit (+Pts)</th><th>Debit (-Pts)</th><th>Running Balance</th><th>Staff</th><th></th></tr>
-          </thead>
-          <tbody>${rows || '<tr><td colspan="8" class="empty">No entries in this ledger passbook yet.</td></tr>'}</tbody>
-        </table>
+      
+      <div class="desktop-only">
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr><th>Bill #</th><th>Date</th><th>Bill Amount</th><th>Credit (+Pts)</th><th>Debit (-Pts)</th><th>Running Balance</th><th>Staff</th><th></th></tr>
+            </thead>
+            <tbody>${tableRows || '<tr><td colspan="8" class="empty">No entries in this ledger passbook yet.</td></tr>'}</tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="mobile-only">
+        ${cards || '<div class="empty">No entries in this ledger passbook yet.</div>'}
       </div>
     </div>`;
   detail.scrollIntoView({ behavior: 'smooth' });
