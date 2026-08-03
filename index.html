@@ -1407,6 +1407,21 @@ window.showCustomer = function(phone) {
     return false;
   }).sort((a, b) => (a.ts || 0) - (b.ts || 0));
 
+  // Fallback: If no individual bill receipts exist in transactions table, synthesize Opening Balance entry from account summary
+  if (hist.length === 0 && (c.totalPoints > 0 || c.totalSpent > 0 || c.visits > 0)) {
+    hist.push({
+      id: 'op-' + phone,
+      billNo: 'INITIAL',
+      date: c.firstVisit || c.lastVisit || (new Date().toISOString().slice(0, 10)),
+      phone: phone,
+      name: c.name,
+      amount: Number(c.totalSpent || 0),
+      earned: Number(c.totalPoints || 0),
+      redeemed: 0,
+      staffName: 'Opening Balance'
+    });
+  }
+
   let runningBal = 0;
   let tableRows = hist.map(t => {
     const amt = Number(t.amount || 0);
