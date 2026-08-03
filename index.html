@@ -11,8 +11,17 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 
+<!-- Web App Manifest for PWA Offline Mode -->
+<link rel="manifest" href="manifest.json">
+
 <!-- Supabase JS Client SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<!-- QR Code Generator Library for Customer Pass -->
+<script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
+
+<!-- Camera Barcode & QR Code Scanner Library for Cashier -->
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
 <style>
   /* #14202E & WHITE — CLEAN MINIMALIST THEME */
@@ -382,7 +391,10 @@
         <h1 id="bizNameHeader">B-INDUSTRIES LOYALTY</h1>
       </div>
     </div>
-    <div class="stamp">EARN<br>&amp;<br>SAVE</div>
+    <div style="display:flex; gap:10px; align-items:center;">
+      <button class="btn secondary" id="btn-pwa-install" onclick="installPWA()" style="display:none; padding:4px 12px; font-size:12px;">📱 Install App</button>
+      <div class="stamp">EARN<br>&amp;<br>SAVE</div>
+    </div>
   </div>
 </header>
 
@@ -435,7 +447,15 @@
       <div class="grid">
         <div class="field"><label>Bill Number</label><input id="f-bill" class="mono" placeholder="e.g. 1042"></div>
         <div class="field"><label>Date</label><input id="f-date" type="date"></div>
-        <div class="field"><label>Customer Phone</label><input id="f-phone" class="mono" placeholder="10-digit number" maxlength="15"></div>
+        <div class="field">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <label>Customer Phone</label>
+            <button class="btn secondary" type="button" onclick="openQRScanner()" style="padding:2px 8px; font-size:11.5px; display:inline-flex; align-items:center; gap:4px; margin-bottom:4px;">
+              <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><rect x="7" y="7" width="10" height="10" rx="1"/></svg> Scan QR
+            </button>
+          </div>
+          <input id="f-phone" class="mono" placeholder="10-digit number" maxlength="15">
+        </div>
         <div class="field"><label>Customer Name</label><input id="f-name" placeholder="Full name"></div>
         <div class="field">
           <label>Bill Amount (₹)</label>
@@ -639,6 +659,16 @@
 
 <div class="toast" id="toast"></div>
 <div id="print-receipt"></div>
+
+<!-- Camera QR Code Scanner Overlay Modal -->
+<div id="qr-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:99999; align-items:center; justify-content:center; padding:16px;">
+  <div class="card" style="width:100%; max-width:440px; margin:0; text-align:center;">
+    <h2>Scan Customer QR Code</h2>
+    <div class="sub">Point your camera at the customer's digital QR pass.</div>
+    <div id="qr-reader" style="width:100%; border-radius:12px; overflow:hidden; background:#000; min-height:250px; margin:16px 0;"></div>
+    <button class="btn danger" type="button" onclick="closeQRScanner()" style="width:100%;">Cancel &amp; Close Camera</button>
+  </div>
+</div>
 
 <script>
 // Default Supabase Configuration for Instant Vercel & Multi-Mobile Sync
@@ -1719,6 +1749,74 @@ window.printReceipt = function(id) {
     <div class="r-foot">Thank you for shopping with us!<br>Keep this receipt for your records.</div>`;
   window.print();
 };
+// Camera QR Scanner Handlers
+let html5QrScanner = null;
+
+window.openQRScanner = function() {
+  const modal = document.getElementById('qr-modal');
+  modal.style.display = 'flex';
+
+  if (!html5QrScanner) {
+    html5QrScanner = new Html5Qrcode("qr-reader");
+  }
+
+  html5QrScanner.start(
+    { facingMode: "environment" },
+    { fps: 10, qrbox: { width: 250, height: 250 } },
+    (decodedText) => {
+      closeQRScanner();
+      const cleanPhone = decodedText.replace(/\D/g, '');
+      document.getElementById('f-phone').value = cleanPhone || decodedText;
+      updatePreview();
+      toast(`Scanned Customer: ${cleanPhone || decodedText}`);
+    },
+    () => {}
+  ).catch(err => {
+    console.warn('Camera access error:', err);
+    toast('Camera unavailable or permission denied');
+  });
+};
+
+window.closeQRScanner = function() {
+  document.getElementById('qr-modal').style.display = 'none';
+  if (html5QrScanner) {
+    try { html5QrScanner.stop(); } catch(e) {}
+  }
+};
+
+// PWA Service Worker Registration
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').then((reg) => {
+      console.log('Loyalty PWA Service Worker registered:', reg.scope);
+    }).catch((err) => {
+      console.warn('Service Worker registration warning:', err);
+    });
+  });
+}
+
+// PWA Install Prompt Engine
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  const btn = document.getElementById('btn-pwa-install');
+  if (btn) btn.style.display = 'inline-flex';
+});
+
+window.installPWA = function() {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then((choiceResult) => {
+      if (choiceResult.outcome === 'accepted') {
+        toast('Loyalty App Installed!');
+      }
+      deferredPrompt = null;
+      const btn = document.getElementById('btn-pwa-install');
+      if (btn) btn.style.display = 'none';
+    });
+  }
+};
 
 // ---- Customer Self-Service ----
 document.getElementById('c-lookup').addEventListener('click', () => {
@@ -1753,6 +1851,12 @@ document.getElementById('c-lookup').addEventListener('click', () => {
       <div style="font-size:15px; margin-top:10px; color:rgba(255,255,255,0.8);">Welcome back, <b>${escapeHtml(c.name)}</b> — ${c.visits} visits so far</div>
     </div>
 
+    <div class="card" style="text-align:center;">
+      <div style="font-size:12px; font-weight:700; color:var(--text-sub); margin-bottom:8px; text-transform:uppercase; letter-spacing:0.5px;">YOUR DIGITAL LOYALTY QR PASS</div>
+      <canvas id="cust-qr-canvas" style="background:#fff; padding:12px; border-radius:12px; border:1px solid var(--border-color); max-width:180px; width:100%; margin:auto;"></canvas>
+      <div style="font-size:12px; color:var(--text-sub); margin-top:8px;">Show this QR pass at the cashier counter to scan your profile in 1 second!</div>
+    </div>
+
     <div class="card">
       <div class="code-box">
         <div style="font-size:11.5px; color:var(--text-sub); margin-bottom:4px; font-weight:700;">YOUR REFERRAL CODE — SHARE WITH FRIENDS</div>
@@ -1773,6 +1877,17 @@ document.getElementById('c-lookup').addEventListener('click', () => {
         ${hist.length ? `<table><thead><tr><th>Bill</th><th>Date</th><th>Amount</th><th>Points</th></tr></thead><tbody>${histRows}</tbody></table>` : '<div class="empty">No bills recorded yet.</div>'}
       </div>
     </div>`;
+
+    setTimeout(() => {
+      if (window.QRious) {
+        new QRious({
+          element: document.getElementById('cust-qr-canvas'),
+          value: c.phone,
+          size: 200,
+          level: 'H'
+        });
+      }
+    }, 50);
 
   document.getElementById('c-redeem-btn').addEventListener('click', () => {
     const amt = parseFloat(document.getElementById('c-redeem-amt').value) || 0;

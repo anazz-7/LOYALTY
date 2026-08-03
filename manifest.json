@@ -1,0 +1,17 @@
+{
+  "name": "B-INDUSTRIES LOYALTY",
+  "short_name": "Loyalty",
+  "description": "Multi-Device Retail Loyalty & POS Management System",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#14202E",
+  "theme_color": "#14202E",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%2314202E'/><text x='50' y='65' font-size='50' font-weight='bold' fill='%233B82F6' text-anchor='middle'>B</text></svg>",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
