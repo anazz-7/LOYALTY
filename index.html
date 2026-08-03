@@ -388,13 +388,13 @@
         <h1 id="bizNameHeader">B-INDUSTRIES LOYALTY</h1>
       </div>
     </div>
-    <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+    <div style="display:flex; gap:6px; align-items:center;">
       <span class="staff-chip" id="staff-chip" style="display:none;"></span>
-      <button class="btn secondary" id="btn-lock-terminal" style="display:none; padding:4px 10px; font-size:12px; align-items:center; gap:4px;" onclick="lockTerminal()">
-        <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg> Logout
+      <button class="btn secondary" id="btn-lock-terminal" style="display:none; padding:6px 10px; font-size:12px; align-items:center; justify-content:center;" title="Logout Terminal" onclick="lockTerminal()">
+        <svg class="icon icon-sm" viewBox="0 0 24 24" style="margin:0;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
       </button>
-      <button class="btn secondary" id="btn-pwa-install" onclick="installPWA()" style="display:none; padding:4px 10px; font-size:12px; align-items:center; gap:4px;">
-        <svg class="icon icon-sm" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg> Install App
+      <button class="btn secondary" id="btn-pwa-install" onclick="installPWA()" style="display:none; padding:6px 10px; font-size:12px; align-items:center; gap:4px;" title="Install App">
+        <svg class="icon icon-sm" viewBox="0 0 24 24" style="margin:0;"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
       </button>
       <div class="stamp">EARN<br>&amp;<br>SAVE</div>
     </div>
@@ -500,10 +500,24 @@
 
   <section id="tab-customers" style="display:none;">
     <div class="card">
-      <h2>Customers Directory</h2>
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:14px;">
+        <div>
+          <h2>Customer Directory &amp; General Ledger</h2>
+          <div class="sub" style="margin-bottom:0;">Official customer account balances, debit purchases, credit point rewards, and passbook statements.</div>
+        </div>
+      </div>
+
+      <!-- General Ledger Summary Cards -->
+      <div class="stat-grid" style="margin-bottom:16px;">
+        <div class="stat"><div class="num" id="ledger-count">0</div><div class="lbl">Total Accounts</div></div>
+        <div class="stat"><div class="num" id="ledger-purchases">₹0</div><div class="lbl">Total Purchases (Debit)</div></div>
+        <div class="stat"><div class="num" id="ledger-points">0 pts</div><div class="lbl">Net Outstanding Points</div></div>
+        <div class="stat"><div class="num" id="ledger-liability">₹0.00</div><div class="lbl">Store Cash Liability</div></div>
+      </div>
+
       <div class="searchbar">
         <div style="position:relative;">
-          <input id="cust-search" placeholder="Search phone number or customer name..." style="padding-left:38px;">
+          <input id="cust-search" placeholder="Search customer name, phone number, or referral code..." style="padding-left:38px;">
           <svg class="icon icon-sm" viewBox="0 0 24 24" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--text-sub);"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         </div>
       </div>
@@ -1282,33 +1296,50 @@ function renderRecent() {
 function renderCustomers() {
   const q = (document.getElementById('cust-search').value || '').toLowerCase().trim();
   const list = document.getElementById('customer-list');
-  const arr = Object.values(customers).filter(c => !q || c.phone.toLowerCase().includes(q) || c.name.toLowerCase().includes(q)).sort((a, b) => b.lastVisit.localeCompare(a.lastVisit));
-  if (arr.length === 0) { list.innerHTML = '<div class="empty">No customers yet.</div>'; return; }
-  
+  const arr = Object.values(customers).filter(c => !q || c.phone.toLowerCase().includes(q) || c.name.toLowerCase().includes(q) || (c.referralCode && c.referralCode.toLowerCase().includes(q))).sort((a, b) => b.lastVisit.localeCompare(a.lastVisit));
+
+  // Calculate General Ledger Totals
+  const totalAccs = Object.keys(customers).length;
+  const totalPurchases = Object.values(customers).reduce((s, c) => s + (c.totalSpent || 0), 0);
+  const totalPts = Object.values(customers).reduce((s, c) => s + (c.totalPoints || 0), 0);
+  const totalLiability = totalPts * (settings.redeemVal || 0);
+
+  document.getElementById('ledger-count').textContent = totalAccs;
+  document.getElementById('ledger-purchases').textContent = '₹' + totalPurchases.toFixed(0);
+  document.getElementById('ledger-points').textContent = totalPts + ' pts';
+  document.getElementById('ledger-liability').textContent = '₹' + totalLiability.toFixed(2);
+
+  if (arr.length === 0) { list.innerHTML = '<div class="empty">No matching customer ledger accounts.</div>'; return; }
+
   let tableRows = arr.map(c => `
     <tr>
       <td><b>${escapeHtml(c.name)}</b></td>
       <td class="mono">${escapeHtml(c.phone)}</td>
       <td>${c.visits}</td>
-      <td class="mono">₹${c.totalSpent.toFixed(0)}</td>
+      <td class="mono">₹${c.totalSpent.toFixed(2)}</td>
       <td><span class="badge">${c.totalPoints} pts</span></td>
-      <td><button class="link-btn" onclick="showCustomer('${c.phone}')">View</button></td>
+      <td class="mono">₹${(c.totalPoints * (settings.redeemVal || 0)).toFixed(2)}</td>
+      <td><button class="btn secondary" style="padding:4px 10px; font-size:11.5px;" onclick="showCustomer('${c.phone}')"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> Ledger Statement</button></td>
     </tr>`).join('');
 
   let cards = arr.map(c => `
-    <div class="cust-mobile-card" onclick="showCustomer('${c.phone}')" style="background:var(--bg-card); border:1.5px solid var(--border-color); border-radius:12px; padding:14px; margin-bottom:8px; cursor:pointer;">
+    <div class="cust-mobile-card" onclick="showCustomer('${c.phone}')" style="background:var(--bg-card); border:1.5px solid var(--border-color); border-radius:12px; padding:14px; margin-bottom:10px; cursor:pointer;">
       <div style="display:flex; justify-content:space-between; align-items:center;">
         <div style="font-weight:700; font-size:14.5px; color:var(--text-main);">${escapeHtml(c.name)}</div>
         <span class="badge">${c.totalPoints} pts</span>
       </div>
       <div style="font-size:12px; color:var(--text-sub); margin-top:6px; display:flex; justify-content:space-between;" class="mono">
         <span>${escapeHtml(c.phone)}</span>
-        <span>${c.visits} visits · ₹${c.totalSpent.toFixed(0)}</span>
+        <span>${c.visits} visits · ₹${c.totalSpent.toFixed(0)} spent</span>
+      </div>
+      <div style="margin-top:8px; border-top:1px dashed var(--border-color); padding-top:6px; display:flex; justify-content:space-between; align-items:center; font-size:11.5px;">
+        <span style="color:var(--text-sub);">Cash Liability: <b class="mono" style="color:var(--ink);">₹${(c.totalPoints * (settings.redeemVal || 0)).toFixed(2)}</b></span>
+        <span style="color:var(--accent-blue); font-weight:700;">View Ledger Statement ➔</span>
       </div>
     </div>`).join('');
 
   list.innerHTML = `
-    <div class="desktop-only"><div class="table-responsive"><table><thead><tr><th>Name</th><th>Phone</th><th>Visits</th><th>Spent</th><th>Balance</th><th></th></tr></thead><tbody>${tableRows}</tbody></table></div></div>
+    <div class="desktop-only"><div class="table-responsive"><table><thead><tr><th>Customer Account</th><th>Phone</th><th>Visits</th><th>Total Debits (Spent ₹)</th><th>Closing Balance</th><th>Cash Liability</th><th></th></tr></thead><tbody>${tableRows}</tbody></table></div></div>
     <div class="mobile-only">${cards}</div>`;
 }
 document.getElementById('cust-search').addEventListener('input', renderCustomers);
@@ -1317,28 +1348,50 @@ window.showCustomer = function(phone) {
   const c = customers[phone]; const detail = document.getElementById('customer-detail');
   if (!c) { detail.innerHTML = ''; return; }
   if (!c.referralCode) { c.referralCode = generateReferralCode(c.name, c.phone); persistCustomers(); }
-  const hist = transactions.filter(t => t.phone === phone);
-  let rows = hist.map(t => `
-    <tr>
-      <td class="mono">#${escapeHtml(t.billNo)}</td>
-      <td>${t.date}</td>
-      <td class="mono">₹${t.amount.toFixed(2)}</td>
-      <td><span class="badge">+${t.earned}</span> ${t.redeemed > 0 ? `<span class="badge redeem">-${t.redeemed}</span>` : ''}</td>
-      <td>${escapeHtml(t.staffName || '—')}</td>
-      <td>
-        <button class="btn whatsapp" onclick="sendReceipt('${t.id}')">Receipt</button>
-        <button class="btn print" onclick="printReceipt('${t.id}')">Print</button>
-        ${currentStaffRole === 'owner' ? `<button class="btn danger" onclick="deleteTxn('${t.id}')">Delete</button>` : ''}
-      </td>
-    </tr>`).join('');
-
   if (!c.pin) { c.pin = generateCustomerPin(); persistCustomers(); saveCustomerCloud(c); }
+
+  const hist = transactions.filter(t => t.phone === phone).sort((a, b) => a.ts - b.ts);
+  let runningBal = 0;
+  let rows = hist.map(t => {
+    runningBal = runningBal + t.earned - t.redeemed;
+    return `
+      <tr>
+        <td class="mono">#${escapeHtml(t.billNo)}</td>
+        <td>${t.date}</td>
+        <td class="mono">₹${t.amount.toFixed(2)}</td>
+        <td><span class="badge">+${t.earned}</span></td>
+        <td>${t.redeemed > 0 ? `<span class="badge redeem">-${t.redeemed}</span>` : '—'}</td>
+        <td class="mono"><b>${runningBal} pts</b></td>
+        <td>${escapeHtml(t.staffName || '—')}</td>
+        <td>
+          <button class="btn whatsapp" style="padding:3px 8px; font-size:11px;" onclick="sendReceipt('${t.id}')">Receipt</button>
+          ${currentStaffRole === 'owner' ? `<button class="btn danger" onclick="deleteTxn('${t.id}')">Delete</button>` : ''}
+        </td>
+      </tr>`;
+  }).join('');
+
   detail.innerHTML = `
     <div class="customer-detail">
-      <h3>${escapeHtml(c.name)}</h3>
-      <div class="sub" style="margin-bottom:12px;">${escapeHtml(c.phone)} · ${c.visits} visits · Balance: <b>${c.totalPoints} pts</b> (≈₹${(c.totalPoints * (settings.redeemVal || 0)).toFixed(2)}) · Referral: <b class="mono" style="color:var(--accent-blue);">${escapeHtml(c.referralCode || '—')}</b> · Security PIN: <b class="mono" style="color:var(--ink);">${c.pin}</b> <button class="btn secondary" type="button" onclick="resetCustomerPin('${c.phone}')" style="padding:2px 6px; font-size:11px; margin-left:4px;">Reset PIN</button></div>
-      <div class="table-responsive"><table><thead><tr><th>Bill</th><th>Date</th><th>Amount</th><th>Points</th><th>Staff</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
+        <div>
+          <h3 style="font-size:18px; color:var(--text-main);">${escapeHtml(c.name)} — Statement of Account</h3>
+          <div class="sub" style="margin-bottom:0;">Account Phone: <b class="mono">${escapeHtml(c.phone)}</b> · ${c.visits} total visits · Security PIN: <b class="mono">${c.pin}</b> <button class="btn secondary" type="button" onclick="resetCustomerPin('${c.phone}')" style="padding:2px 6px; font-size:11px; margin-left:4px;">Reset PIN</button></div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:22px; font-weight:800; color:var(--ink);" class="mono">${c.totalPoints} pts</div>
+          <div style="font-size:12px; color:var(--text-sub);">Closing Cash Liability: <b class="mono" style="color:var(--accent-emerald);">₹${(c.totalPoints * (settings.redeemVal || 0)).toFixed(2)}</b></div>
+        </div>
+      </div>
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr><th>Bill #</th><th>Date</th><th>Bill Amount</th><th>Credit (+Pts)</th><th>Debit (-Pts)</th><th>Running Balance</th><th>Staff</th><th></th></tr>
+          </thead>
+          <tbody>${rows || '<tr><td colspan="8" class="empty">No entries in this ledger passbook yet.</td></tr>'}</tbody>
+        </table>
+      </div>
     </div>`;
+  detail.scrollIntoView({ behavior: 'smooth' });
 };
 
 window.deleteTxn = function(id) {
