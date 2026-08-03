@@ -6,6 +6,9 @@
 <title>B-INDUSTRIES LOYALTY — Smart Rewards Program</title>
 <meta name="theme-color" content="#14202E">
 
+<!-- Branded Favicon -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%2314202E'/><text x='50' y='68' font-size='55' font-weight='800' fill='%233B82F6' text-anchor='middle' font-family='sans-serif'>B</text></svg>">
+
 <!-- Premium Typography System: Plus Jakarta Sans + Inter + JetBrains Mono -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -392,7 +395,9 @@
       </div>
     </div>
     <div style="display:flex; gap:10px; align-items:center;">
-      <button class="btn secondary" id="btn-pwa-install" onclick="installPWA()" style="display:none; padding:4px 12px; font-size:12px;">📱 Install App</button>
+      <button class="btn secondary" id="btn-pwa-install" onclick="installPWA()" style="display:none; padding:4px 12px; font-size:12px; align-items:center; gap:6px;">
+        <svg class="icon icon-sm" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg> Install App
+      </button>
       <div class="stamp">EARN<br>&amp;<br>SAVE</div>
     </div>
   </div>
@@ -917,7 +922,7 @@ document.getElementById('pin-submit').addEventListener('click', () => {
       document.getElementById('pin-status').textContent = '';
       document.getElementById('pin-input').value = '';
 
-      document.getElementById('staff-chip').textContent = `${currentStaffName} (${currentStaffRole === 'owner' ? '👑 Owner' : '👤 Staff'})`;
+      document.getElementById('staff-chip').textContent = `${currentStaffName} (${currentStaffRole === 'owner' ? 'Owner' : 'Staff'})`;
       document.getElementById('staff-chip').style.display = 'inline-block';
       document.getElementById('btn-lock-terminal').style.display = 'inline-flex';
 
@@ -1327,7 +1332,7 @@ window.testSupabaseConnection = async function() {
   const statusEl = document.getElementById('supa-status');
   if (!supabaseClient) {
     statusEl.style.color = 'var(--accent-red)';
-    statusEl.innerHTML = '❌ Not Connected. Enter Supabase URL and Anon Key below or add them in window.SUPABASE_URL.';
+    statusEl.innerHTML = '<span class="badge redeem">Not Connected</span> Enter Supabase URL and Anon Key below or add them in window.SUPABASE_URL.';
     return;
   }
   statusEl.innerHTML = `<span class="spinner dark"></span> Running Supabase Diagnostic Health Check...`;
@@ -1335,15 +1340,15 @@ window.testSupabaseConnection = async function() {
     const { data, error } = await supabaseClient.from('customers').select('count', { count: 'exact', head: true });
     if (error) {
       statusEl.style.color = 'var(--accent-red)';
-      statusEl.innerHTML = `❌ Supabase Error: ${error.message} (${error.hint || 'Check if supabase_schema.sql was run in SQL Editor'}).`;
+      statusEl.innerHTML = `<span class="badge redeem">Supabase Error</span> ${error.message} (${error.hint || 'Check if supabase_schema.sql was run in SQL Editor'}).`;
     } else {
       statusEl.style.color = 'var(--accent-emerald)';
-      statusEl.innerHTML = `✅ Connected & Healthy! Supabase Cloud Database is active and syncing live.`;
+      statusEl.innerHTML = `<span class="badge">Connected &amp; Healthy</span> Supabase Cloud Database is active and syncing live.`;
       toast('Supabase Health Check Passed!');
     }
   } catch(e) {
     statusEl.style.color = 'var(--accent-red)';
-    statusEl.innerHTML = `❌ Diagnostic Exception: ${e.message}`;
+    statusEl.innerHTML = `<span class="badge redeem">Diagnostic Exception</span> ${e.message}`;
   }
 };
 
@@ -1404,11 +1409,11 @@ window.syncAllLocalToCloud = async function() {
     }
 
     statusEl.style.color = 'var(--accent-emerald)';
-    statusEl.innerHTML = `✅ Successfully uploaded ${custArr.length} customers & ${transactions.length} bills to Supabase Cloud!`;
+    statusEl.innerHTML = `<span class="badge">Cloud Upload Complete</span> Successfully uploaded ${custArr.length} customers &amp; ${transactions.length} bills to Supabase Cloud!`;
     toast('Local data uploaded to Cloud!');
   } catch(err) {
     statusEl.style.color = 'var(--accent-red)';
-    statusEl.innerHTML = `❌ Cloud Upload Error: ${err.message}`;
+    statusEl.innerHTML = `<span class="badge redeem">Cloud Upload Error</span> ${err.message}`;
   }
 };
 
