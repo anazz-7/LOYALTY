@@ -648,6 +648,9 @@
         </label>
       </div>
     </div>
+
+    <div class="card">
+      <h2>Backup &amp; Data Tools</h2>
       <div class="sub">Safely export bills to CSV or download full JSON database backups.</div>
       <div style="display:flex; gap:10px; flex-wrap:wrap;">
         <button class="btn secondary" id="export-csv">Export Bills (CSV)</button>
@@ -2076,8 +2079,7 @@ function renderCustomerPortal(c) {
     document.getElementById('c-redeem-btn').disabled = true;
     toast('Redemption requested');
   });
-  }, 250);
-});
+}
 
 loadAll();
 </script>
