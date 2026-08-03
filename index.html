@@ -498,26 +498,55 @@
 
   <section id="tab-reports" style="display:none;">
     <div class="card">
-      <h2>Sales &amp; Customer Reports</h2>
-      <div class="sub">Pick a range to analyze revenue, bills, and point statistics.</div>
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
+        <div>
+          <h2>Sales &amp; Executive Analytics</h2>
+          <div class="sub">Filter by date to analyze revenue, cashier performance, customer spending, and loyalty metrics.</div>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button class="btn secondary" onclick="exportFilteredCSV()"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Export Report (CSV)</button>
+          <button class="btn secondary" onclick="window.print()"><svg class="icon icon-sm" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg> Print</button>
+        </div>
+      </div>
+
       <div class="quick-range">
         <button class="active" data-range="today">Today</button>
-        <button data-range="week">This week</button>
-        <button data-range="month">This month</button>
-        <button data-range="all">All time</button>
+        <button data-range="yesterday">Yesterday</button>
+        <button data-range="week">This Week</button>
+        <button data-range="month">This Month</button>
+        <button data-range="all">All Time</button>
       </div>
-      <div class="grid">
-        <div class="field"><label>From</label><input id="r-from" type="date"></div>
-        <div class="field"><label>To</label><input id="r-to" type="date"></div>
+
+      <div class="grid" style="margin-top:14px;">
+        <div class="field"><label>From Date</label><input id="r-from" type="date"></div>
+        <div class="field"><label>To Date</label><input id="r-to" type="date"></div>
       </div>
-      <div class="stat-grid" id="report-stats"></div>
+
+      <div class="stat-grid" id="report-stats" style="margin-top:20px;"></div>
     </div>
+
     <div class="card">
-      <h2>Daily Breakdown</h2>
-      <div id="report-daily"></div>
+      <h2>Daily Revenue &amp; Sales Trend</h2>
+      <div id="report-chart" style="margin-top:14px;"></div>
+      <div id="report-daily" style="margin-top:16px;"></div>
     </div>
-    <div class="card">
-      <h2>Bills in This Range</h2>
+
+    <div class="grid" style="grid-template-columns: 1fr 1fr; gap:16px;">
+      <div class="card" style="margin:0;">
+        <h2>Cashier / Staff Performance</h2>
+        <div class="sub">Breakdown of bills and sales generated per staff member.</div>
+        <div id="report-staff" style="margin-top:12px;"></div>
+      </div>
+
+      <div class="card" style="margin:0;">
+        <h2>Top VIP Customers in Range</h2>
+        <div class="sub">Highest spending customers during this period.</div>
+        <div id="report-top-cust" style="margin-top:12px;"></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px;">
+      <h2>Bills Log in Selected Range</h2>
       <div id="report-bills"></div>
     </div>
   </section>
@@ -1513,6 +1542,7 @@ function rangeForPreset(preset) {
   const pad = n => String(n).padStart(2, '0');
   const toStr = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
   if (preset === 'today') { return [toStr(now), toStr(now)]; }
+  if (preset === 'yesterday') { const d = new Date(now); d.setDate(d.getDate() - 1); return [toStr(d), toStr(d)]; }
   if (preset === 'week') { const d = new Date(now); d.setDate(d.getDate() - 6); return [toStr(d), toStr(now)]; }
   if (preset === 'month') { const d = new Date(now.getFullYear(), now.getMonth(), 1); return [toStr(d), toStr(now)]; }
   return ['2000-01-01', toStr(now)];
@@ -1539,27 +1569,118 @@ function renderReports() {
   const revenue = inRange.reduce((s, t) => s + t.amount, 0);
   const earned = inRange.reduce((s, t) => s + t.earned, 0);
   const redeemed = inRange.reduce((s, t) => s + t.redeemed, 0);
+  const redeemedVal = redeemed * (settings.redeemVal || 0);
   const uniqueCustomers = new Set(inRange.map(t => t.phone)).size;
+  const aov = inRange.length > 0 ? (revenue / inRange.length) : 0;
 
+  // 1. Executive Summary Cards
   document.getElementById('report-stats').innerHTML = `
-    <div class="stat"><div class="num">₹${revenue.toFixed(0)}</div><div class="lbl">Revenue</div></div>
-    <div class="stat"><div class="num">${inRange.length}</div><div class="lbl">Bills</div></div>
-    <div class="stat"><div class="num">${uniqueCustomers}</div><div class="lbl">Customers Served</div></div>
-    <div class="stat"><div class="num">+${earned} / -${redeemed}</div><div class="lbl">Points Earned / Redeemed</div></div>`;
+    <div class="stat"><div class="num">₹${revenue.toFixed(2)}</div><div class="lbl">Total Revenue</div></div>
+    <div class="stat"><div class="num">${inRange.length}</div><div class="lbl">Bills Issued</div></div>
+    <div class="stat"><div class="num">₹${aov.toFixed(2)}</div><div class="lbl">Average Order Value (AOV)</div></div>
+    <div class="stat"><div class="num">${uniqueCustomers}</div><div class="lbl">Unique Customers</div></div>
+    <div class="stat"><div class="num">+${earned}</div><div class="lbl">Points Issued</div></div>
+    <div class="stat"><div class="num">-${redeemed} <span style="font-size:12px; color:var(--text-sub);">(₹${redeemedVal.toFixed(0)})</span></div><div class="lbl">Points Redeemed</div></div>`;
 
+  // 2. Daily Breakdown & Trend Chart
   const byDay = {};
-  inRange.forEach(t => { if (!byDay[t.date]) byDay[t.date] = { revenue: 0, bills: 0 }; byDay[t.date].revenue += t.amount; byDay[t.date].bills += 1; });
-  const days = Object.keys(byDay).sort().reverse();
-  document.getElementById('report-daily').innerHTML = days.length ? `
-    <div class="table-responsive"><table><thead><tr><th>Date</th><th>Bills</th><th>Revenue</th></tr></thead><tbody>
-    ${days.map(d => `<tr><td>${d}</td><td>${byDay[d].bills}</td><td class="mono">₹${byDay[d].revenue.toFixed(0)}</td></tr>`).join('')}
-    </tbody></table></div>` : '<div class="empty">No bills in this range.</div>';
+  inRange.forEach(t => {
+    if (!byDay[t.date]) byDay[t.date] = { revenue: 0, bills: 0, points: 0 };
+    byDay[t.date].revenue += t.amount;
+    byDay[t.date].bills += 1;
+    byDay[t.date].points += t.earned;
+  });
 
+  const days = Object.keys(byDay).sort().reverse();
+  const maxRevenue = Math.max(...Object.values(byDay).map(d => d.revenue), 1);
+
+  // Daily Chart Bars
+  if (days.length > 0) {
+    const chartBars = days.slice(0, 14).reverse().map(d => {
+      const height = Math.max(10, Math.round((byDay[d].revenue / maxRevenue) * 100));
+      return `
+        <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; min-width:32px;">
+          <div style="font-size:10px; font-weight:700; color:var(--text-sub);" class="mono">₹${byDay[d].revenue >= 1000 ? (byDay[d].revenue/1000).toFixed(1)+'k' : byDay[d].revenue}</div>
+          <div style="width:100%; height:120px; background:var(--bg-card-elevated); border-radius:6px; display:flex; align-items:flex-end; padding:2px; overflow:hidden;">
+            <div style="width:100%; height:${height}%; background:linear-gradient(180deg, var(--accent-blue) 0%, #2563EB 100%); border-radius:4px; transition:height 0.3s ease;"></div>
+          </div>
+          <div style="font-size:10.5px; color:var(--text-sub);" class="mono">${d.slice(5)}</div>
+        </div>`;
+    }).join('');
+
+    document.getElementById('report-chart').innerHTML = `<div style="display:flex; gap:8px; align-items:flex-end; padding-top:10px;">${chartBars}</div>`;
+  } else {
+    document.getElementById('report-chart').innerHTML = '';
+  }
+
+  document.getElementById('report-daily').innerHTML = days.length ? `
+    <div class="table-responsive"><table><thead><tr><th>Date</th><th>Bills</th><th>Points Issued</th><th>Daily Revenue</th></tr></thead><tbody>
+    ${days.map(d => `<tr><td class="mono">${d}</td><td>${byDay[d].bills}</td><td><span class="badge">+${byDay[d].points}</span></td><td class="mono">₹${byDay[d].revenue.toFixed(2)}</td></tr>`).join('')}
+    </tbody></table></div>` : '<div class="empty">No sales recorded in this date range.</div>';
+
+  // 3. Staff / Cashier Leaderboard Performance
+  const staffPerf = {};
+  inRange.forEach(t => {
+    const sName = t.staffName || 'Owner / Direct';
+    if (!staffPerf[sName]) staffPerf[sName] = { bills: 0, revenue: 0, points: 0 };
+    staffPerf[sName].bills += 1;
+    staffPerf[sName].revenue += t.amount;
+    staffPerf[sName].points += t.earned;
+  });
+
+  const staffRows = Object.keys(staffPerf).sort((a,b) => staffPerf[b].revenue - staffPerf[a].revenue).map(s => `
+    <tr>
+      <td><b>${escapeHtml(s)}</b></td>
+      <td>${staffPerf[s].bills}</td>
+      <td class="mono">₹${staffPerf[s].revenue.toFixed(2)}</td>
+      <td><span class="badge">+${staffPerf[s].points}</span></td>
+    </tr>`).join('');
+
+  document.getElementById('report-staff').innerHTML = staffRows ? `
+    <div class="table-responsive"><table><thead><tr><th>Staff Name</th><th>Bills</th><th>Sales (₹)</th><th>Points</th></tr></thead><tbody>${staffRows}</tbody></table></div>`
+    : '<div class="empty">No cashier data.</div>';
+
+  // 4. Top VIP Customers in Range
+  const custPerf = {};
+  inRange.forEach(t => {
+    if (!custPerf[t.phone]) custPerf[t.phone] = { name: t.name, phone: t.phone, bills: 0, spent: 0, points: 0 };
+    custPerf[t.phone].bills += 1;
+    custPerf[t.phone].spent += t.amount;
+    custPerf[t.phone].points += t.earned;
+  });
+
+  const topCustRows = Object.values(custPerf).sort((a,b) => b.spent - a.spent).slice(0, 5).map(c => `
+    <tr>
+      <td><b>${escapeHtml(c.name)}</b></td>
+      <td class="mono">${escapeHtml(c.phone)}</td>
+      <td class="mono">₹${c.spent.toFixed(0)}</td>
+      <td><span class="badge">${c.points} pts</span></td>
+    </tr>`).join('');
+
+  document.getElementById('report-top-cust').innerHTML = topCustRows ? `
+    <div class="table-responsive"><table><thead><tr><th>Customer</th><th>Phone</th><th>Spent</th><th>Earned</th></tr></thead><tbody>${topCustRows}</tbody></table></div>`
+    : '<div class="empty">No customer data.</div>';
+
+  // 5. Filtered Bills Log
   document.getElementById('report-bills').innerHTML = inRange.length ? `
-    <div class="table-responsive"><table><thead><tr><th>Bill</th><th>Date</th><th>Customer</th><th>Amount</th><th>Staff</th></tr></thead><tbody>
-    ${inRange.slice(0, 50).map(t => `<tr><td class="mono">#${escapeHtml(t.billNo)}</td><td>${t.date}</td><td>${escapeHtml(t.name)}</td><td class="mono">₹${t.amount.toFixed(2)}</td><td>${escapeHtml(t.staffName || '—')}</td></tr>`).join('')}
-    </tbody></table></div>${inRange.length > 50 ? `<div class="sub" style="margin-top:8px;">Showing 50 of ${inRange.length} bills. Export CSV in Settings for full list.</div>` : ''}` : '<div class="empty">No bills in this range.</div>';
+    <div class="table-responsive"><table><thead><tr><th>Bill</th><th>Date</th><th>Customer</th><th>Amount</th><th>Points</th><th>Staff</th></tr></thead><tbody>
+    ${inRange.slice(0, 50).map(t => `<tr><td class="mono">#${escapeHtml(t.billNo)}</td><td>${t.date}</td><td>${escapeHtml(t.name)}<br><span style="color:var(--text-sub); font-size:12px;" class="mono">${escapeHtml(t.phone)}</span></td><td class="mono">₹${t.amount.toFixed(2)}</td><td><span class="badge">+${t.earned}</span> ${t.redeemed > 0 ? `<span class="badge redeem">-${t.redeemed}</span>` : ''}</td><td>${escapeHtml(t.staffName || '—')}</td></tr>`).join('')}
+    </tbody></table></div>${inRange.length > 50 ? `<div class="sub" style="margin-top:8px;">Showing 50 of ${inRange.length} bills. Export CSV for full report.</div>` : ''}` : '<div class="empty">No bills in this range.</div>';
 }
+
+window.exportFilteredCSV = function() {
+  const from = document.getElementById('r-from').value || '2000-01-01';
+  const to = document.getElementById('r-to').value || '9999-12-31';
+  const inRange = transactions.filter(t => t.date >= from && t.date <= to);
+  if (inRange.length === 0) { toast('No bills in selected range to export'); return; }
+
+  let csv = 'Bill Number,Date,Customer Name,Phone,Amount,Points Earned,Points Redeemed,Staff Name\n';
+  inRange.forEach(t => {
+    csv += `${t.billNo},${t.date},"${t.name}",${t.phone},${t.amount},${t.earned},${t.redeemed},"${t.staffName || 'Owner'}"\n`;
+  });
+  downloadFile(csv, `sales-report-${from}-to-${to}.csv`, 'text/csv');
+  toast('Filtered Sales Report exported!');
+};
 
 // ---- WhatsApp & Thermal Print ----
 function buildReceiptText(t) {
