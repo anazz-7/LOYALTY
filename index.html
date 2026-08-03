@@ -428,9 +428,6 @@
     </div>
     <button class="btn" id="pin-submit" style="width:100%;">Unlock Terminal</button>
     <div class="save-status" id="pin-status" style="color:var(--accent-red); margin-top:8px;"></div>
-    <div style="margin-top:14px; font-size:12px; border-top:1px dashed var(--border-color); padding-top:12px; text-align:center;">
-      <button type="button" class="link-btn" onclick="resetPinToDefault()" style="font-size:12px;">Reset PIN to Default (1234)</button>
-    </div>
   </div>
 </main>
 
@@ -979,15 +976,6 @@ document.getElementById('pin-input').addEventListener('keyup', (e) => {
     document.getElementById('pin-submit').click();
   }
 });
-
-window.resetPinToDefault = function() {
-  settings.staff = [{ name: "Owner", pin: "1234", role: "owner" }];
-  persistSettings();
-  document.getElementById('pin-input').value = '1234';
-  document.getElementById('pin-status').style.color = 'var(--accent-emerald)';
-  document.getElementById('pin-status').textContent = 'PIN reset to 1234! Click Unlock Terminal.';
-  toast('PIN reset to 1234');
-};
 
 // ---- Staff tabs ----
 window.switchTab = function(tabName) {
