@@ -1384,19 +1384,27 @@ function renderCustomers() {
 }
 document.getElementById('cust-search').addEventListener('input', renderCustomers);
 
+function get10DigitPhone(p) {
+  const digits = String(p || '').replace(/\D/g, '');
+  return digits.length >= 10 ? digits.slice(-10) : digits;
+}
+
 window.showCustomer = function(phone) {
   const c = customers[phone]; const detail = document.getElementById('customer-detail');
   if (!c) { detail.innerHTML = ''; return; }
-  if (!c.referralCode) { c.referralCode = generateReferralCode(c.name, c.phone); persistCustomers(); }
-  if (!c.pin) { c.pin = generateCustomerPin(); persistCustomers(); saveCustomerCloud(c); }
+  if (!c.referralCode) { c.referralCode = generateReferralCode(c.name, c.phone); }
+  if (!c.pin) { c.pin = generateCustomerPin(); saveCustomerCloud(c); }
 
-  const cleanPhone = String(phone || '').trim().toLowerCase();
-  const cleanName = String(c.name || '').trim().toLowerCase();
+  const target10 = get10DigitPhone(phone);
+  const targetName = String(c.name || '').trim().toLowerCase();
 
   const hist = transactions.filter(t => {
-    const tPhone = String(t.phone || '').trim().toLowerCase();
+    const t10 = get10DigitPhone(t.phone);
     const tName = String(t.name || '').trim().toLowerCase();
-    return (cleanPhone && tPhone === cleanPhone) || (cleanName && tName === cleanName);
+    if (target10 && t10 && target10 === t10) return true;
+    if (t.phone && phone && String(t.phone).trim() === String(phone).trim()) return true;
+    if (targetName && tName && (tName === targetName || tName.includes(targetName) || targetName.includes(tName))) return true;
+    return false;
   }).sort((a, b) => (a.ts || 0) - (b.ts || 0));
 
   let runningBal = 0;
