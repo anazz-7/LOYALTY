@@ -1515,19 +1515,42 @@ async function fetchCloudData() {
       renderStaffList();
     }
 
-    // 3. Fetch Cloud Customers (100% Supabase Direct)
+    // 3. Fetch Cloud Customers (100% Supabase Direct + Auto-Sanitize Swapped Data)
     const { data: custData } = await supabaseClient.from('customers').select('*');
     const newCustomers = {};
     if (custData && custData.length) {
       custData.forEach(row => {
         if (!row.phone) return;
-        newCustomers[row.phone] = {
-          phone: row.phone, name: row.name || 'Customer', totalPoints: Number(row.total_points || 0),
-          totalSpent: Number(row.total_spent || 0), visits: Number(row.visits || 0),
-          firstVisit: row.first_visit, lastVisit: row.last_visit,
-          referralCode: row.referral_code, referredBy: row.referred_by,
-          pin: row.pin || null
-        };
+        let p = String(row.phone || '').trim();
+        let n = String(row.name || 'Customer').trim();
+
+        // Auto-fix swapped name & phone (e.g. phone has letters 'VIJAY BASKARAN' and name has digits '9942112306')
+        const pDigits = p.replace(/\D/g, '');
+        const nDigits = n.replace(/\D/g, '');
+        if (pDigits.length < 5 && nDigits.length >= 10 && /[a-zA-Z]/.test(p)) {
+          const tempP = nDigits.slice(-10);
+          n = p;
+          p = tempP;
+        } else if (pDigits.length >= 10) {
+          p = pDigits.slice(-10);
+        }
+
+        if (!p) return;
+
+        if (newCustomers[p]) {
+          newCustomers[p].totalPoints = Math.max(newCustomers[p].totalPoints, Number(row.total_points || 0));
+          newCustomers[p].totalSpent = Math.max(newCustomers[p].totalSpent, Number(row.total_spent || 0));
+          newCustomers[p].visits = Math.max(newCustomers[p].visits, Number(row.visits || 0));
+          if (!newCustomers[p].name || newCustomers[p].name === 'Customer') newCustomers[p].name = n;
+        } else {
+          newCustomers[p] = {
+            phone: p, name: n || 'Customer', totalPoints: Number(row.total_points || 0),
+            totalSpent: Number(row.total_spent || 0), visits: Number(row.visits || 0),
+            firstVisit: row.first_visit, lastVisit: row.last_visit,
+            referralCode: row.referral_code, referredBy: row.referred_by,
+            pin: row.pin || null
+          };
+        }
       });
     }
     customers = newCustomers;
@@ -3091,7 +3114,7 @@ window.saveCustomerProfileEdit = async function() {
     const oldPhone = document.getElementById('edit-cust-old-phone').value;
     const newName = document.getElementById('edit-cust-name').value.trim();
     const newPhoneRaw = document.getElementById('edit-cust-phone').value.trim();
-    const newPhone = get10DigitPhone(newPhoneRaw) || newPhoneRaw;
+    const newPhone = get10DigitPhone(newPhoneRaw) || newPhoneRaw.replace(/\D/g, '');
     const newPoints = parseInt(document.getElementById('edit-cust-points').value);
     const newPin = document.getElementById('edit-cust-pin').value.trim() || '1234';
 
@@ -3102,7 +3125,7 @@ window.saveCustomerProfileEdit = async function() {
     }
 
     const oldPhone10 = get10DigitPhone(oldPhone);
-    const oldC = customers[oldPhone10] || customers[oldPhone] || Object.values(customers).find(x => x && (get10DigitPhone(x.phone) === oldPhone10 || x.phone === oldPhone));
+    const oldC = customers[oldPhone10] || customers[oldPhone] || Object.values(customers).find(x => x && (get10DigitPhone(x.phone) === oldPhone10 || x.phone === oldPhone || x.name === oldPhone));
     
     if (!oldC) {
       toast('Customer account record not found');
@@ -3112,18 +3135,18 @@ window.saveCustomerProfileEdit = async function() {
 
     const ptsToSet = isNaN(newPoints) ? (oldC.totalPoints || 0) : newPoints;
 
-    if (oldC.phone !== newPhone) {
-      delete customers[oldC.phone];
-      delete customers[oldPhone10];
+    const keysToRemove = [oldC.phone, oldPhone, oldPhone10, oldC.name].filter(Boolean);
+    keysToRemove.forEach(k => {
+      if (k !== newPhone) delete customers[k];
+    });
 
-      transactions.forEach(t => {
-        if (get10DigitPhone(t.phone) === oldPhone10 || t.phone === oldC.phone) {
-          t.phone = newPhone;
-          t.name = newName;
-        }
-      });
-      persistTransactions();
-    }
+    transactions.forEach(t => {
+      if (get10DigitPhone(t.phone) === oldPhone10 || t.phone === oldC.phone || t.name === oldC.name) {
+        t.phone = newPhone;
+        t.name = newName;
+      }
+    });
+    persistTransactions();
 
     const updatedC = {
       ...oldC,
@@ -3138,20 +3161,21 @@ window.saveCustomerProfileEdit = async function() {
 
     if (supabaseClient) {
       try {
-        if (oldC.phone !== newPhone) {
-          await supabaseClient.from('customers').delete().eq('phone', oldC.phone);
-          if (oldPhone10 !== oldC.phone) {
-            await supabaseClient.from('customers').delete().eq('phone', oldPhone10);
-          }
-          const updatedTxs = transactions.filter(t => get10DigitPhone(t.phone) === newPhone).map(t => ({
-            id: t.id, bill_no: t.billNo, date: t.date, phone: t.phone,
-            name: t.name, amount: t.amount, earned: t.earned, redeemed: t.redeemed,
-            staff_name: t.staffName || '—'
-          }));
-          if (updatedTxs.length > 0) {
-            await supabaseClient.from('transactions').upsert(updatedTxs);
+        for (const k of keysToRemove) {
+          if (k !== newPhone) {
+            await supabaseClient.from('customers').delete().eq('phone', k);
           }
         }
+
+        const updatedTxs = transactions.filter(t => get10DigitPhone(t.phone) === newPhone).map(t => ({
+          id: t.id, bill_no: t.billNo, date: t.date, phone: t.phone,
+          name: t.name, amount: t.amount, earned: t.earned, redeemed: t.redeemed,
+          staff_name: t.staffName || '—'
+        }));
+        if (updatedTxs.length > 0) {
+          await supabaseClient.from('transactions').upsert(updatedTxs);
+        }
+
         await saveCustomerCloud(updatedC);
       } catch(cloudErr) {
         console.warn('Supabase customer edit save notice:', cloudErr);
