@@ -1898,7 +1898,7 @@ window.showCustomer = function(phone) {
         <td class="mono"><b>${runningBal} pts</b></td>
         <td>${escapeHtml(t.staffName || '—')}</td>
         <td>
-          <button class="btn whatsapp" style="padding:3px 8px; font-size:11px;" onclick="sendReceipt('${t.id}')">Receipt</button>
+          <button class="btn sms" style="padding:3px 8px; font-size:11.5px;" onclick="sendSMSReceipt('${t.id}')">SMS Receipt</button>
           ${currentStaffRole === 'owner' ? `<button class="btn danger" onclick="deleteTxn('${t.id}')">Delete</button>` : ''}
         </td>
       </tr>`;
@@ -1921,7 +1921,7 @@ window.showCustomer = function(phone) {
           <span>Running Bal: <b class="mono" style="color:var(--ink);">${cardBal} pts</b></span>
         </div>
         <div style="margin-top:8px; display:flex; gap:6px; justify-content:flex-end;">
-          <button class="btn whatsapp" style="padding:3px 8px; font-size:11px;" onclick="sendReceipt('${t.id}')">Receipt</button>
+          <button class="btn sms" style="padding:3px 8px; font-size:11px;" onclick="sendSMSReceipt('${t.id}')">SMS Receipt</button>
           ${currentStaffRole === 'owner' ? `<button class="btn danger" style="padding:3px 8px; font-size:11px;" onclick="deleteTxn('${t.id}')">Delete</button>` : ''}
         </div>
       </div>`;
