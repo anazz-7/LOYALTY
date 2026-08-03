@@ -250,31 +250,31 @@
   .customer-detail { border-top: 2px dashed var(--border-color); margin-top: 18px; padding-top: 18px; }
   .save-status { font-size: 13px; color: var(--accent-emerald); font-weight: 700; text-align: center; margin-top: 10px; }
 
-  /* Customer Hero Card */
+  /* Customer Hero & Digital Card Alignment */
   .customer-hero-card {
     background-color: var(--ink); border-radius: var(--radius-lg);
-    padding: 24px; text-align: center; margin-bottom: 18px; color: #FFFFFF; box-shadow: var(--card-shadow);
+    padding: 22px 18px; text-align: center; margin-bottom: 18px; color: #FFFFFF; box-shadow: var(--card-shadow);
   }
-  .customer-hero-card .balance { font-size: 46px; font-weight: 800; font-family: 'Plus Jakarta Sans'; color: #FFFFFF; line-height: 1; }
+  .customer-hero-card .balance { font-size: 42px; font-weight: 800; font-family: 'Plus Jakarta Sans'; color: #FFFFFF; line-height: 1; }
   .customer-hero-card .balance-lbl { font-size: 11px; color: rgba(255,255,255,0.7); font-family: 'Plus Jakarta Sans'; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin-top: 6px; }
 
   .code-box {
-    background-color: var(--bg-card-elevated); border: 2px dashed var(--ink);
-    border-radius: var(--radius-md); padding: 16px; text-align: center; margin-top: 14px;
+    background-color: var(--bg-card-elevated); border: 2px dashed var(--border-dark);
+    border-radius: var(--radius-md); padding: 14px 16px; text-align: center; margin-top: 14px;
   }
-  .code-box .code { font-family: 'JetBrains Mono'; font-size: 28px; font-weight: 800; letter-spacing: 3px; color: var(--ink); }
+  .code-box .code { font-family: 'JetBrains Mono'; font-size: 26px; font-weight: 800; letter-spacing: 3px; color: var(--ink); }
 
   /* Premium Digital Wallet Loyalty Pass Card */
   .digital-card {
     background: linear-gradient(135deg, #0F172A 0%, #1E293B 50%, #14202E 100%);
     border: 1.5px solid rgba(255, 255, 255, 0.18);
     border-radius: 20px;
-    padding: 24px;
+    padding: 22px 20px;
     color: #FFFFFF;
     position: relative;
     overflow: hidden;
     box-shadow: 0 20px 40px -10px rgba(15, 23, 42, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.25);
-    margin-bottom: 22px;
+    margin-bottom: 20px;
   }
   .digital-card::before {
     content: ''; position: absolute; top: -60%; right: -30%; width: 280px; height: 280px;
@@ -287,7 +287,7 @@
     color: rgba(255, 255, 255, 0.03); letter-spacing: 4px; pointer-events: none;
   }
   .digital-card .card-top {
-    display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 10px;
+    display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; gap: 10px;
   }
   .digital-card .card-brand-name {
     font-family: 'Plus Jakarta Sans', sans-serif; font-size: 14px; font-weight: 800;
@@ -301,10 +301,10 @@
     box-shadow: 0 4px 12px rgba(217, 119, 6, 0.35); font-family: 'Plus Jakarta Sans';
   }
   .digital-card .card-mid {
-    display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 20px;
+    display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 18px;
   }
   .digital-card .card-cust-name {
-    font-family: 'Plus Jakarta Sans', sans-serif; font-size: 22px; font-weight: 800; color: #FFFFFF;
+    font-family: 'Plus Jakarta Sans', sans-serif; font-size: 21px; font-weight: 800; color: #FFFFFF;
     line-height: 1.2; word-break: break-word;
   }
   .digital-card .card-cust-meta {
@@ -313,8 +313,9 @@
   .digital-card .card-qr-wrapper {
     background: #FFFFFF; padding: 8px; border-radius: 14px; flex-shrink: 0;
     box-shadow: 0 6px 18px rgba(0,0,0,0.3); border: 2px solid rgba(255,255,255,0.9); text-align: center;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
   }
-  .digital-card .card-qr-wrapper canvas { display: block; max-width: 115px; width: 100%; height: auto; }
+  .digital-card .card-qr-wrapper canvas { display: block; max-width: 110px; width: 100%; height: auto; }
   .digital-card .card-bottom {
     display: flex; justify-content: space-between; align-items: flex-end;
     border-top: 1px dashed rgba(255, 255, 255, 0.15); padding-top: 14px; margin-top: 6px;
@@ -323,7 +324,7 @@
     font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.1em; color: rgba(255,255,255,0.65); font-weight: 700;
   }
   .digital-card .card-points-number {
-    font-family: 'Plus Jakarta Sans', sans-serif; font-size: 34px; font-weight: 800; color: #38BDF8; line-height: 1; margin-top: 2px;
+    font-family: 'Plus Jakarta Sans', sans-serif; font-size: 32px; font-weight: 800; color: #38BDF8; line-height: 1; margin-top: 2px;
   }
 
   .staff-row { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
@@ -780,7 +781,7 @@
 
 <!-- ============ CUSTOMER APP ============ -->
 <main id="customer-app" style="display:none;">
-  <div class="card" style="max-width:500px; margin:0 auto 20px;">
+  <div class="card" id="c-lookup-card" style="max-width:500px; margin:0 auto 20px;">
     <h2>Check Your Points</h2>
     <div class="sub">Enter your registered 10-digit phone number.</div>
     <div class="field"><label>Phone Number</label><input id="c-phone" class="mono" placeholder="10-digit number" maxlength="15" style="text-align:center; font-size:18px;"></div>
@@ -970,10 +971,12 @@ async function loadAll() {
 
   // Restore Persisted Customer Session for Future App Opens
   const custSess = Storage.get('bm-loyalty-cust-session');
-  if (custSess && custSess.phone) {
+  if (custSess && custSess.phone && (!sess || !sess.name)) {
     const phone10 = get10DigitPhone(custSess.phone);
     const c = customers[phone10] || customers[custSess.phone];
     if (c && String(c.pin || '') === String(custSess.pin || '')) {
+      const custModeBtn = document.getElementById('btn-mode-customer');
+      if (custModeBtn) custModeBtn.click();
       renderCustomerPortal(c);
     }
   }
@@ -2501,6 +2504,8 @@ document.getElementById('c-lookup').addEventListener('click', () => {
 
 window.logoutCustomer = function() {
   Storage.remove('bm-loyalty-cust-session');
+  const lookupCard = document.getElementById('c-lookup-card');
+  if (lookupCard) lookupCard.style.display = 'block';
   document.getElementById('customer-result').innerHTML = '';
   document.getElementById('c-phone').value = '';
   document.getElementById('c-status').textContent = '';
@@ -2509,6 +2514,8 @@ window.logoutCustomer = function() {
 
 function renderCustomerPortal(c) {
   const result = document.getElementById('customer-result');
+  const lookupCard = document.getElementById('c-lookup-card');
+  if (lookupCard) lookupCard.style.display = 'none';
   document.getElementById('c-status').textContent = '';
 
   const hist = transactions.filter(t => {
