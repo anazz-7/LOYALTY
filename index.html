@@ -555,13 +555,6 @@
       </div>
     </div>
     <div class="header-actions">
-      <span class="staff-chip" id="staff-chip" style="display:none;"></span>
-      <button class="btn secondary" id="btn-lock-terminal" style="display:none; padding:6px 10px; font-size:12px; align-items:center; justify-content:center;" title="Logout Staff Terminal" onclick="lockTerminal()">
-        <svg class="icon icon-sm" viewBox="0 0 24 24" style="margin:0;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-      </button>
-      <button class="btn danger" id="btn-logout-cust" style="display:none; padding:4px 10px; font-size:11.5px; align-items:center; gap:4px; border-radius:8px;" title="Logout Customer Account" onclick="logoutCustomer()">
-        <svg class="icon icon-sm" viewBox="0 0 24 24" style="margin:0;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg> Logout
-      </button>
       <button class="btn secondary" id="btn-pwa-install" onclick="installPWA()" style="display:none; padding:6px 10px; font-size:12px; align-items:center; gap:4px;" title="Install App">
         <svg class="icon icon-sm" viewBox="0 0 24 24" style="margin:0;"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
       </button>
@@ -2590,15 +2583,25 @@ function buildSMSReceiptText(t) {
   return `${settings.bizName}: Bill #${t.billNo} of Rs.${t.amount.toFixed(2)}. Earned +${t.earned} pts. Balance: ${bal} PTS${pinText}. Thank you!`;
 }
 
-function smsLink(phone, text) {
-  let digits = String(phone).replace(/\D/g, '');
-  if (digits.length > 10) digits = digits.slice(-10);
-  return `sms:${digits}?body=${encodeURIComponent(text)}`;
-}
-
 window.sendSMSReceipt = function(id) {
   const t = transactions.find(x => x.id === id); if (!t) return;
-  window.open(smsLink(t.phone, buildSMSReceiptText(t)), '_blank');
+  const text = buildSMSReceiptText(t);
+  let digits = String(t.phone || '').replace(/\D/g, '');
+  if (digits.length > 10) digits = digits.slice(-10);
+
+  if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+    navigator.clipboard.writeText(text).catch(() => {});
+  }
+
+  const isiOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const url = `sms:${digits}${isiOS ? '&body=' : '?body='}${encodeURIComponent(text)}`;
+
+  try {
+    window.location.href = url;
+  } catch(e) {
+    window.open(url, '_self');
+  }
+  toast('Opening SMS app... (Receipt text copied!)');
 };
 
 window.printReceipt = function(id) {
@@ -2773,7 +2776,17 @@ window.toggleCardFlip = function() {
 window.shareReferralSMS = function(code) {
   const biz = settings.bizName || 'B INDUSTRIES';
   const msg = `Hey! Join ${biz} Loyalty Program using my referral code *${code}* and get bonus points on your first bill! 🎉 Check your points here: ${window.location.href}`;
-  window.open(`sms:?body=${encodeURIComponent(msg)}`, '_blank');
+  const isiOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const url = `sms:${isiOS ? '&body=' : '?body='}${encodeURIComponent(msg)}`;
+  if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+    navigator.clipboard.writeText(msg).catch(() => {});
+  }
+  try {
+    window.location.href = url;
+  } catch(e) {
+    window.open(url, '_self');
+  }
+  toast('Opening SMS app... (Referral code copied!)');
 };
 
 window.triggerConfetti = function() {
