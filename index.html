@@ -661,49 +661,58 @@
 
   <section id="tab-customers" style="display:none;">
     <div class="card">
-      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:14px;">
-        <div>
-          <h2>Customer Directory &amp; General Ledger</h2>
-          <div class="sub" style="margin-bottom:0;">Official customer account balances, debit purchases, credit point rewards, and passbook statements.</div>
-        </div>
-      </div>
-
-      <!-- General Ledger Summary Cards -->
-      <div class="stat-grid" style="margin-bottom:16px;">
-        <div class="stat"><div class="num" id="ledger-count">0</div><div class="lbl">Total Accounts</div></div>
-        <div class="stat"><div class="num" id="ledger-purchases">₹0</div><div class="lbl">Total Purchases (Debit)</div></div>
-        <div class="stat"><div class="num" id="ledger-points">0 pts</div><div class="lbl">Net Outstanding Points</div></div>
-        <div class="stat"><div class="num" id="ledger-liability">₹0.00</div><div class="lbl">Store Cash Liability</div></div>
-      </div>
-
-      <!-- Directory Search, Tier Filters & Sort Bar -->
-      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
-        <div style="display:flex; gap:6px; flex-wrap:wrap;">
-          <button class="btn secondary dir-filter-btn active" data-filter="all" onclick="setDirectoryFilter('all')" style="padding:4px 10px; font-size:12px;">All Accounts</button>
-          <button class="btn secondary dir-filter-btn" data-filter="vip" onclick="setDirectoryFilter('vip')" style="padding:4px 10px; font-size:12px; color:#F59E0B; border-color:rgba(245,158,11,0.3);">👑 VIP Diamond</button>
-          <button class="btn secondary dir-filter-btn" data-filter="gold" onclick="setDirectoryFilter('gold')" style="padding:4px 10px; font-size:12px; color:#38BDF8; border-color:rgba(56,189,248,0.3);">⚡ Gold</button>
-          <button class="btn secondary dir-filter-btn" data-filter="bronze" onclick="setDirectoryFilter('bronze')" style="padding:4px 10px; font-size:12px; color:#94A3B8; border-color:rgba(148,163,184,0.3);">🥉 Bronze</button>
+      <div id="customer-directory-main">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:14px;">
+          <div>
+            <h2 style="margin:0;">Customer Directory &amp; General Ledger</h2>
+            <div class="sub" style="margin:0;">Official customer account balances, debit purchases, credit point rewards, and passbook statements.</div>
+          </div>
         </div>
 
-        <div style="display:flex; align-items:center; gap:6px;">
-          <span style="font-size:12px; color:var(--text-sub);">Sort:</span>
-          <select id="dir-sort-select" onchange="setDirectorySort(this.value)" style="padding:4px 8px; font-size:12px; border-radius:8px; background:var(--bg-card); color:var(--text-main); border:1px solid var(--border-dark);">
-            <option value="lastVisit">Recent Visit</option>
-            <option value="points">Most Points</option>
-            <option value="spent">Highest Spent (₹)</option>
-            <option value="visits">Most Visits</option>
-          </select>
+        <!-- General Ledger Summary Cards -->
+        <div class="stat-grid" style="margin-bottom:16px;">
+          <div class="stat"><div class="num" id="ledger-count">0</div><div class="lbl">Total Accounts</div></div>
+          <div class="stat"><div class="num" id="ledger-purchases">₹0</div><div class="lbl">Total Purchases (Debit)</div></div>
+          <div class="stat"><div class="num" id="ledger-points">0 pts</div><div class="lbl">Net Outstanding Points</div></div>
+          <div class="stat"><div class="num" id="ledger-liability">₹0.00</div><div class="lbl">Store Cash Liability</div></div>
         </div>
+
+        <!-- Compact Scrollable Mobile Tier Filters & Sort Bar -->
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:12px;">
+          <div style="display:flex; gap:4px; overflow-x:auto; padding-bottom:2px; -webkit-overflow-scrolling:touch; max-width:100%;">
+            <button class="btn secondary dir-filter-btn active" data-filter="all" onclick="setDirectoryFilter('all')" style="padding:3px 8px; font-size:11px; flex-shrink:0; white-space:nowrap; border-radius:6px;">All Accounts</button>
+            <button class="btn secondary dir-filter-btn" data-filter="vip" onclick="setDirectoryFilter('vip')" style="padding:3px 8px; font-size:11px; flex-shrink:0; white-space:nowrap; border-radius:6px; color:#F59E0B; border-color:rgba(245,158,11,0.3); display:inline-flex; align-items:center; gap:3px;">
+              <svg class="icon icon-xs" viewBox="0 0 24 24" style="color:#F59E0B;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>VIP Diamond
+            </button>
+            <button class="btn secondary dir-filter-btn" data-filter="gold" onclick="setDirectoryFilter('gold')" style="padding:3px 8px; font-size:11px; flex-shrink:0; white-space:nowrap; border-radius:6px; color:#38BDF8; border-color:rgba(56,189,248,0.3); display:inline-flex; align-items:center; gap:3px;">
+              <svg class="icon icon-xs" viewBox="0 0 24 24" style="color:#38BDF8;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Gold
+            </button>
+            <button class="btn secondary dir-filter-btn" data-filter="bronze" onclick="setDirectoryFilter('bronze')" style="padding:3px 8px; font-size:11px; flex-shrink:0; white-space:nowrap; border-radius:6px; color:#94A3B8; border-color:rgba(148,163,184,0.3); display:inline-flex; align-items:center; gap:3px;">
+              <svg class="icon icon-xs" viewBox="0 0 24 24" style="color:#94A3B8;"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>Bronze
+            </button>
+          </div>
+
+          <div style="display:flex; align-items:center; gap:4px; margin-left:auto;">
+            <span style="font-size:11px; color:var(--text-sub);">Sort:</span>
+            <select id="dir-sort-select" onchange="setDirectorySort(this.value)" style="padding:3px 6px; font-size:11px; border-radius:6px; background:var(--bg-card); color:var(--text-main); border:1px solid var(--border-dark);">
+              <option value="lastVisit">Recent Visit</option>
+              <option value="points">Most Points</option>
+              <option value="spent">Highest Spent (₹)</option>
+              <option value="visits">Most Visits</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="searchbar">
+          <div style="position:relative;">
+            <input id="cust-search" placeholder="Search customer name, phone number, or referral code..." style="padding-left:38px;">
+            <svg class="icon icon-sm" viewBox="0 0 24 24" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--text-sub);"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          </div>
+        </div>
+        <div id="customer-list"></div>
       </div>
 
-      <div class="searchbar">
-        <div style="position:relative;">
-          <input id="cust-search" placeholder="Search customer name, phone number, or referral code..." style="padding-left:38px;">
-          <svg class="icon icon-sm" viewBox="0 0 24 24" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--text-sub);"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        </div>
-      </div>
-      <div id="customer-list"></div>
-      <div id="customer-detail"></div>
+      <div id="customer-detail" style="display:none;"></div>
     </div>
   </section>
 
@@ -2043,9 +2052,9 @@ function renderRecent() {
 
 function getCustomerTierBadge(pts) {
   pts = Number(pts || 0);
-  if (pts >= 500) return `<span class="badge" style="background:#FEF3C7; color:#92400E; border-color:#F59E0B; font-size:10.5px;">👑 VIP DIAMOND</span>`;
-  if (pts >= 200) return `<span class="badge" style="background:#E0F2FE; color:#0369A1; border-color:#38BDF8; font-size:10.5px;">⚡ GOLD</span>`;
-  return `<span class="badge" style="background:#F1F5F9; color:#475569; border-color:#CBD5E1; font-size:10.5px;">🥉 BRONZE</span>`;
+  if (pts >= 500) return `<span class="badge" style="background:#FEF3C7; color:#92400E; border-color:#F59E0B; font-size:10.5px; display:inline-flex; align-items:center; gap:3px;"><svg class="icon icon-xs" viewBox="0 0 24 24" style="color:#D97706;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> VIP DIAMOND</span>`;
+  if (pts >= 200) return `<span class="badge" style="background:#E0F2FE; color:#0369A1; border-color:#38BDF8; font-size:10.5px; display:inline-flex; align-items:center; gap:3px;"><svg class="icon icon-xs" viewBox="0 0 24 24" style="color:#0284C7;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> GOLD</span>`;
+  return `<span class="badge" style="background:#F1F5F9; color:#475569; border-color:#CBD5E1; font-size:10.5px; display:inline-flex; align-items:center; gap:3px;"><svg class="icon icon-xs" viewBox="0 0 24 24" style="color:#64748B;"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg> BRONZE</span>`;
 }
 
 let currentDirectoryFilter = 'all';
@@ -2110,8 +2119,12 @@ function renderCustomers() {
       <td class="mono">
         ${escapeHtml(c.phone)}
         <div style="display:inline-flex; gap:4px; margin-left:6px;">
-          <a href="tel:${c.phone}" title="Call Customer" style="color:var(--accent-blue); text-decoration:none; padding:2px 5px; background:rgba(56,189,248,0.1); border-radius:4px; font-size:11px; font-weight:700;">📞 Call</a>
-          <a href="https://wa.me/${(settings.countryCode||'91')}${c.phone}" target="_blank" title="WhatsApp Customer" style="color:#10B981; text-decoration:none; padding:2px 5px; background:rgba(16,185,129,0.1); border-radius:4px; font-size:11px; font-weight:700;">💚 WA</a>
+          <a href="tel:${c.phone}" title="Call Customer" style="color:var(--accent-blue); text-decoration:none; padding:2px 6px; background:rgba(56,189,248,0.1); border-radius:4px; font-size:11px; font-weight:700; display:inline-flex; align-items:center; gap:3px;">
+            <svg class="icon icon-xs" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg> Call
+          </a>
+          <a href="https://wa.me/${(settings.countryCode||'91')}${c.phone}" target="_blank" title="WhatsApp Customer" style="color:#10B981; text-decoration:none; padding:2px 6px; background:rgba(16,185,129,0.1); border-radius:4px; font-size:11px; font-weight:700; display:inline-flex; align-items:center; gap:3px;">
+            <svg class="icon icon-xs" viewBox="0 0 24 24" style="fill:currentColor;"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg> WA
+          </a>
         </div>
       </td>
       <td>${c.visits}</td>
@@ -2138,8 +2151,12 @@ function renderCustomers() {
       </div>
       <div style="margin-top:10px; display:flex; gap:6px; flex-wrap:wrap; align-items:center; justify-content:space-between;">
         <div style="display:flex; gap:6px;">
-          <a href="tel:${c.phone}" class="btn secondary" style="padding:3px 8px; font-size:11px; text-decoration:none;">📞 Call</a>
-          <a href="https://wa.me/${(settings.countryCode||'91')}${c.phone}" target="_blank" class="btn secondary" style="padding:3px 8px; font-size:11px; text-decoration:none; color:#10B981; border-color:rgba(16,185,129,0.3);">💚 WA</a>
+          <a href="tel:${c.phone}" class="btn secondary" style="padding:3px 8px; font-size:11px; text-decoration:none; display:inline-flex; align-items:center; gap:3px;">
+            <svg class="icon icon-xs" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg> Call
+          </a>
+          <a href="https://wa.me/${(settings.countryCode||'91')}${c.phone}" target="_blank" class="btn secondary" style="padding:3px 8px; font-size:11px; text-decoration:none; color:#10B981; border-color:rgba(16,185,129,0.3); display:inline-flex; align-items:center; gap:3px;">
+            <svg class="icon icon-xs" viewBox="0 0 24 24" style="fill:currentColor;"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg> WA
+          </a>
         </div>
         <button class="btn secondary" style="padding:4px 10px; font-size:11.5px;" onclick="showCustomer('${c.phone}')">Ledger Statement ➔</button>
       </div>
@@ -2151,9 +2168,22 @@ function renderCustomers() {
 }
 document.getElementById('cust-search').addEventListener('input', renderCustomers);
 
+window.backToDirectory = function() {
+  const mainDir = document.getElementById('customer-directory-main');
+  const detail = document.getElementById('customer-detail');
+  if (mainDir) mainDir.style.display = 'block';
+  if (detail) detail.style.display = 'none';
+};
+
 window.showCustomer = function(phone) {
-  const c = customers[phone]; const detail = document.getElementById('customer-detail');
-  if (!c) { detail.innerHTML = ''; return; }
+  const c = customers[phone]; 
+  const detail = document.getElementById('customer-detail');
+  const mainDir = document.getElementById('customer-directory-main');
+  if (!c || !detail) return;
+
+  if (mainDir) mainDir.style.display = 'none';
+  detail.style.display = 'block';
+
   if (!c.referralCode) { c.referralCode = generateReferralCode(c.name, c.phone); }
   if (!c.pin) { c.pin = generateCustomerPin(); saveCustomerCloud(c); }
 
@@ -2231,15 +2261,20 @@ window.showCustomer = function(phone) {
 
       detail.innerHTML = `
     <div class="customer-detail">
+      <button class="btn secondary" type="button" onclick="backToDirectory()" style="margin-bottom:14px; padding:6px 14px; font-size:12.5px; border-color:var(--border-dark); font-weight:700; display:inline-flex; align-items:center; gap:6px;">
+        <svg class="icon icon-sm" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        ← Back to Customer Directory
+      </button>
+
       <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
         <div>
-          <h3 style="font-size:18px; color:var(--text-main);">${escapeHtml(c.name)} — Statement of Account</h3>
+          <h3 style="font-size:18px; color:var(--text-main); margin:0 0 4px 0;">${escapeHtml(c.name)} — Statement of Account</h3>
           <div class="sub" style="margin-bottom:0;">
             Account Phone: <b class="mono">${escapeHtml(c.phone)}</b> · ${c.visits} total visits · Security PIN: <b class="mono">${c.pin}</b> 
-            <button class="btn secondary" type="button" onclick="editCustomerModal('${c.phone}')" style="padding:2px 8px; font-size:11.5px; margin-left:6px; background:var(--accent-blue); color:#fff; border:none; border-radius:6px; font-weight:700;" title="Edit Customer Details">
-              ✏️ Edit Profile
+            <button class="btn secondary" type="button" onclick="editCustomerModal('${c.phone}')" style="padding:3px 8px; font-size:11.5px; margin-left:6px; background:var(--accent-blue); color:#fff; border:none; border-radius:6px; font-weight:700; display:inline-flex; align-items:center; gap:4px;" title="Edit Customer Details">
+              <svg class="icon icon-xs" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Edit Profile
             </button>
-            <button class="btn secondary" type="button" onclick="resetCustomerPin('${c.phone}')" style="padding:2px 6px; font-size:11px; margin-left:4px;">Reset PIN</button>
+            <button class="btn secondary" type="button" onclick="resetCustomerPin('${c.phone}')" style="padding:3px 8px; font-size:11px; margin-left:4px;">Reset PIN</button>
           </div>
         </div>
         <div style="text-align:right;">
