@@ -1257,63 +1257,73 @@ document.addEventListener('click', (e) => {
 });
 document.getElementById('f-date').valueAsDate = new Date();
 
-document.getElementById('save-bill').addEventListener('click', () => {
+document.getElementById('save-bill').addEventListener('click', async () => {
   const btn = document.getElementById('save-bill');
+  const statusEl = document.getElementById('save-status');
   const originalText = btn.innerHTML;
+
+  statusEl.textContent = '';
+  
+  let bill = document.getElementById('f-bill').value.trim();
+  let date = document.getElementById('f-date').value || (new Date().toISOString().slice(0, 10));
+  let phone = fPhone.value.trim();
+  let name = fName.value.trim();
+  const amount = parseFloat(fAmount.value) || 0;
+  let redeem = parseFloat(fRedeem.value) || 0;
+  const refCode = document.getElementById('f-refcode').value.trim().toUpperCase();
+
+  // Smart Name-to-Phone Resolution (Allows recording bills by Customer Name directly!)
+  if (!phone && name) {
+    const match = Object.values(customers).find(c => c.name.toLowerCase() === name.toLowerCase())
+               || Object.values(customers).find(c => c.name.toLowerCase().includes(name.toLowerCase()));
+    if (match) {
+      phone = match.phone;
+      name = match.name;
+      fPhone.value = phone;
+      fName.value = name;
+    } else {
+      phone = '90' + Date.now().toString().slice(-8);
+      fPhone.value = phone;
+    }
+  } else if (phone && !name) {
+    const match = customers[phone];
+    if (match) {
+      name = match.name;
+      fName.value = name;
+    } else {
+      name = 'Customer ' + phone.slice(-4);
+      fName.value = name;
+    }
+  }
+
+  // Form Validation Check
+  if (amount <= 0) {
+    statusEl.style.color = 'var(--accent-red)';
+    statusEl.innerHTML = '⚠️ Please enter a valid <b>Bill Amount (₹)</b> greater than 0.';
+    fAmount.focus();
+    toast('Enter Bill Amount (₹)');
+    return;
+  }
+
+  if (!phone && !name) {
+    statusEl.style.color = 'var(--accent-red)';
+    statusEl.innerHTML = '⚠️ Please enter <b>Customer Phone</b> or <b>Customer Name</b>.';
+    fPhone.focus();
+    toast('Enter Customer Phone or Name');
+    return;
+  }
+
+  // Auto-generate sequential bill number if empty
+  if (!bill) {
+    const maxNo = transactions.reduce((m, t) => Math.max(m, parseInt(String(t.billNo||'').replace(/\D/g, '')) || 0), 1000);
+    bill = String(maxNo + 1);
+    document.getElementById('f-bill').value = bill;
+  }
+
   btn.innerHTML = `<span class="spinner"></span> Saving Bill...`;
   btn.disabled = true;
 
-  setTimeout(async () => {
-    let bill = document.getElementById('f-bill').value.trim();
-    let date = document.getElementById('f-date').value || (new Date().toISOString().slice(0, 10));
-    let phone = fPhone.value.trim();
-    let name = fName.value.trim();
-    const amount = parseFloat(fAmount.value) || 0;
-    let redeem = parseFloat(fRedeem.value) || 0;
-    const refCode = document.getElementById('f-refcode').value.trim().toUpperCase();
-
-    // Auto-generate sequential bill number if empty
-    if (!bill) {
-      const maxNo = transactions.reduce((m, t) => Math.max(m, parseInt(t.billNo.replace(/\D/g, '')) || 0), 1000);
-      bill = String(maxNo + 1);
-      document.getElementById('f-bill').value = bill;
-    }
-
-    // Smart Name-to-Phone Resolution (Allows recording bills by Customer Name directly!)
-    if (!phone && name) {
-      const match = Object.values(customers).find(c => c.name.toLowerCase() === name.toLowerCase())
-                 || Object.values(customers).find(c => c.name.toLowerCase().includes(name.toLowerCase()));
-      if (match) {
-        phone = match.phone;
-        name = match.name;
-        fPhone.value = phone;
-        fName.value = name;
-      } else {
-        phone = '90' + Date.now().toString().slice(-8);
-        fPhone.value = phone;
-      }
-    } else if (phone && !name) {
-      const match = customers[phone];
-      if (match) {
-        name = match.name;
-        fName.value = name;
-      } else {
-        name = 'Customer ' + phone.slice(-4);
-        fName.value = name;
-      }
-    }
-
-    btn.innerHTML = originalText;
-    btn.disabled = false;
-
-    if (!bill || !date || !phone || !name || amount <= 0) {
-      document.getElementById('save-status').style.color = 'var(--accent-red)';
-      document.getElementById('save-status').innerHTML = '⚠️ Please fill <b>Bill Amount (₹)</b> and <b>Customer Name or Phone</b>.';
-      btn.innerHTML = originalText;
-      btn.disabled = false;
-      return;
-    }
-
+  try {
     const isNewCustomer = !customers[phone];
     if (isNewCustomer) {
       const code = generateReferralCode(name, phone);
@@ -1333,22 +1343,63 @@ document.getElementById('save-bill').addEventListener('click', () => {
     redeem = Math.min(redeem, c.totalPoints);
     const earned = settings.rate > 0 ? Math.floor(amount / settings.rate) : 0;
 
-    c.name = name; c.totalPoints = c.totalPoints - redeem + earned; c.totalSpent += amount; c.visits += 1; c.lastVisit = date;
+    c.name = name;
+    c.totalPoints = c.totalPoints - redeem + earned;
+    c.totalSpent += amount;
+    c.visits += 1;
+    c.lastVisit = date;
 
-    const newTx = { id: generateUUID(), billNo: bill, date, phone, name, amount, earned, redeemed: redeem, ts: Date.now(), staffName: currentStaffName || '—' };
+    const newTx = {
+      id: generateUUID(),
+      billNo: bill,
+      date,
+      phone,
+      name,
+      amount,
+      earned,
+      redeemed: redeem,
+      ts: Date.now(),
+      staffName: currentStaffName || '—'
+    };
     transactions.unshift(newTx);
 
-    persistCustomers(); persistTransactions();
-    await saveCustomerCloud(c);
-    await saveTransactionCloud(newTx);
+    persistCustomers();
+    persistTransactions();
+
+    // Sync to Cloud asynchronously with fallbacks
+    if (supabaseClient) {
+      try {
+        await saveCustomerCloud(c);
+        await saveTransactionCloud(newTx);
+      } catch(cloudErr) {
+        console.warn('Cloud bill sync notice:', cloudErr);
+      }
+    }
+
     lastSavedId = newTx.id;
 
-    document.getElementById('save-status').innerHTML = `Saved — Bill #${bill}, ${earned} points earned. &nbsp; <button class="btn whatsapp" onclick="sendReceipt('${lastSavedId}')"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg> WhatsApp Receipt</button> <button class="btn print" onclick="printReceipt('${lastSavedId}')"><svg class="icon icon-sm" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg> Print</button>`;
-    toast('Bill saved successfully');
+    statusEl.style.color = 'var(--accent-emerald)';
+    statusEl.innerHTML = `Saved — Bill #${bill}, +${earned} pts. &nbsp; <button class="btn whatsapp" onclick="sendReceipt('${lastSavedId}')"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg> WhatsApp Receipt</button> <button class="btn print" onclick="printReceipt('${lastSavedId}')"><svg class="icon icon-sm" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg> Print</button>`;
+    toast('Bill saved successfully!');
 
-    document.getElementById('f-bill').value = ''; fPhone.value = ''; fName.value = ''; fAmount.value = ''; fRedeem.value = ''; document.getElementById('f-refcode').value = '';
-    updatePreview(); renderRecent(); renderCustomers();
-  }, 250);
+    // Reset inputs for next bill
+    document.getElementById('f-bill').value = '';
+    fPhone.value = '';
+    fName.value = '';
+    fAmount.value = '';
+    fRedeem.value = '';
+    document.getElementById('f-refcode').value = '';
+    updatePreview();
+    renderRecent();
+    renderCustomers();
+  } catch(err) {
+    statusEl.style.color = 'var(--accent-red)';
+    statusEl.innerHTML = '❌ Error saving bill: ' + escapeHtml(err.message);
+    toast('Save error: ' + err.message);
+  } finally {
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+  }
 });
 
 // Quick Amount Tap Helpers
