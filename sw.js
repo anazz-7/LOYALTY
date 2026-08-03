@@ -1,4 +1,4 @@
-const CACHE_NAME = 'b-industries-loyalty-v13';
+const CACHE_NAME = 'b-industries-loyalty-v14';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
