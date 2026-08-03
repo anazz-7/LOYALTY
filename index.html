@@ -791,10 +791,15 @@ function generateReferralCode(name, phone) {
 }
 
 async function loadAll() {
-  const c = Storage.get('bm-loyalty-customers'); customers = c || {};
-  const t = Storage.get('bm-loyalty-transactions'); transactions = t || [];
-  const r = Storage.get('bm-loyalty-redemptions'); redemptions = r || [];
-  const s = Storage.get('bm-loyalty-settings'); if (s) settings = Object.assign({}, settings, s);
+  customers = {};
+  transactions = [];
+  redemptions = [];
+
+  // Clear legacy data caches from localStorage to strictly enforce 100% Supabase
+  localStorage.removeItem('bm-loyalty-customers');
+  localStorage.removeItem('bm-loyalty-transactions');
+  localStorage.removeItem('bm-loyalty-redemptions');
+  localStorage.removeItem('bm-loyalty-settings');
 
   document.getElementById('bizNameHeader').textContent = settings.bizName || "B-INDUSTRIES LOYALTY";
   document.getElementById('s-bizname').value = settings.bizName || "";
@@ -834,7 +839,6 @@ async function loadAll() {
     applyRoleRestrictions();
   }
 
-  // Automatic Background Auto-Polling (every 4 seconds for seamless multi-device sync)
   if (!window.autoSyncInterval) {
     window.autoSyncInterval = setInterval(async () => {
       if (supabaseClient) {
@@ -848,7 +852,7 @@ async function loadAll() {
 async function fetchCloudData() {
   if (!supabaseClient) return;
   try {
-    // 1. Fetch Cloud Settings
+    // 1. Fetch Cloud Settings (100% Supabase Direct)
     const { data: setRow } = await supabaseClient.from('settings').select('*').eq('id', 1).maybeSingle();
     if (setRow) {
       settings.bizName = setRow.biz_name || settings.bizName;
@@ -858,60 +862,46 @@ async function fetchCloudData() {
       settings.refBonusReferrer = Number(setRow.ref_bonus_referrer ?? settings.refBonusReferrer);
       settings.refBonusReferee = Number(setRow.ref_bonus_referee ?? settings.refBonusReferee);
       document.getElementById('bizNameHeader').textContent = settings.bizName;
-      persistSettings();
     }
 
-    // 2. Fetch Cloud Staff Logins & Roles
+    // 2. Fetch Cloud Staff Logins & Roles (100% Supabase Direct)
     const { data: staffRows } = await supabaseClient.from('staff').select('*');
     if (staffRows && staffRows.length) {
       settings.staff = staffRows.map(st => ({ name: st.name, pin: st.pin, role: st.role || 'staff' }));
-      persistSettings();
       renderStaffList();
     }
 
-    // 3. Fetch Cloud Customers
+    // 3. Fetch Cloud Customers (100% Supabase Direct)
     const { data: custData } = await supabaseClient.from('customers').select('*');
+    const newCustomers = {};
     if (custData && custData.length) {
       custData.forEach(row => {
         if (!row.phone) return;
-        if (!customers[row.phone]) {
-          customers[row.phone] = {
-            phone: row.phone, name: row.name || 'Customer', totalPoints: Number(row.total_points || 0),
-            totalSpent: Number(row.total_spent || 0), visits: Number(row.visits || 0),
-            firstVisit: row.first_visit, lastVisit: row.last_visit,
-            referralCode: row.referral_code, referredBy: row.referred_by
-          };
-        } else {
-          customers[row.phone].totalPoints = Math.max(customers[row.phone].totalPoints || 0, Number(row.total_points || 0));
-          customers[row.phone].totalSpent = Math.max(customers[row.phone].totalSpent || 0, Number(row.total_spent || 0));
-          customers[row.phone].visits = Math.max(customers[row.phone].visits || 0, Number(row.visits || 0));
-          if (row.name) customers[row.phone].name = row.name;
-        }
-      });
-      persistCustomers();
-    } else if (Object.keys(customers).length > 0) {
-      await syncAllLocalToCloud();
-    }
-
-    // 4. Fetch Cloud Transactions (Merged with Local Storage)
-    const { data: txData } = await supabaseClient.from('transactions').select('*');
-    if (txData && txData.length) {
-      const txMap = {};
-      (transactions || []).forEach(t => { if (t && t.id) txMap[t.id] = t; });
-      txData.forEach(row => {
-        txMap[row.id] = {
-          id: row.id, billNo: row.bill_no, date: row.date, phone: row.phone,
-          name: row.name, amount: Number(row.amount || 0), earned: Number(row.earned || 0),
-          redeemed: Number(row.redeemed || 0), staffName: row.staff_name || '—',
-          ts: row.created_at ? new Date(row.created_at).getTime() : (row.ts || Date.now())
+        newCustomers[row.phone] = {
+          phone: row.phone, name: row.name || 'Customer', totalPoints: Number(row.total_points || 0),
+          totalSpent: Number(row.total_spent || 0), visits: Number(row.visits || 0),
+          firstVisit: row.first_visit, lastVisit: row.last_visit,
+          referralCode: row.referral_code, referredBy: row.referred_by
         };
       });
-      transactions = Object.values(txMap).sort((a, b) => (b.ts || 0) - (a.ts || 0));
-      persistTransactions();
+    }
+    customers = newCustomers;
+
+    // 4. Fetch Cloud Transactions (100% Supabase Direct)
+    const { data: txData } = await supabaseClient.from('transactions').select('*');
+    if (txData && txData.length) {
+      transactions = txData.map(row => ({
+        id: row.id, billNo: row.bill_no, date: row.date, phone: row.phone,
+        name: row.name, amount: Number(row.amount || 0), earned: Number(row.earned || 0),
+        redeemed: Number(row.redeemed || 0), staffName: row.staff_name || '—',
+        ts: row.created_at ? new Date(row.created_at).getTime() : (row.ts || Date.now())
+      })).sort((a, b) => (b.ts || 0) - (a.ts || 0));
+    } else {
+      transactions = [];
     }
 
-    // 5. Fetch Cloud Redemptions
-    const { data: redData } = await supabaseClient.from('redemptions').select('*').order('created_at', { ascending: false });
+    // 5. Fetch Cloud Redemptions (100% Supabase Direct)
+    const { data: redData } = await supabaseClient.from('redemptions').select('*');
     if (redData && redData.length) {
       redemptions = redData.map(row => ({
         id: row.id, phone: row.phone, name: row.name,
@@ -919,18 +909,19 @@ async function fetchCloudData() {
         code: row.code, status: row.status,
         createdAt: new Date(row.created_at).getTime(),
         fulfilledAt: row.fulfilled_at ? new Date(row.fulfilled_at).getTime() : null
-      }));
-      persistRedemptions();
+      })).sort((a, b) => b.createdAt - a.createdAt);
+    } else {
+      redemptions = [];
     }
   } catch(err) {
-    console.warn('Cloud sync fetch warning:', err);
+    console.warn('Cloud fetch warning:', err);
   }
 }
 
-function persistCustomers() { Storage.set('bm-loyalty-customers', customers); }
-function persistTransactions() { Storage.set('bm-loyalty-transactions', transactions); }
-function persistRedemptions() { Storage.set('bm-loyalty-redemptions', redemptions); }
-function persistSettings() { Storage.set('bm-loyalty-settings', settings); }
+function persistCustomers() {}
+function persistTransactions() {}
+function persistRedemptions() {}
+function persistSettings() {}
 
 // ---- Mode switching ----
 document.getElementById('btn-mode-staff').addEventListener('click', () => {
