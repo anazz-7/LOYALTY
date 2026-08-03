@@ -1125,10 +1125,25 @@ async function loadAll() {
   }
   settings.staff.forEach(st => { if (!st.role) st.role = 'owner'; });
 
+  // Safety timer to guarantee loading screen disappears within 3 seconds maximum no matter what
+  const hideLoading = () => {
+    if (loadingEl && loadingEl.style.display !== 'none') {
+      loadingEl.style.opacity = '0';
+      loadingEl.style.transition = 'opacity 0.3s ease';
+      setTimeout(() => { loadingEl.style.display = 'none'; }, 300);
+    }
+  };
+  const hardSafetyTimer = setTimeout(hideLoading, 3000);
+
   const hasCloud = initSupabase();
   if (hasCloud) {
     if (loadingStatus) loadingStatus.textContent = 'Loading customers & bills from cloud...';
-    await fetchCloudData();
+    try {
+      await Promise.race([
+        fetchCloudData(),
+        new Promise(res => setTimeout(res, 2500))
+      ]);
+    } catch(e) { console.warn('Cloud load notice:', e); }
     if (loadingStatus) loadingStatus.textContent = 'Synced! Starting app...';
   } else {
     if (loadingStatus) loadingStatus.textContent = 'Starting in offline mode...';
@@ -1137,12 +1152,8 @@ async function loadAll() {
   renderStaffList();
   renderRecent(); renderCustomers(); renderDashboard(); renderRedemptions();
 
-  // Hide loading overlay
-  if (loadingEl) {
-    loadingEl.style.opacity = '0';
-    loadingEl.style.transition = 'opacity 0.4s ease';
-    setTimeout(() => { loadingEl.style.display = 'none'; }, 400);
-  }
+  clearTimeout(hardSafetyTimer);
+  hideLoading();
 
   // Restore Persisted Staff Session for Future App Opens
   const sess = Storage.get('bm-loyalty-session');
