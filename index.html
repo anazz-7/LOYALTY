@@ -1094,16 +1094,50 @@ document.getElementById('save-bill').addEventListener('click', () => {
   btn.disabled = true;
 
   setTimeout(() => {
-    const bill = document.getElementById('f-bill').value.trim(), date = document.getElementById('f-date').value;
-    const phone = fPhone.value.trim(), name = fName.value.trim(), amount = parseFloat(fAmount.value) || 0;
+    let bill = document.getElementById('f-bill').value.trim();
+    let date = document.getElementById('f-date').value || (new Date().toISOString().slice(0, 10));
+    let phone = fPhone.value.trim();
+    let name = fName.value.trim();
+    const amount = parseFloat(fAmount.value) || 0;
     let redeem = parseFloat(fRedeem.value) || 0;
     const refCode = document.getElementById('f-refcode').value.trim().toUpperCase();
+
+    // Auto-generate sequential bill number if empty
+    if (!bill) {
+      const maxNo = transactions.reduce((m, t) => Math.max(m, parseInt(t.billNo.replace(/\D/g, '')) || 0), 1000);
+      bill = String(maxNo + 1);
+      document.getElementById('f-bill').value = bill;
+    }
+
+    // Smart Name-to-Phone Resolution (Allows recording bills by Customer Name directly!)
+    if (!phone && name) {
+      const match = Object.values(customers).find(c => c.name.toLowerCase() === name.toLowerCase())
+                 || Object.values(customers).find(c => c.name.toLowerCase().includes(name.toLowerCase()));
+      if (match) {
+        phone = match.phone;
+        name = match.name;
+        fPhone.value = phone;
+        fName.value = name;
+      } else {
+        phone = '90' + Date.now().toString().slice(-8);
+        fPhone.value = phone;
+      }
+    } else if (phone && !name) {
+      const match = customers[phone];
+      if (match) {
+        name = match.name;
+        fName.value = name;
+      } else {
+        name = 'Customer ' + phone.slice(-4);
+        fName.value = name;
+      }
+    }
 
     btn.innerHTML = originalText;
     btn.disabled = false;
 
     if (!bill || !date || !phone || !name || amount <= 0) {
-      document.getElementById('save-status').textContent = 'Please fill bill number, date, phone, name and amount.'; return;
+      document.getElementById('save-status').textContent = 'Please fill bill amount and customer name or phone.'; return;
     }
 
     const isNewCustomer = !customers[phone];
