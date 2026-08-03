@@ -885,12 +885,14 @@
     <div class="card">
       <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:14px;">
         <div>
-          <h2>System Activity &amp; Audit Log</h2>
-          <div class="sub" style="margin:0;">Real-time timeline of store bills, redemptions, staff actions, and customer logins.</div>
+          <h2 style="margin:0;">Lifetime Activity &amp; Audit Log</h2>
+          <div class="sub" style="margin:0;">Official permanent lifetime audit log of store bills, redemptions, staff actions, customer edits, and system events (Protected - Non-deletable).</div>
         </div>
         <div style="display:flex; gap:8px; align-items:center;">
-          <input id="activity-search" placeholder="Search logs..." style="max-width:200px; padding:6px 12px; font-size:13px;" onkeyup="renderActivityLogs()">
-          <button class="btn secondary" onclick="clearActivityLogs()" style="padding:6px 12px; font-size:12px;">Clear Logs</button>
+          <input id="activity-search" placeholder="Search audit logs..." style="max-width:200px; padding:6px 12px; font-size:13px;" onkeyup="renderActivityLogs()">
+          <button class="btn secondary" onclick="exportActivityLogsCSV()" style="padding:6px 12px; font-size:12px; display:inline-flex; align-items:center; gap:4px;">
+            <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Export Audit Log (CSV)
+          </button>
         </div>
       </div>
       <div id="activity-log-container"></div>
@@ -1058,7 +1060,7 @@ function logActivity(type, title, description, details = {}) {
   };
 
   activityLogs.unshift(newLog);
-  if (activityLogs.length > 300) activityLogs = activityLogs.slice(0, 300);
+  // Lifetime Full Activity History — Keep all records permanently without truncation
 
   try { localStorage.setItem('bm-loyalty-activity-logs', JSON.stringify(activityLogs)); } catch(e) {}
 
@@ -1122,7 +1124,7 @@ window.renderActivityLogs = function() {
     system: { bg: '#F1F5F9', text: '#475569', border: '#CBD5E1', label: 'SYSTEM' }
   };
 
-  container.innerHTML = logsToDisplay.slice(0, 80).map(l => {
+  container.innerHTML = logsToDisplay.slice(0, 500).map(l => {
     const meta = badgeColors[l.type] || badgeColors.system;
     return `
       <div style="display:flex; gap:12px; align-items:flex-start; padding:12px 14px; background:var(--bg-card-elevated); border:1.5px solid var(--border-color); border-radius:12px; margin-bottom:10px;">
@@ -1141,13 +1143,17 @@ window.renderActivityLogs = function() {
   }).join('');
 };
 
-window.clearActivityLogs = function() {
-  if (confirm('Clear activity logs from view?')) {
-    activityLogs = [];
-    try { localStorage.removeItem('bm-loyalty-activity-logs'); } catch(e) {}
-    renderActivityLogs();
-    toast('Activity logs cleared');
-  }
+window.exportActivityLogsCSV = function() {
+  if (!activityLogs || activityLogs.length === 0) { toast('No activity logs to export'); return; }
+
+  let csv = 'Timestamp,Date & Time,Event Type,Title,Description,Staff Member,Phone\n';
+  activityLogs.forEach(l => {
+    csv += `"${l.timestamp}","${l.dateStr||''}","${l.type||''}","${(l.title||'').replace(/"/g,'""')}","${(l.description||'').replace(/"/g,'""')}","${(l.staffName||'').replace(/"/g,'""')}","${l.phone||''}"\n`;
+  });
+
+  const dateStr = new Date().toISOString().slice(0, 10);
+  downloadFile(csv, `lifetime-activity-audit-log-${dateStr}.csv`, 'text/csv');
+  toast(`Exported ${activityLogs.length} lifetime audit log records to CSV!`);
 };
 
 
