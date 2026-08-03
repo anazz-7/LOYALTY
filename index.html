@@ -620,7 +620,7 @@
               <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><rect x="7" y="7" width="10" height="10" rx="1"/></svg> Scan QR
             </button>
           </div>
-          <input id="f-phone" class="mono" placeholder="10-digit number or search name" maxlength="15" autocomplete="off">
+          <input id="f-phone" class="mono" placeholder="10-digit phone number" maxlength="10" autocomplete="off">
           <div id="cust-phone-dropdown" style="display:none; position:absolute; left:0; right:0; top:100%; z-index:99; background:var(--bg-card); border:1px solid var(--border-dark); border-radius:8px; max-height:220px; overflow-y:auto; box-shadow:0 10px 25px rgba(0,0,0,0.15); margin-top:4px;"></div>
         </div>
         <div class="field" style="position:relative;">
@@ -905,7 +905,7 @@
   <div class="card" id="c-lookup-card" style="max-width:500px; margin:0 auto 20px;">
     <h2>Check Your Points</h2>
     <div class="sub">Enter your registered 10-digit phone number.</div>
-    <div class="field"><label>Phone Number</label><input id="c-phone" class="mono" placeholder="10-digit number" maxlength="15" style="text-align:center; font-size:18px;"></div>
+    <div class="field"><label>Phone Number</label><input id="c-phone" class="mono" placeholder="10-digit phone number" maxlength="10" style="text-align:center; font-size:18px;"></div>
     <button class="btn" id="c-lookup" style="width:100%; margin-top:12px;">Check Balance</button>
     <div class="save-status" id="c-status" style="color:var(--accent-red); margin-top:8px;"></div>
   </div>
@@ -933,7 +933,7 @@
 
     <div class="field" style="margin-bottom:12px;">
       <label style="color:rgba(255,255,255,0.85);">Phone Number (10 Digits)</label>
-      <input id="edit-cust-phone" class="mono" style="background:rgba(255,255,255,0.08); border-color:rgba(255,255,255,0.2); color:#fff;" placeholder="Phone Number">
+      <input id="edit-cust-phone" class="mono" maxlength="10" style="background:rgba(255,255,255,0.08); border-color:rgba(255,255,255,0.2); color:#fff;" placeholder="10-digit phone number">
     </div>
 
     <div class="grid" style="grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px;">
@@ -1788,6 +1788,17 @@ window.selectCustomerResult = function(phone) {
 };
 
 [fPhone, fName, fAmount, fRedeem].forEach(el => el.addEventListener('input', updatePreview));
+
+['f-phone', 'c-phone', 'edit-cust-phone'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) {
+    el.addEventListener('input', (e) => {
+      let digits = e.target.value.replace(/\D/g, '');
+      if (digits.length > 10) digits = digits.slice(0, 10);
+      e.target.value = digits;
+    });
+  }
+});
 fName.addEventListener('input', (e) => handleCustomerSearch(e.target.value, document.getElementById('cust-name-dropdown')));
 fPhone.addEventListener('input', (e) => handleCustomerSearch(e.target.value, document.getElementById('cust-phone-dropdown')));
 
