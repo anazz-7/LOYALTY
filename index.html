@@ -2152,14 +2152,28 @@ window.showCustomer = function(phone) {
 };
 
 window.deleteTxn = function(id) {
+  if (currentStaffRole !== 'owner') {
+    toast('Access Restricted to Owner');
+    return;
+  }
   const t = transactions.find(x => x.id === id); if (!t) return;
+  if (!confirm(`Are you sure you want to delete Bill #${t.billNo}? This will reverse customer points.`)) return;
+
   const c = customers[t.phone];
-  if (c) { c.totalPoints = c.totalPoints - t.earned + t.redeemed; c.totalSpent -= t.amount; c.visits = Math.max(0, c.visits - 1); }
+  if (c) { 
+    c.totalPoints = Math.max(0, c.totalPoints - t.earned + t.redeemed); 
+    c.totalSpent = Math.max(0, c.totalSpent - t.amount); 
+    c.visits = Math.max(0, c.visits - 1); 
+  }
   transactions = transactions.filter(x => x.id !== id);
   persistCustomers(); persistTransactions();
   if (c) saveCustomerCloud(c);
   deleteTransactionCloud(id);
-  toast('Entry deleted'); renderRecent(); renderCustomers(); showCustomer(t.phone);
+
+  logActivity('staff', 'Transaction Deleted', `Bill #${t.billNo} (₹${t.amount}) deleted by ${currentStaffName || 'Owner'} (${currentStaffRole}).`, { phone: t.phone, amount: t.amount, staffName: currentStaffName });
+  toast('Transaction deleted and points adjusted');
+  renderRecent(); renderCustomers(); renderDashboard();
+  if (c) showCustomer(c.phone);
 };
 
 // ---- Redemptions (staff side) ----
@@ -2245,6 +2259,7 @@ document.getElementById('save-settings').addEventListener('click', () => {
   persistSettings(); saveSettingsCloud();
   document.getElementById('bizNameHeader').textContent = settings.bizName;
   document.getElementById('settings-status').textContent = 'Settings saved.';
+  logActivity('staff', 'Settings Updated', `Store settings updated by ${currentStaffName || 'Owner'} (${currentStaffRole}). Rate: 1pt/₹${settings.rate}, Redeem: ₹${settings.redeemVal}/pt.`, { staffName: currentStaffName });
   toast('Settings saved'); updatePreview();
 });
 
@@ -2784,6 +2799,7 @@ window.exportCustomersCSV = function() {
 
   const dateStr = new Date().toISOString().slice(0, 10);
   downloadFile(csv, `customers-database-${dateStr}.csv`, 'text/csv');
+  logActivity('staff', 'Customer List Exported', `Customer database CSV exported by ${currentStaffName || 'Owner'} (${arr.length} records).`, { staffName: currentStaffName });
   toast(`Exported ${arr.length} customer records to CSV!`);
 };
 
@@ -2928,6 +2944,7 @@ window.resetCustomerPin = function(phone) {
   const c = customers[phone]; if (!c) return;
   c.pin = generateCustomerPin();
   persistCustomers(); saveCustomerCloud(c);
+  logActivity('staff', 'Customer PIN Reset', `Account PIN reset for ${c.name} (${c.phone}) by ${currentStaffName || 'Owner'}.`, { phone, staffName: currentStaffName });
   toast(`New PIN for ${c.name}: ${c.pin}`);
   showCustomer(phone);
 };
