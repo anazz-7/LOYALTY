@@ -3071,62 +3071,97 @@ window.closeEditCustModal = function() {
 };
 
 window.saveCustomerProfileEdit = async function() {
-  const oldPhone = document.getElementById('edit-cust-old-phone').value;
-  const newName = document.getElementById('edit-cust-name').value.trim();
-  const newPhoneRaw = document.getElementById('edit-cust-phone').value.trim();
-  const newPhone = get10DigitPhone(newPhoneRaw) || newPhoneRaw;
-  const newPoints = parseInt(document.getElementById('edit-cust-points').value) || 0;
-  const newPin = document.getElementById('edit-cust-pin').value.trim() || '1234';
+  const modal = document.getElementById('edit-cust-modal');
+  const btn = modal ? modal.querySelector('button.btn') : null;
+  const originalBtnText = btn ? btn.innerHTML : 'Save Customer Changes';
+  if (btn) { btn.disabled = true; btn.innerHTML = '⏳ Saving...'; }
 
-  if (!newName || !newPhone) {
-    toast('Customer name and phone number are required');
-    return;
-  }
+  try {
+    const oldPhone = document.getElementById('edit-cust-old-phone').value;
+    const newName = document.getElementById('edit-cust-name').value.trim();
+    const newPhoneRaw = document.getElementById('edit-cust-phone').value.trim();
+    const newPhone = get10DigitPhone(newPhoneRaw) || newPhoneRaw;
+    const newPoints = parseInt(document.getElementById('edit-cust-points').value);
+    const newPin = document.getElementById('edit-cust-pin').value.trim() || '1234';
 
-  const oldPhone10 = get10DigitPhone(oldPhone);
-  const oldC = customers[oldPhone10] || customers[oldPhone] || Object.values(customers).find(x => x && (get10DigitPhone(x.phone) === oldPhone10 || x.phone === oldPhone));
-  if (!oldC) {
-    toast('Customer account record not found');
-    return;
-  }
+    if (!newName || !newPhone) {
+      toast('Customer name and phone number are required');
+      if (btn) { btn.disabled = false; btn.innerHTML = originalBtnText; }
+      return;
+    }
 
-  if (oldC.phone !== newPhone) {
-    delete customers[oldPhone];
-    delete customers[oldPhone10];
-    transactions.forEach(t => {
-      if (get10DigitPhone(t.phone) === oldPhone10) {
-        t.phone = newPhone;
-        t.name = newName;
+    const oldPhone10 = get10DigitPhone(oldPhone);
+    const oldC = customers[oldPhone10] || customers[oldPhone] || Object.values(customers).find(x => x && (get10DigitPhone(x.phone) === oldPhone10 || x.phone === oldPhone));
+    
+    if (!oldC) {
+      toast('Customer account record not found');
+      if (btn) { btn.disabled = false; btn.innerHTML = originalBtnText; }
+      return;
+    }
+
+    const ptsToSet = isNaN(newPoints) ? (oldC.totalPoints || 0) : newPoints;
+
+    if (oldC.phone !== newPhone) {
+      delete customers[oldC.phone];
+      delete customers[oldPhone10];
+
+      transactions.forEach(t => {
+        if (get10DigitPhone(t.phone) === oldPhone10 || t.phone === oldC.phone) {
+          t.phone = newPhone;
+          t.name = newName;
+        }
+      });
+      persistTransactions();
+    }
+
+    const updatedC = {
+      ...oldC,
+      phone: newPhone,
+      name: newName,
+      totalPoints: ptsToSet,
+      pin: newPin
+    };
+
+    customers[newPhone] = updatedC;
+    persistCustomers();
+
+    if (supabaseClient) {
+      try {
+        if (oldC.phone !== newPhone) {
+          await supabaseClient.from('customers').delete().eq('phone', oldC.phone);
+          if (oldPhone10 !== oldC.phone) {
+            await supabaseClient.from('customers').delete().eq('phone', oldPhone10);
+          }
+          const updatedTxs = transactions.filter(t => get10DigitPhone(t.phone) === newPhone).map(t => ({
+            id: t.id, bill_no: t.billNo, date: t.date, phone: t.phone,
+            name: t.name, amount: t.amount, earned: t.earned, redeemed: t.redeemed,
+            staff_name: t.staffName || '—'
+          }));
+          if (updatedTxs.length > 0) {
+            await supabaseClient.from('transactions').upsert(updatedTxs);
+          }
+        }
+        await saveCustomerCloud(updatedC);
+      } catch(cloudErr) {
+        console.warn('Supabase customer edit save notice:', cloudErr);
       }
-    });
-    persistTransactions();
-  }
+    }
 
-  const updatedC = {
-    ...oldC,
-    phone: newPhone,
-    name: newName,
-    totalPoints: newPoints,
-    pin: newPin
-  };
+    logActivity('staff', 'Customer Profile Updated', `Profile edited for ${newName} (${newPhone}). Balance: ${ptsToSet} PTS.`, { phone: newPhone, staffName: currentStaffName });
+    toast('Customer profile updated successfully!');
+    closeEditCustModal();
+    renderCustomers();
+    renderRecent();
 
-  customers[newPhone] = updatedC;
-  persistCustomers();
-
-  if (supabaseClient) {
-    try {
-      await saveCustomerCloud(updatedC);
-    } catch(e) {}
-  }
-
-  logActivity('staff', 'Customer Profile Updated', `Profile edited for ${newName} (${newPhone}). Balance: ${newPoints} PTS.`, { phone: newPhone, staffName: currentStaffName });
-  toast('Customer profile updated!');
-  closeEditCustModal();
-  renderCustomers();
-
-  const detail = document.getElementById('customer-detail');
-  if (detail && detail.style.display !== 'none') {
-    showCustomer(newPhone);
+    const detail = document.getElementById('customer-detail');
+    if (detail && detail.style.display !== 'none') {
+      showCustomer(newPhone);
+    }
+  } catch(err) {
+    console.error('Customer profile edit error:', err);
+    toast('Save error: ' + err.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = originalBtnText; }
   }
 };
 
