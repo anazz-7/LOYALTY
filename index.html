@@ -449,16 +449,21 @@
       <div class="grid">
         <div class="field"><label>Bill Number</label><input id="f-bill" class="mono" placeholder="e.g. 1042"></div>
         <div class="field"><label>Date</label><input id="f-date" type="date"></div>
-        <div class="field">
+        <div class="field" style="position:relative;">
           <div style="display:flex; justify-content:space-between; align-items:center;">
             <label>Customer Phone</label>
             <button class="btn secondary" type="button" onclick="openQRScanner()" style="padding:2px 8px; font-size:11.5px; display:inline-flex; align-items:center; gap:4px; margin-bottom:4px;">
               <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><rect x="7" y="7" width="10" height="10" rx="1"/></svg> Scan QR
             </button>
           </div>
-          <input id="f-phone" class="mono" placeholder="10-digit number" maxlength="15">
+          <input id="f-phone" class="mono" placeholder="10-digit number or search name" maxlength="15" autocomplete="off">
+          <div id="cust-phone-dropdown" style="display:none; position:absolute; left:0; right:0; top:100%; z-index:99; background:var(--bg-card); border:1px solid var(--border-dark); border-radius:8px; max-height:220px; overflow-y:auto; box-shadow:0 10px 25px rgba(0,0,0,0.15); margin-top:4px;"></div>
         </div>
-        <div class="field"><label>Customer Name</label><input id="f-name" placeholder="Full name"></div>
+        <div class="field" style="position:relative;">
+          <label>Customer Name</label>
+          <input id="f-name" placeholder="Search or type full name..." autocomplete="off">
+          <div id="cust-name-dropdown" style="display:none; position:absolute; left:0; right:0; top:100%; z-index:99; background:var(--bg-card); border:1px solid var(--border-dark); border-radius:8px; max-height:220px; overflow-y:auto; box-shadow:0 10px 25px rgba(0,0,0,0.15); margin-top:4px;"></div>
+        </div>
         <div class="field">
           <label>Bill Amount (₹)</label>
           <input id="f-amount" type="number" min="0" class="mono" placeholder="0">
@@ -1025,7 +1030,60 @@ function updatePreview() {
   document.getElementById('pv-redeemval').textContent = '₹' + redeemVal.toFixed(2);
   document.getElementById('pv-balance').textContent = newBalance;
 }
+
+function handleCustomerSearch(query, dropdownEl) {
+  const q = (query || '').toLowerCase().trim();
+  if (q.length < 1) {
+    dropdownEl.style.display = 'none';
+    dropdownEl.innerHTML = '';
+    return;
+  }
+
+  const matches = Object.values(customers).filter(c => 
+    c.name.toLowerCase().includes(q) || c.phone.toLowerCase().includes(q)
+  ).slice(0, 6);
+
+  if (matches.length === 0) {
+    dropdownEl.style.display = 'none';
+    dropdownEl.innerHTML = '';
+    return;
+  }
+
+  dropdownEl.innerHTML = matches.map(c => `
+    <div class="search-item" onclick="selectCustomerResult('${c.phone}')" style="padding:10px 12px; cursor:pointer; border-bottom:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center; transition:background 0.15s ease;">
+      <div>
+        <div style="font-weight:700; color:var(--text-main); font-size:13.5px;">${escapeHtml(c.name)}</div>
+        <div style="font-size:12px; color:var(--text-sub);" class="mono">${escapeHtml(c.phone)} · ${c.visits} visits</div>
+      </div>
+      <span class="badge">${c.totalPoints} pts</span>
+    </div>`).join('');
+
+  dropdownEl.style.display = 'block';
+}
+
+window.selectCustomerResult = function(phone) {
+  const c = customers[phone];
+  if (!c) return;
+  fPhone.value = c.phone;
+  fName.value = c.name;
+  document.getElementById('cust-name-dropdown').style.display = 'none';
+  document.getElementById('cust-phone-dropdown').style.display = 'none';
+  updatePreview();
+  toast(`Selected: ${c.name}`);
+};
+
 [fPhone, fName, fAmount, fRedeem].forEach(el => el.addEventListener('input', updatePreview));
+fName.addEventListener('input', (e) => handleCustomerSearch(e.target.value, document.getElementById('cust-name-dropdown')));
+fPhone.addEventListener('input', (e) => handleCustomerSearch(e.target.value, document.getElementById('cust-phone-dropdown')));
+
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('#f-name') && !e.target.closest('#cust-name-dropdown')) {
+    document.getElementById('cust-name-dropdown').style.display = 'none';
+  }
+  if (!e.target.closest('#f-phone') && !e.target.closest('#cust-phone-dropdown')) {
+    document.getElementById('cust-phone-dropdown').style.display = 'none';
+  }
+});
 document.getElementById('f-date').valueAsDate = new Date();
 
 document.getElementById('save-bill').addEventListener('click', () => {
