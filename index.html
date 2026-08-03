@@ -873,27 +873,40 @@ async function fetchCloudData() {
     const { data: custData } = await supabaseClient.from('customers').select('*');
     if (custData && custData.length) {
       custData.forEach(row => {
-        customers[row.phone] = {
-          phone: row.phone, name: row.name, totalPoints: Number(row.total_points || 0),
-          totalSpent: Number(row.total_spent || 0), visits: Number(row.visits || 0),
-          firstVisit: row.first_visit, lastVisit: row.last_visit,
-          referralCode: row.referral_code, referredBy: row.referred_by
-        };
+        if (!row.phone) return;
+        if (!customers[row.phone]) {
+          customers[row.phone] = {
+            phone: row.phone, name: row.name || 'Customer', totalPoints: Number(row.total_points || 0),
+            totalSpent: Number(row.total_spent || 0), visits: Number(row.visits || 0),
+            firstVisit: row.first_visit, lastVisit: row.last_visit,
+            referralCode: row.referral_code, referredBy: row.referred_by
+          };
+        } else {
+          customers[row.phone].totalPoints = Math.max(customers[row.phone].totalPoints || 0, Number(row.total_points || 0));
+          customers[row.phone].totalSpent = Math.max(customers[row.phone].totalSpent || 0, Number(row.total_spent || 0));
+          customers[row.phone].visits = Math.max(customers[row.phone].visits || 0, Number(row.visits || 0));
+          if (row.name) customers[row.phone].name = row.name;
+        }
       });
       persistCustomers();
     } else if (Object.keys(customers).length > 0) {
-      // Auto-upload local data to cloud if cloud is currently empty!
       await syncAllLocalToCloud();
     }
 
-    // 4. Fetch Cloud Transactions
-    const { data: txData } = await supabaseClient.from('transactions').select('*').order('date', { ascending: false });
+    // 4. Fetch Cloud Transactions (Merged with Local Storage)
+    const { data: txData } = await supabaseClient.from('transactions').select('*');
     if (txData && txData.length) {
-      transactions = txData.map(row => ({
-        id: row.id, billNo: row.bill_no, date: row.date, phone: row.phone,
-        name: row.name, amount: Number(row.amount || 0), earned: Number(row.earned || 0),
-        redeemed: Number(row.redeemed || 0), staffName: row.staff_name || '—'
-      }));
+      const txMap = {};
+      (transactions || []).forEach(t => { if (t && t.id) txMap[t.id] = t; });
+      txData.forEach(row => {
+        txMap[row.id] = {
+          id: row.id, billNo: row.bill_no, date: row.date, phone: row.phone,
+          name: row.name, amount: Number(row.amount || 0), earned: Number(row.earned || 0),
+          redeemed: Number(row.redeemed || 0), staffName: row.staff_name || '—',
+          ts: row.created_at ? new Date(row.created_at).getTime() : (row.ts || Date.now())
+        };
+      });
+      transactions = Object.values(txMap).sort((a, b) => (b.ts || 0) - (a.ts || 0));
       persistTransactions();
     }
 
