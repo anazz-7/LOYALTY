@@ -555,6 +555,10 @@
       </div>
     </div>
     <div class="header-actions">
+      <button class="btn secondary" id="btn-share-app" onclick="openShareAppModal()" style="padding:6px 12px; font-size:12.5px; display:inline-flex; align-items:center; gap:6px; border-radius:10px; font-weight:700; background:rgba(255,255,255,0.08); color:#fff; border:1px solid rgba(255,255,255,0.18);" title="Share App via QR Code">
+        <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 0 1 2 2h12a2 2 0 0 1 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+        <span>Share App</span>
+      </button>
       <button class="btn secondary" id="btn-pwa-install" onclick="installPWA()" style="display:none; padding:6px 10px; font-size:12px; align-items:center; gap:4px;" title="Install App">
         <svg class="icon icon-sm" viewBox="0 0 24 24" style="margin:0;"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
       </button>
@@ -877,11 +881,40 @@
       <span style="width:8px; height:8px; background:#4ADE80; border-radius:50%; display:inline-block;"></span>
       <span id="bottom-role-text" style="color:rgba(255,255,255,0.95);">Active Session</span>
     </div>
-    <button class="btn danger" id="bottom-logout-btn" onclick="handleBottomLogout()" style="padding:4px 14px; font-size:12px; height:auto; min-height:32px; border-radius:8px; width:auto; flex-shrink:0;">
-      <svg class="icon icon-sm" viewBox="0 0 24 24" style="margin-right:4px;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg> Logout
-    </button>
+    <div style="display:flex; gap:8px; align-items:center;">
+      <button class="btn secondary" onclick="openShareAppModal()" style="padding:4px 10px; font-size:12px; height:auto; min-height:32px; border-radius:8px; width:auto; flex-shrink:0; background:rgba(255,255,255,0.1); color:#fff; border:1px solid rgba(255,255,255,0.2);" title="Share App via QR Code">
+        <svg class="icon icon-sm" viewBox="0 0 24 24" style="margin-right:4px;"><path d="M4 12v8a2 2 0 0 1 2 2h12a2 2 0 0 1 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Share App
+      </button>
+      <button class="btn danger" id="bottom-logout-btn" onclick="handleBottomLogout()" style="padding:4px 14px; font-size:12px; height:auto; min-height:32px; border-radius:8px; width:auto; flex-shrink:0;">
+        <svg class="icon icon-sm" viewBox="0 0 24 24" style="margin-right:4px;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg> Logout
+      </button>
+    </div>
   </div>
 </footer>
+
+<!-- Share App QR Code Overlay Modal -->
+<div id="share-app-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); z-index:99999; align-items:center; justify-content:center; padding:16px;">
+  <div class="card" style="width:100%; max-width:400px; margin:0; text-align:center; position:relative; background:#14202E; border:1px solid rgba(255,255,255,0.15); box-shadow:0 20px 50px rgba(0,0,0,0.6); border-radius:20px; color:#fff;">
+    <button type="button" onclick="closeShareAppModal()" style="position:absolute; top:14px; right:14px; background:rgba(255,255,255,0.1); border:none; color:#fff; width:32px; height:32px; border-radius:50%; font-size:18px; cursor:pointer;">✕</button>
+    <div style="width:48px; height:48px; background:linear-gradient(135deg,#1d4ed8,#3b82f6); border-radius:14px; display:inline-flex; align-items:center; justify-content:center; font-size:22px; font-weight:900; color:#fff; margin-bottom:10px;">B</div>
+    <h2 style="color:#fff; font-size:20px; font-weight:800; margin-bottom:4px;">Scan to Open App</h2>
+    <div class="sub" style="color:rgba(255,255,255,0.7); font-size:13px; margin-bottom:16px;">Scan this QR code with Chrome or camera on another phone to open this app instantly.</div>
+    
+    <div style="background:#fff; padding:14px; border-radius:16px; display:inline-block; margin-bottom:14px; box-shadow:0 8px 24px rgba(0,0,0,0.3);">
+      <canvas id="share-app-qr-canvas"></canvas>
+    </div>
+
+    <div style="font-size:11.5px; color:#38BDF8; font-weight:700; word-break:break-all; padding:8px 12px; background:rgba(255,255,255,0.05); border-radius:8px; margin-bottom:14px;" class="mono" id="share-app-url-text"></div>
+
+    <div style="display:flex; gap:10px;">
+      <button class="btn" onclick="copyAppUrl()" style="flex:1; background:#2563EB;">
+        <svg class="icon icon-sm" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        Copy Link
+      </button>
+      <button class="btn secondary" onclick="closeShareAppModal()" style="flex:1; border-color:rgba(255,255,255,0.2); color:#fff;">Close</button>
+    </div>
+  </div>
+</div>
 
 <script>
 // Default Supabase Configuration for Instant Vercel & Multi-Mobile Sync
@@ -1112,6 +1145,73 @@ window.handleBottomLogout = function() {
   updateBottomSessionBar();
 };
 
+window.openShareAppModal = function() {
+  const modal = document.getElementById('share-app-modal');
+  const urlTxt = document.getElementById('share-app-url-text');
+  const canvas = document.getElementById('share-app-qr-canvas');
+  if (!modal) return;
+
+  const currentUrl = window.location.href;
+  if (urlTxt) urlTxt.textContent = currentUrl;
+  modal.style.display = 'flex';
+
+  setTimeout(() => {
+    if (window.QRious && canvas) {
+      new QRious({
+        element: canvas,
+        value: currentUrl,
+        size: 200,
+        level: 'H'
+      });
+    }
+  }, 50);
+};
+
+window.closeShareAppModal = function() {
+  const modal = document.getElementById('share-app-modal');
+  if (modal) modal.style.display = 'none';
+};
+
+window.copyAppUrl = function() {
+  const currentUrl = window.location.href;
+  if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+    navigator.clipboard.writeText(currentUrl).then(() => {
+      toast('App link copied to clipboard!');
+    }).catch(() => {
+      toast('App link: ' + currentUrl);
+    });
+  } else {
+    toast('App link: ' + currentUrl);
+  }
+};
+
+window.triggerImmediateSync = async function() {
+  try {
+    if (window.syncChannel) {
+      window.syncChannel.postMessage({ type: 'SYNC_NOW', ts: Date.now() });
+    }
+  } catch(e) {}
+
+  if (supabaseClient) {
+    await fetchCloudData();
+    renderRecent(); renderCustomers(); renderDashboard(); renderRedemptions();
+    updateBottomSessionBar();
+  }
+};
+
+if ('BroadcastChannel' in window) {
+  try {
+    window.syncChannel = new BroadcastChannel('b-industries-immediate-sync');
+    window.syncChannel.onmessage = async (event) => {
+      if (event.data && event.data.type === 'SYNC_NOW') {
+        if (supabaseClient) await fetchCloudData();
+        renderRecent(); renderCustomers(); renderDashboard(); renderRedemptions();
+        updateBottomSessionBar();
+      }
+    };
+  } catch(e) {}
+}
+
 window.generateUUID = function generateUUID() {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
     try { return crypto.randomUUID(); } catch(e) {}
@@ -1230,7 +1330,7 @@ async function loadAll() {
         await fetchCloudData();
         renderRecent(); renderCustomers(); renderDashboard(); renderRedemptions();
       }
-    }, 4000);
+    }, 2500);
   }
 }
 
@@ -2938,6 +3038,17 @@ function renderCustomerPortal(c) {
         <div class="save-status" id="c-redeem-status"></div>
         <div id="c-code-box"></div>
       </div>
+    </div>
+
+    <!-- Share App QR Card on Customer Portal -->
+    <div class="card" style="background:linear-gradient(135deg,#1e293b,#0f172a); border:1px solid rgba(59,130,246,0.3); color:#fff; text-align:center; padding:18px;">
+      <div style="font-size:11px; font-weight:800; color:#38BDF8; letter-spacing:0.12em; text-transform:uppercase; margin-bottom:4px;">MULTI-DEVICE ACCESS</div>
+      <h3 style="margin:0 0 6px 0; color:#fff; font-weight:800; font-size:16px;">Open App on another Phone or Chrome</h3>
+      <div style="font-size:12.5px; color:rgba(255,255,255,0.7); margin-bottom:14px;">Scan QR Code or copy link to open your digital customer portal on any other device.</div>
+      <button class="btn" type="button" onclick="openShareAppModal()" style="background:#2563EB; width:100%;">
+        <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 0 1 2 2h12a2 2 0 0 1 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+        Show QR Code to Open on Chrome
+      </button>
     </div>
 
     <!-- Recent Bills Card List -->
