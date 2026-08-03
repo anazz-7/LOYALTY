@@ -639,37 +639,15 @@
     </div>
 
     <div class="card">
-      <h2>Security &amp; Access Controls</h2>
-      <div class="sub">Configure security authentication rules for customer portals and terminals.</div>
-      <div class="field" style="margin-top:10px;">
-        <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
-          <input type="checkbox" id="s-enable-otp" style="width:18px; height:18px;">
-          <span>Require 4-Digit Security OTP for Customer Account Lookups &amp; Redemptions</span>
-        </label>
-      </div>
-    </div>
-
-    <div class="card">
-      <h2>Realtime SMS OTP Gateway (Live Mobile SMS)</h2>
-      <div class="sub">Send real 4-digit SMS OTPs directly to mobile phones via Fast2SMS, Twilio, or Supabase Phone Auth.</div>
-      <div class="grid" style="margin-top:10px;">
-        <div class="field">
-          <label>SMS Gateway Provider</label>
-          <select id="s-sms-provider">
-            <option value="simulated">In-App Demo / WhatsApp Instant OTP (Free)</option>
-            <option value="fast2sms">Fast2SMS (India Transactional SMS)</option>
-            <option value="twilio">Twilio Global SMS Gateway</option>
-            <option value="supabase">Supabase Phone Auth SMS</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>SMS Provider API Key / Auth Token</label>
-          <input id="s-sms-apikey" class="mono" type="password" placeholder="e.g. Fast2SMS API Key or Twilio Token">
-        </div>
-      </div>
-      <div style="margin-top:12px; display:flex; gap:10px; align-items:center;">
-        <button class="btn secondary" type="button" onclick="testSMSGateway()">Send Test SMS OTP</button>
-        <div class="save-status" id="sms-status"></div>
+      <h2>Account Verification &amp; Security Mode</h2>
+      <div class="sub">Choose how customers verify their accounts and claim point redemptions.</div>
+      <div class="field" style="margin-top:12px;">
+        <label>Verification Method</label>
+        <select id="s-verification-mode">
+          <option value="qr">Digital QR Pass / Cashier Camera Scan (Recommended — Free &amp; Fast)</option>
+          <option value="whatsapp">WhatsApp 1-Click Direct Verification</option>
+          <option value="direct">Direct Phone Lookup (Instant — Zero Friction)</option>
+        </select>
       </div>
     </div>
 
@@ -703,21 +681,6 @@
 
 <div class="toast" id="toast"></div>
 <div id="print-receipt"></div>
-
-<!-- Customer OTP Verification Modal -->
-<div id="otp-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:99999; align-items:center; justify-content:center; padding:16px;">
-  <div class="card" style="width:100%; max-width:400px; margin:0; text-align:center;">
-    <h2>Security OTP Verification</h2>
-    <div class="sub">Enter the 4-digit security code sent to <b class="mono" id="otp-phone-lbl" style="color:var(--ink);"></b>.</div>
-    <div class="field" style="margin:20px 0;">
-      <input id="otp-input" type="password" class="mono" inputmode="numeric" placeholder="••••" maxlength="4" style="font-size:24px; letter-spacing:10px; text-align:center;">
-    </div>
-    <button class="btn" id="otp-verify-btn" style="width:100%;">Verify &amp; Access Account</button>
-    <div class="save-status" id="otp-status" style="margin-top:8px;"></div>
-    <div style="font-size:12px; color:var(--text-sub); margin-top:12px; border-top:1px dashed var(--border-color); padding-top:10px;" id="otp-demo-hint"></div>
-    <button class="btn secondary" type="button" onclick="closeOTPModal()" style="width:100%; margin-top:10px;">Cancel</button>
-  </div>
-</div>
 
 <!-- Camera QR Code Scanner Overlay Modal -->
 <div id="qr-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:99999; align-items:center; justify-content:center; padding:16px;">
@@ -832,9 +795,7 @@ async function loadAll() {
   document.getElementById('s-refbonus-referee').value = settings.refBonusReferee ?? 10;
   document.getElementById('s-supa-url').value = settings.supaUrl || '';
   document.getElementById('s-supa-key').value = settings.supaKey || '';
-  document.getElementById('s-enable-otp').checked = settings.enableOTP ?? true;
-  document.getElementById('s-sms-provider').value = settings.smsProvider || 'simulated';
-  document.getElementById('s-sms-apikey').value = settings.smsApiKey || '';
+  document.getElementById('s-verification-mode').value = settings.verificationMode || 'qr';
 
   if (!settings.staff || settings.staff.length === 0) {
     settings.staff = [{ name: "Owner", pin: "1234", role: "owner" }];
@@ -1436,7 +1397,7 @@ document.getElementById('save-settings').addEventListener('click', () => {
   settings.countryCode = (document.getElementById('s-countrycode').value || '91').replace(/\D/g, '') || '91';
   settings.refBonusReferrer = parseFloat(document.getElementById('s-refbonus-referrer').value) || 0;
   settings.refBonusReferee = parseFloat(document.getElementById('s-refbonus-referee').value) || 0;
-  settings.enableOTP = document.getElementById('s-enable-otp').checked;
+  settings.verificationMode = document.getElementById('s-verification-mode').value;
 
   persistSettings(); saveSettingsCloud();
   document.getElementById('bizNameHeader').textContent = settings.bizName;
@@ -1960,120 +1921,6 @@ window.installPWA = function() {
   }
 };
 
-// Customer OTP Verification Engine
-let activeOTP = null;
-let otpTargetPhone = null;
-let onOTPSuccessCallback = null;
-
-function generateOTP() {
-  return Math.floor(1000 + Math.random() * 9000).toString();
-}
-
-window.openOTPModal = function(phone, callback) {
-  otpTargetPhone = phone;
-  onOTPSuccessCallback = callback;
-  activeOTP = generateOTP();
-
-  document.getElementById('otp-phone-lbl').textContent = phone;
-  document.getElementById('otp-input').value = '';
-  document.getElementById('otp-status').textContent = '';
-
-  const provider = settings.smsProvider || 'simulated';
-  if (provider === 'fast2sms' && settings.smsApiKey) {
-    document.getElementById('otp-demo-hint').innerHTML = `<span class="spinner dark"></span> Sending Realtime SMS OTP to <b class="mono">${phone}</b>...`;
-    sendRealtimeSMSOTP(phone, activeOTP);
-  } else {
-    document.getElementById('otp-demo-hint').innerHTML = `Verification OTP Code: <b class="mono" style="color:var(--accent-blue); font-size:16px;">${activeOTP}</b>`;
-  }
-
-  document.getElementById('otp-modal').style.display = 'flex';
-  document.getElementById('otp-input').focus();
-
-  toast(`OTP generated: ${activeOTP}`);
-};
-
-async function sendRealtimeSMSOTP(phone, otp) {
-  const provider = settings.smsProvider || 'simulated';
-  const apiKey = settings.smsApiKey || '';
-  const hintEl = document.getElementById('otp-demo-hint');
-
-  if (provider === 'fast2sms' && apiKey) {
-    try {
-      const cleanPhone = phone.replace(/\D/g, '').slice(-10);
-      const res = await fetch(`https://www.fast2sms.com/dev/bulkV2?authorization=${apiKey}&route=otp&variables_values=${otp}&numbers=${cleanPhone}`);
-      const data = await res.json();
-      if (data && data.return) {
-        if (hintEl) hintEl.innerHTML = `✅ Realtime SMS OTP sent to <b class="mono">${cleanPhone}</b>!`;
-        toast(`SMS OTP sent to ${cleanPhone}`);
-      } else {
-        if (hintEl) hintEl.innerHTML = `⚠️ SMS Gateway Warning: ${data.message || 'Check Fast2SMS API Key'}. Demo OTP: <b class="mono" style="color:var(--accent-blue);">${otp}</b>`;
-      }
-    } catch(err) {
-      if (hintEl) hintEl.innerHTML = `Demo OTP: <b class="mono" style="color:var(--accent-blue);">${otp}</b> (Live SMS requires CORS proxy or direct backend)`;
-    }
-  }
-}
-
-window.testSMSGateway = async function() {
-  const statusEl = document.getElementById('sms-status');
-  const provider = document.getElementById('s-sms-provider').value;
-  const key = document.getElementById('s-sms-apikey').value.trim();
-
-  settings.smsProvider = provider;
-  settings.smsApiKey = key;
-  persistSettings(); saveSettingsCloud();
-
-  if (provider === 'simulated') {
-    statusEl.style.color = 'var(--accent-emerald)';
-    statusEl.textContent = 'Simulated / In-App Demo Mode Active. (No API key required)';
-    return;
-  }
-
-  if (!key) {
-    statusEl.style.color = 'var(--accent-red)';
-    statusEl.textContent = 'Please enter your SMS Provider API Key above.';
-    return;
-  }
-
-  statusEl.innerHTML = `<span class="spinner dark"></span> Testing ${provider} SMS Gateway...`;
-  try {
-    const testOtp = generateOTP();
-    await sendRealtimeSMSOTP('9999999999', testOtp);
-    statusEl.style.color = 'var(--accent-emerald)';
-    statusEl.textContent = `${provider.toUpperCase()} Gateway configured & saved!`;
-    toast('SMS Settings Saved');
-  } catch(e) {
-    statusEl.style.color = 'var(--accent-red)';
-    statusEl.textContent = `SMS Error: ${e.message}`;
-  }
-};
-
-window.closeOTPModal = function() {
-  document.getElementById('otp-modal').style.display = 'none';
-  activeOTP = null;
-  otpTargetPhone = null;
-  onOTPSuccessCallback = null;
-};
-
-document.getElementById('otp-verify-btn').addEventListener('click', () => {
-  const entered = document.getElementById('otp-input').value.trim();
-  if (entered === activeOTP) {
-    toast('OTP Verified Successfully!');
-    const cb = onOTPSuccessCallback;
-    closeOTPModal();
-    if (cb) cb();
-  } else {
-    document.getElementById('otp-status').style.color = 'var(--accent-red)';
-    document.getElementById('otp-status').textContent = 'Incorrect OTP Code. Try again.';
-  }
-});
-
-document.getElementById('otp-input').addEventListener('keyup', (e) => {
-  if (e.key === 'Enter') {
-    document.getElementById('otp-verify-btn').click();
-  }
-});
-
 // ---- Customer Self-Service ----
 document.getElementById('c-lookup').addEventListener('click', () => {
   const phone = document.getElementById('c-phone').value.trim();
@@ -2082,9 +1929,11 @@ document.getElementById('c-lookup').addEventListener('click', () => {
   const c = customers[phone];
   if (!c) { document.getElementById('c-status').textContent = 'No records found for this number.'; return; }
 
-  const requireOTP = settings.enableOTP ?? true;
-  if (requireOTP) {
-    openOTPModal(phone, () => renderCustomerPortal(c));
+  const mode = settings.verificationMode || 'qr';
+  if (mode === 'whatsapp') {
+    const text = `Hi ${settings.bizName}, I am verifying my loyalty account for phone ${phone}.`;
+    window.open(waLink(phone, text), '_blank');
+    renderCustomerPortal(c);
   } else {
     renderCustomerPortal(c);
   }
