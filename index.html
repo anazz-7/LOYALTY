@@ -314,45 +314,69 @@
   /* COMPREHENSIVE RESPONSIVE BREAKPOINTS (SMARTPHONES, TABLETS & FOLDABLES) */
   @media (max-width: 900px) {
     .preview { grid-template-columns: repeat(3, 1fr); }
+    .grid-2col { grid-template-columns: 1fr !important; }
   }
 
   @media (max-width: 640px) {
-    .online-strip { font-size: 9.5px; padding: 4px 8px; }
-    header.masthead { padding: 8px 12px; }
-    .masthead-row { flex-direction: row; align-items: center; justify-content: space-between; gap: 6px; }
-    .brand-block { gap: 8px; }
-    .brand-logo-icon { width: 32px; height: 32px; font-size: 15px; border-radius: 8px; }
-    .masthead h1 { font-size: 15px; }
+    .online-strip { font-size: 9.5px; padding: 5px 10px; text-align: center; justify-content: center; }
+    header.masthead { padding: 10px 14px; }
+    .masthead-row { display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 8px; }
+    .brand-block { gap: 8px; max-width: calc(100% - 110px); }
+    .brand-block h1 { font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .brand-logo-icon { width: 34px; height: 34px; font-size: 16px; border-radius: 8px; flex-shrink: 0; }
     .masthead .tag { display: none; }
     .stamp { display: none; }
 
-    .mode-row { margin: 8px 12px 0; }
-    .mode-btn { font-size: 12px; padding: 8px 6px; min-height: 38px; }
+    .header-actions { display: flex; gap: 4px; align-items: center; justify-content: flex-end; flex-shrink: 0; }
+    .staff-chip { max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10.5px; padding: 2px 8px; }
 
-    nav.tabs { padding: 0 12px; margin-top: 10px; gap: 6px; }
-    nav.tabs button { padding: 8px 14px; font-size: 12px; }
+    .mode-row { margin: 10px 12px 0; padding: 3px; }
+    .mode-btn { font-size: 12.5px; padding: 8px 6px; min-height: 40px; }
+
+    nav.tabs { padding: 0 12px; margin-top: 10px; gap: 6px; scroll-snap-type: x mandatory; }
+    nav.tabs button { padding: 8px 14px; font-size: 12px; scroll-snap-align: start; }
 
     main { padding: 0 12px; margin: 12px auto; }
-    .card { padding: 16px 12px; border-radius: var(--radius-md); margin-bottom: 12px; }
+    .card { padding: 16px 14px; border-radius: var(--radius-md); margin-bottom: 12px; }
     .card h2 { font-size: 16.5px; }
 
     .grid { grid-template-columns: 1fr; gap: 12px; }
+    .grid-2col { grid-template-columns: 1fr !important; }
     .stat-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .stat { padding: 12px; }
+    .stat .num { font-size: 20px; }
+    .stat .lbl { font-size: 10px; }
 
-    .preview { grid-template-columns: repeat(2, 1fr); gap: 8px; padding: 12px; }
-    .quick-amt-row { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    .preview { grid-template-columns: repeat(2, 1fr); gap: 8px; padding: 10px; }
+    .preview span:nth-child(5) { grid-column: span 2; }
+    
+    .quick-amt-row { grid-template-columns: repeat(3, 1fr) !important; gap: 6px; }
 
-    .btn { width: 100%; justify-content: center; }
+    .btn { width: 100%; justify-content: center; text-align: center; }
     .btn.whatsapp, .btn.print, .btn.danger { width: auto; }
+    .btn-group-mobile { display: flex; flex-direction: column; width: 100%; gap: 8px; }
+    .btn-group-mobile .btn { width: 100%; }
 
-    th, td { padding: 8px 8px; font-size: 11.5px; }
+    th, td { padding: 9px 10px; font-size: 11.5px; }
+    td button { white-space: nowrap; }
+
+    .customer-hero-card { padding: 18px 14px; }
     .customer-hero-card .balance { font-size: 38px; }
+    
+    .staff-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; align-items: center; }
+    .staff-row input, .staff-row select { width: 100%; min-width: 0; }
+    .staff-row .btn.danger { grid-column: span 2; width: 100%; }
+    
+    #c-pin-input { font-size: 22px !important; letter-spacing: 8px !important; max-width: 240px; margin: 0 auto; display: block; }
   }
 
   @media (max-width: 400px) {
     .preview { grid-template-columns: 1fr; }
-    .quick-amt-row { grid-template-columns: repeat(2, 1fr); }
-    .quick-range { grid-template-columns: 1fr 1fr; }
+    .preview span:nth-child(5) { grid-column: span 1; }
+    .quick-amt-row { grid-template-columns: repeat(2, 1fr) !important; }
+    .quick-range { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .quick-range button { width: 100%; text-align: center; }
+    .stat-grid { grid-template-columns: 1fr; }
   }
 
   /* Thermal Print */
@@ -398,7 +422,7 @@
         <h1 id="bizNameHeader">B-INDUSTRIES LOYALTY</h1>
       </div>
     </div>
-    <div style="display:flex; gap:6px; align-items:center;">
+    <div class="header-actions">
       <span class="staff-chip" id="staff-chip" style="display:none;"></span>
       <button class="btn secondary" id="btn-lock-terminal" style="display:none; padding:6px 10px; font-size:12px; align-items:center; justify-content:center;" title="Logout Terminal" onclick="lockTerminal()">
         <svg class="icon icon-sm" viewBox="0 0 24 24" style="margin:0;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
@@ -473,7 +497,7 @@
         <div class="field">
           <label>Bill Amount (₹)</label>
           <input id="f-amount" type="number" min="0" class="mono" placeholder="0">
-          <div class="quick-amt-row" style="display:flex; gap:5px; margin-top:6px; flex-wrap:wrap;">
+          <div class="quick-amt-row">
             <button type="button" class="amt-btn" onclick="addAmount(100)">+₹100</button>
             <button type="button" class="amt-btn" onclick="addAmount(200)">+₹200</button>
             <button type="button" class="amt-btn" onclick="addAmount(500)">+₹500</button>
@@ -493,7 +517,7 @@
       </div>
       <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
         <button class="btn" id="save-bill">Save Entry</button>
-        <div style="font-size:11px; color:var(--text-sub); display:flex; gap:10px; flex-wrap:wrap;">
+        <div class="desktop-only" style="font-size:11px; color:var(--text-sub); display:flex; gap:10px; flex-wrap:wrap;">
           <span><kbd style="background:var(--bg-card-elevated); border:1px solid var(--border-dark); padding:2px 5px; border-radius:4px; font-family:'JetBrains Mono';">Ctrl+S</kbd> Save</span>
           <span><kbd style="background:var(--bg-card-elevated); border:1px solid var(--border-dark); padding:2px 5px; border-radius:4px; font-family:'JetBrains Mono';">F1</kbd> New Bill</span>
           <span><kbd style="background:var(--bg-card-elevated); border:1px solid var(--border-dark); padding:2px 5px; border-radius:4px; font-family:'JetBrains Mono';">F2</kbd> Search</span>
@@ -579,7 +603,7 @@
       <div id="report-daily" style="margin-top:16px;"></div>
     </div>
 
-    <div class="grid" style="grid-template-columns: 1fr 1fr; gap:16px;">
+    <div class="grid grid-2col" style="gap:16px;">
       <div class="card" style="margin:0;">
         <h2>Cashier / Staff Performance</h2>
         <div class="sub">Breakdown of bills and sales generated per staff member.</div>
