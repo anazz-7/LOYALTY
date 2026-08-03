@@ -317,13 +317,17 @@
   }
 
   @media (max-width: 640px) {
-    header.masthead { padding: 12px 14px; }
-    .masthead-row { flex-direction: column; align-items: flex-start; gap: 10px; }
-    .brand-block { width: 100%; justify-content: space-between; }
-    .stamp { width: 42px; height: 42px; font-size: 8px; }
+    .online-strip { font-size: 9.5px; padding: 4px 8px; }
+    header.masthead { padding: 8px 12px; }
+    .masthead-row { flex-direction: row; align-items: center; justify-content: space-between; gap: 6px; }
+    .brand-block { gap: 8px; }
+    .brand-logo-icon { width: 32px; height: 32px; font-size: 15px; border-radius: 8px; }
+    .masthead h1 { font-size: 15px; }
+    .masthead .tag { display: none; }
+    .stamp { display: none; }
 
-    .mode-row { margin: 12px 12px 0; }
-    .mode-btn { font-size: 12.5px; padding: 10px 8px; }
+    .mode-row { margin: 8px 12px 0; }
+    .mode-btn { font-size: 12px; padding: 8px 6px; min-height: 38px; }
 
     nav.tabs { padding: 0 12px; margin-top: 10px; gap: 6px; }
     nav.tabs button { padding: 8px 14px; font-size: 12px; }
@@ -384,10 +388,12 @@
         <h1 id="bizNameHeader">B-INDUSTRIES LOYALTY</h1>
       </div>
     </div>
-    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+    <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
       <span class="staff-chip" id="staff-chip" style="display:none;"></span>
-      <button class="btn secondary" id="btn-lock-terminal" style="display:none; padding:5px 12px; font-size:12px;" onclick="lockTerminal()">Lock Terminal</button>
-      <button class="btn secondary" id="btn-pwa-install" onclick="installPWA()" style="display:none; padding:5px 12px; font-size:12px; align-items:center; gap:4px;">
+      <button class="btn secondary" id="btn-lock-terminal" style="display:none; padding:4px 10px; font-size:12px; align-items:center; gap:4px;" onclick="lockTerminal()">
+        <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg> Logout
+      </button>
+      <button class="btn secondary" id="btn-pwa-install" onclick="installPWA()" style="display:none; padding:4px 10px; font-size:12px; align-items:center; gap:4px;">
         <svg class="icon icon-sm" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg> Install App
       </button>
       <div class="stamp">EARN<br>&amp;<br>SAVE</div>
@@ -996,7 +1002,7 @@ window.lockTerminal = function() {
   document.getElementById('btn-lock-terminal').style.display = 'none';
   document.getElementById('pin-input').value = '';
   document.getElementById('pin-status').textContent = '';
-  toast('Terminal Locked');
+  toast('Logged out successfully');
 };
 
 document.getElementById('pin-input').addEventListener('keyup', (e) => {
