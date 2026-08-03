@@ -322,44 +322,57 @@
   }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-  /* FULLY RESPONSIVE MEDIA QUERIES (MOBILE, TABLET & DESKTOP) */
-  @media (max-width: 768px) {
-    header.masthead { padding: 14px 16px; }
-    .masthead-row { gap: 8px; }
-    .brand-logo-icon { width: 38px; height: 38px; font-size: 18px; border-radius: 10px; }
-    .masthead h1 { font-size: 18px; }
-    .stamp { width: 46px; height: 46px; font-size: 9px; }
-    
-    .mode-row { flex-direction: column; margin-top: 14px; padding: 0 14px; gap: 8px; }
-    .mode-btn { font-size: 13.5px; padding: 12px 14px; width: 100%; }
-    
-    nav.tabs { padding: 0 14px; margin-top: 12px; gap: 6px; }
-    nav.tabs button { padding: 8px 14px; font-size: 12px; }
+  /* FULLY RESPONSIVE MOBILE & TABLET DESIGN SYSTEM */
+  nav.tabs button { flex-shrink: 0; }
+  .table-responsive { -webkit-overflow-scrolling: touch; }
 
-    main { padding: 0 14px; margin: 16px auto; }
-    .card { padding: 18px 16px; border-radius: var(--radius-md); margin-bottom: 16px; }
+  @media (max-width: 768px) {
+    header.masthead { padding: 12px 14px; }
+    .masthead-row { gap: 10px; flex-direction: column; align-items: flex-start; }
+    .brand-block { width: 100%; justify-content: space-between; }
+    .brand-logo-icon { width: 40px; height: 40px; font-size: 19px; border-radius: 10px; }
+    .masthead h1 { font-size: 18px; }
+    .stamp { width: 44px; height: 44px; font-size: 8.5px; }
+
+    .mode-row { flex-direction: column; margin-top: 12px; padding: 0 12px; gap: 8px; }
+    .mode-btn { font-size: 13.5px; padding: 12px 14px; width: 100%; min-height: 44px; justify-content: center; }
+
+    nav.tabs { padding: 0 12px; margin-top: 12px; gap: 6px; scroll-snap-type: x mandatory; }
+    nav.tabs button { padding: 10px 14px; font-size: 12.5px; scroll-snap-align: start; min-height: 40px; }
+
+    main { padding: 0 12px; margin: 14px auto; }
+    .card { padding: 18px 14px; border-radius: var(--radius-md); margin-bottom: 14px; }
     .card h2 { font-size: 17px; }
+    .card .sub { font-size: 12.5px; margin-bottom: 14px; }
 
     .grid { grid-template-columns: 1fr; gap: 12px; }
-    .stat-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-    .stat { padding: 14px; }
+    .stat-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .stat { padding: 12px; }
     .stat .num { font-size: 22px; }
 
-    .preview { flex-direction: column; gap: 8px; padding: 14px; }
-    
-    th, td { padding: 10px 10px; font-size: 12px; }
-    .btn { width: 100%; padding: 12px 16px; font-size: 13px; }
-    .btn.whatsapp, .btn.print, .btn.danger { width: auto; }
-    
-    .customer-hero-card { padding: 22px 16px; }
-    .customer-hero-card .balance { font-size: 40px; }
+    .preview { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; padding: 12px; font-size: 12px; }
+    .preview span { display: flex; flex-direction: column; }
+    .preview b { font-size: 14px; margin-top: 2px; }
+
+    input, select { font-size: 15px; padding: 12px; min-height: 44px; }
+    .btn { width: 100%; padding: 13px 16px; font-size: 14px; min-height: 44px; justify-content: center; }
+    .btn.whatsapp, .btn.print, .btn.danger { width: auto; min-height: 36px; padding: 8px 12px; font-size: 12px; }
+    .quick-amt-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
+    .amt-btn { padding: 8px 4px; font-size: 11px; text-align: center; justify-content: center; }
+
+    th, td { padding: 9px 10px; font-size: 12px; }
+    .customer-hero-card { padding: 20px 14px; }
+    .customer-hero-card .balance { font-size: 42px; }
     .code-box .code { font-size: 24px; letter-spacing: 2px; }
   }
 
   @media (max-width: 480px) {
-    .stat-grid { grid-template-columns: 1fr; }
-    .quick-range { display: grid; grid-template-columns: 1fr 1fr; width: 100%; gap: 6px; }
-    .quick-range button { width: 100%; text-align: center; padding: 8px 10px; font-size: 11px; }
+    .masthead-row { align-items: stretch; }
+    .stat-grid { grid-template-columns: repeat(2, 1fr); }
+    .preview { grid-template-columns: 1fr; }
+    .quick-range { display: grid; grid-template-columns: repeat(2, 1fr); width: 100%; gap: 6px; }
+    .quick-range button { width: 100%; text-align: center; padding: 8px 6px; font-size: 11.5px; }
+    .search-item { padding: 10px 8px; }
   }
 
   /* Thermal Receipt Print Styles */
