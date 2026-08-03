@@ -1208,7 +1208,7 @@ document.getElementById('save-bill').addEventListener('click', () => {
 
     c.name = name; c.totalPoints = c.totalPoints - redeem + earned; c.totalSpent += amount; c.visits += 1; c.lastVisit = date;
 
-    const newTx = { id: Date.now().toString(36), billNo: bill, date, phone, name, amount, earned, redeemed: redeem, ts: Date.now(), staffName: currentStaffName || '—' };
+    const newTx = { id: generateUUID(), billNo: bill, date, phone, name, amount, earned, redeemed: redeem, ts: Date.now(), staffName: currentStaffName || '—' };
     transactions.unshift(newTx);
 
     persistCustomers(); persistTransactions();
@@ -2197,7 +2197,7 @@ function renderCustomerPortal(c) {
     const value = amt * (settings.redeemVal || 0);
 
     c.totalPoints -= amt;
-    const newRed = { id: Date.now().toString(36), phone: c.phone, name: c.name, points: amt, value, code, status: 'pending', createdAt: Date.now() };
+    const newRed = { id: generateUUID(), phone: c.phone, name: c.name, points: amt, value, code, status: 'pending', createdAt: Date.now() };
     redemptions.unshift(newRed);
 
     persistCustomers(); persistRedemptions();
