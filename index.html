@@ -26,6 +26,9 @@
 
 <!-- Camera Barcode & QR Code Scanner Library for Cashier -->
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+<!-- Canvas Confetti Celebration Library -->
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
 <style>
   /* B-INDUSTRIES LOYALTY — HIGH-PRECISION CLEAN RESPONSIVE DESIGN SYSTEM */
   :root {
@@ -274,7 +277,6 @@
     position: relative;
     overflow: hidden;
     box-shadow: 0 20px 40px -10px rgba(15, 23, 42, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.25);
-    margin-bottom: 20px;
   }
   .digital-card::before {
     content: ''; position: absolute; top: -60%; right: -30%; width: 280px; height: 280px;
@@ -325,6 +327,72 @@
   }
   .digital-card .card-points-number {
     font-family: 'Plus Jakarta Sans', sans-serif; font-size: 32px; font-weight: 800; color: #38BDF8; line-height: 1; margin-top: 2px;
+  }
+
+  /* 3D Card Flip Perspective Container */
+  .card-flip-scene {
+    perspective: 1000px;
+    margin-bottom: 20px;
+    cursor: pointer;
+  }
+  .card-flip-inner {
+    position: relative;
+    width: 100%;
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-style: preserve-3d;
+  }
+  .card-flip-scene.flipped .card-flip-inner {
+    transform: rotateY(180deg);
+  }
+  .card-face {
+    width: 100%;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+  .card-face.card-back {
+    position: absolute;
+    inset: 0;
+    transform: rotateY(180deg);
+    background: linear-gradient(135deg, #0F172A 0%, #1E293B 60%, #090D16 100%);
+    border-radius: 20px;
+    border: 1.5px solid rgba(255, 255, 255, 0.2);
+    padding: 22px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    box-shadow: 0 20px 40px -10px rgba(15, 23, 42, 0.45);
+  }
+
+  /* Tier Progress Bar */
+  .tier-progress-box {
+    margin: 12px 0 6px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    padding: 8px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  .tier-progress-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10.5px;
+    color: rgba(255, 255, 255, 0.75);
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .tier-progress-bar {
+    width: 100%;
+    height: 7px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .tier-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #38BDF8 0%, #4ADE80 100%);
+    border-radius: 6px;
+    transition: width 0.5s ease;
   }
 
   .staff-row { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
@@ -2512,19 +2580,78 @@ window.logoutCustomer = function() {
   toast('Logged out of customer account');
 };
 
+window.toggleCardFlip = function() {
+  const scene = document.getElementById('cust-card-scene');
+  if (scene) scene.classList.toggle('flipped');
+};
+
+window.shareReferralWhatsApp = function(code) {
+  const biz = settings.bizName || 'B INDUSTRIES';
+  const msg = `Hey! Join ${biz} Loyalty Program using my referral code *${code}* and get bonus points on your first bill! 🎉\nCheck your points here: ${window.location.href}`;
+  window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+};
+
+window.triggerConfetti = function() {
+  if (typeof confetti === 'function') {
+    confetti({ particleCount: 90, spread: 70, origin: { y: 0.6 } });
+  }
+};
+
 function renderCustomerPortal(c) {
   const result = document.getElementById('customer-result');
   const lookupCard = document.getElementById('c-lookup-card');
   if (lookupCard) lookupCard.style.display = 'none';
   document.getElementById('c-status').textContent = '';
 
+  const pts = Number(c.totalPoints || 0);
+  let tierName = 'MEMBER PASS';
+  let nextTierName = '⚡ GOLD MEMBER';
+  let nextTierGoal = 200;
+  let prevTierGoal = 0;
+
+  if (pts >= 500) {
+    tierName = '⭐ VIP MEMBER';
+    nextTierName = 'MAX TIER';
+    nextTierGoal = 500;
+    prevTierGoal = 500;
+  } else if (pts >= 200) {
+    tierName = '⚡ GOLD MEMBER';
+    nextTierName = '⭐ VIP MEMBER';
+    nextTierGoal = 500;
+    prevTierGoal = 200;
+  }
+
+  const progressPct = nextTierGoal > prevTierGoal 
+    ? Math.min(100, Math.max(6, Math.round(((pts - prevTierGoal) / (nextTierGoal - prevTierGoal)) * 100)))
+    : 100;
+  
+  const remainingPts = Math.max(0, nextTierGoal - pts);
+  const progressText = pts >= 500 
+    ? 'Top Tier Unlocked 🎉' 
+    : `${remainingPts} pts to ${nextTierName}`;
+
   const hist = transactions.filter(t => {
     const t10 = get10DigitPhone(t.phone); const c10 = get10DigitPhone(c.phone);
     return (t10 && c10 && t10 === c10) || String(t.name||'').toLowerCase() === String(c.name||'').toLowerCase();
   }).slice(0, 8);
-  const histRows = hist.map(t => `<tr><td class="mono">#${escapeHtml(t.billNo)}</td><td>${t.date}</td><td class="mono">₹${Number(t.amount||0).toFixed(2)}</td><td><span class="badge">+${t.earned}</span></td></tr>`).join('');
 
-  const tierName = c.totalPoints >= 500 ? '⭐ VIP MEMBER' : (c.totalPoints >= 200 ? '⚡ GOLD MEMBER' : 'MEMBER PASS');
+  const histCards = hist.length ? hist.map(t => `
+    <div style="background:var(--bg-card-elevated); border:1.5px solid var(--border-color); border-radius:12px; padding:12px 14px; margin-bottom:10px;">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <div style="font-weight:800; font-size:13.5px; color:var(--text-main);" class="mono">Bill #${escapeHtml(t.billNo)}</div>
+          <div style="font-size:11.5px; color:var(--text-sub); margin-top:2px;">${t.date}</div>
+        </div>
+        <div style="text-align:right;">
+          <span class="badge" style="font-size:12px; padding:3px 10px;">+${t.earned} PTS</span>
+          <div style="font-size:13px; font-weight:800; color:var(--ink); margin-top:4px;" class="mono">₹${Number(t.amount||0).toFixed(2)}</div>
+        </div>
+      </div>
+      <div style="margin-top:10px; border-top:1px dashed var(--border-color); padding-top:8px; display:flex; justify-content:space-between; align-items:center;">
+        <span style="font-size:11.5px; color:var(--text-sub);">Issued by Store Cashier</span>
+        <button class="btn whatsapp" style="padding:3px 8px; font-size:11px; height:auto; min-height:28px;" onclick="sendReceipt('${t.id}')">Receipt</button>
+      </div>
+    </div>`).join('') : '<div class="empty">No bills recorded yet.</div>';
 
   result.innerHTML = `
     <!-- Active Customer Session Bar with Logout -->
@@ -2536,48 +2663,83 @@ function renderCustomerPortal(c) {
         <svg class="icon icon-sm" viewBox="0 0 24 24" style="margin-right:4px;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg> Logout Account
       </button>
     </div>
-    <!-- Digital Wallet Loyalty Pass Card -->
-    <div class="digital-card">
-      <div class="card-top">
-        <div class="card-brand-name">
-          <div style="width:24px; height:24px; background:#fff; color:#0f172a; border-radius:6px; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:13px; flex-shrink:0;">B</div>
-          ${escapeHtml(settings.bizName || 'B INDUSTRIES')}
-        </div>
-        <div class="card-tier-badge">${tierName}</div>
-      </div>
-      <div class="card-mid">
-        <div>
-          <div class="card-cust-name">${escapeHtml(c.name)}</div>
-          <div class="card-cust-meta">
-            <span>Phone: <b class="mono" style="color:#fff;">${escapeHtml(c.phone)}</b></span>
-            <span>PIN: <b class="mono" style="color:#38BDF8;">${c.pin}</b></span>
+
+    <!-- 3D Interactive Flip Digital Wallet Pass Card -->
+    <div class="card-flip-scene" id="cust-card-scene" onclick="toggleCardFlip()">
+      <div class="card-flip-inner">
+        <!-- CARD FRONT -->
+        <div class="card-face card-front digital-card">
+          <div class="card-top">
+            <div class="card-brand-name">
+              <div style="width:24px; height:24px; background:#fff; color:#0f172a; border-radius:6px; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:13px; flex-shrink:0;">B</div>
+              ${escapeHtml(settings.bizName || 'B INDUSTRIES')}
+            </div>
+            <div class="card-tier-badge">${tierName}</div>
           </div>
-          <div style="font-size:12px; color:rgba(255,255,255,0.65); margin-top:6px;">${c.visits} total visits · Account Active</div>
+          <div class="card-mid">
+            <div>
+              <div class="card-cust-name">${escapeHtml(c.name)}</div>
+              <div class="card-cust-meta">
+                <span>Phone: <b class="mono" style="color:#fff;">${escapeHtml(c.phone)}</b></span>
+                <span>PIN: <b class="mono" style="color:#38BDF8;">${c.pin}</b></span>
+              </div>
+              <div style="font-size:11.5px; color:rgba(255,255,255,0.65); margin-top:4px;">${c.visits} visits · Tap card to flip QR Pass 🔄</div>
+            </div>
+            <div class="card-qr-wrapper">
+              <canvas id="cust-qr-canvas"></canvas>
+              <div style="font-size:9px; color:#5A6B82; font-weight:700; margin-top:3px;">TAP TO FLIP</div>
+            </div>
+          </div>
+
+          <!-- Tier Progress Indicator -->
+          <div class="tier-progress-box">
+            <div class="tier-progress-labels">
+              <span>Tier Progress (${pts} PTS)</span>
+              <span>${progressText}</span>
+            </div>
+            <div class="tier-progress-bar">
+              <div class="tier-progress-fill" style="width: ${progressPct}%;"></div>
+            </div>
+          </div>
+
+          <div class="card-bottom">
+            <div>
+              <div class="card-points-title">Available Rewards Balance</div>
+              <div class="card-points-number">${c.totalPoints} <span style="font-size:15px; color:rgba(255,255,255,0.8);">PTS</span></div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:10.5px; text-transform:uppercase; letter-spacing:0.08em; color:rgba(255,255,255,0.65); font-weight:700;">Voucher Value</div>
+              <div style="font-size:18px; font-weight:800; color:#4ADE80;" class="mono">₹${(c.totalPoints * (settings.redeemVal || 0)).toFixed(2)}</div>
+            </div>
+          </div>
         </div>
-        <div class="card-qr-wrapper">
-          <canvas id="cust-qr-canvas"></canvas>
-          <div style="font-size:9.5px; color:#5A6B82; font-weight:700; margin-top:4px;">SCAN AT COUNTER</div>
-        </div>
-      </div>
-      <div class="card-bottom">
-        <div>
-          <div class="card-points-title">Available Rewards Balance</div>
-          <div class="card-points-number">${c.totalPoints} <span style="font-size:16px; color:rgba(255,255,255,0.8);">PTS</span></div>
-        </div>
-        <div style="text-align:right;">
-          <div style="font-size:10.5px; text-transform:uppercase; letter-spacing:0.08em; color:rgba(255,255,255,0.65); font-weight:700;">Voucher Value</div>
-          <div style="font-size:18px; font-weight:800; color:#4ADE80;" class="mono">₹${(c.totalPoints * (settings.redeemVal || 0)).toFixed(2)}</div>
+
+        <!-- CARD BACK -->
+        <div class="card-face card-back">
+          <div style="font-size:11px; font-weight:800; color:#38BDF8; letter-spacing:0.12em; text-transform:uppercase; margin-bottom:8px;">CASHIER QR PASS SCANNER</div>
+          <div style="background:#fff; padding:10px; border-radius:14px; border:2px solid rgba(255,255,255,0.9); margin:4px 0;">
+            <canvas id="cust-qr-canvas-back"></canvas>
+          </div>
+          <div style="font-size:17px; font-weight:800; color:#fff; margin-top:4px;" class="mono">${escapeHtml(c.phone)}</div>
+          <div style="font-size:11.5px; color:rgba(255,255,255,0.7); margin-top:2px;">Account PIN: <b class="mono" style="color:#38BDF8;">${c.pin}</b></div>
+          <div style="font-size:10.5px; color:rgba(255,255,255,0.5); margin-top:6px;">Tap anywhere to flip card back ↩</div>
         </div>
       </div>
     </div>
 
+    <!-- Referral & Redemption Section -->
     <div class="card">
       <div class="code-box">
         <div style="font-size:11.5px; color:var(--text-sub); margin-bottom:4px; font-weight:700;">YOUR REFERRAL CODE — SHARE WITH FRIENDS</div>
         <div class="code">${escapeHtml(c.referralCode || '—')}</div>
         <div style="font-size:12.5px; margin-top:6px; color:var(--text-sub);">You get ${settings.refBonusReferrer || 0} pts, they get ${settings.refBonusReferee || 0} pts on their first bill</div>
+        <button class="btn whatsapp" type="button" onclick="shareReferralWhatsApp('${escapeHtml(c.referralCode)}')" style="margin-top:10px; width:100%;">
+          <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+          Share Code on WhatsApp
+        </button>
       </div>
-      <div style="margin-top:16px;">
+
+      <div style="margin-top:18px;">
         <h2 style="margin-bottom:8px;">Redeem Points</h2>
         <div class="sub" style="margin-bottom:12px;">Each point = ₹${(settings.redeemVal || 0).toFixed(2)}.</div>
         <div class="field"><label>Points to Redeem</label><input id="c-redeem-amt" type="number" min="1" max="${c.totalPoints}" class="mono" placeholder="e.g. 50"></div>
@@ -2587,21 +2749,25 @@ function renderCustomerPortal(c) {
       </div>
     </div>
 
+    <!-- Recent Bills Card List -->
     <div class="card">
-      <h2>Recent Bills</h2>
-      <div class="table-responsive">
-        ${hist.length ? `<table><thead><tr><th>Bill</th><th>Date</th><th>Amount</th><th>Points</th></tr></thead><tbody>${histRows}</tbody></table>` : '<div class="empty">No bills recorded yet.</div>'}
-      </div>
+      <h2>Recent Purchase Receipts</h2>
+      <div class="sub" style="margin-bottom:14px;">Your latest bill transactions and earned loyalty points.</div>
+      ${histCards}
     </div>`;
 
   result.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
   setTimeout(() => {
-    // Render Digital Pass QR Code
+    // Render Front & Back QR Code Passes
     if (window.QRious) {
-      const canvas = document.getElementById('cust-qr-canvas');
-      if (canvas) new QRious({ element: canvas, value: c.phone, size: 140, level: 'H' });
+      const canvasFront = document.getElementById('cust-qr-canvas');
+      if (canvasFront) new QRious({ element: canvasFront, value: c.phone, size: 120, level: 'H' });
+
+      const canvasBack = document.getElementById('cust-qr-canvas-back');
+      if (canvasBack) new QRious({ element: canvasBack, value: c.phone, size: 160, level: 'H' });
     }
+
     const redeemBtn = document.getElementById('c-redeem-btn');
     if (redeemBtn) redeemBtn.addEventListener('click', () => {
       const amt = parseFloat(document.getElementById('c-redeem-amt').value) || 0;
@@ -2613,14 +2779,18 @@ function renderCustomerPortal(c) {
       redemptions.unshift(newRed);
       persistCustomers(); persistRedemptions();
       saveCustomerCloud(c); saveRedemptionCloud(newRed);
+
+      // Trigger Confetti Celebration 🎉
+      if (typeof window.triggerConfetti === 'function') window.triggerConfetti();
+
       document.getElementById('c-code-box').innerHTML = `
-        <div class="code-box" style="margin-top:14px;">
-          <div style="font-size:11.5px; color:var(--text-sub); margin-bottom:4px; font-weight:700;">SHOW THIS CODE AT COUNTER</div>
-          <div class="code">${code}</div>
-          <div style="font-size:13px; margin-top:6px; color:var(--text-sub);">Worth ₹${value.toFixed(2)} · ${amt} points redeemed</div>
+        <div class="code-box" style="margin-top:14px; background:#F0FDF4; border-color:#166534;">
+          <div style="font-size:11.5px; color:#166534; margin-bottom:4px; font-weight:700;">SHOW THIS VOUCHER CODE AT COUNTER</div>
+          <div class="code" style="color:#166534;">${code}</div>
+          <div style="font-size:13px; margin-top:6px; color:#166534; font-weight:700;">Worth ₹${value.toFixed(2)} · ${amt} points redeemed</div>
         </div>`;
       document.getElementById('c-redeem-btn').disabled = true;
-      toast('Redemption requested!');
+      toast('Redemption requested! Show code at counter 🎉');
     });
   }, 50);
 }
