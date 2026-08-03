@@ -2340,15 +2340,26 @@ function renderCustomerPortal(c) {
       <div style="font-size:15px; margin-top:10px; color:rgba(255,255,255,0.8);">Welcome back, <b>${escapeHtml(c.name)}</b> — ${c.visits} visits so far</div>
     </div>
 
+    <div class="card" style="text-align:center;">
+      <div style="font-size:12px; font-weight:700; color:var(--text-sub); margin-bottom:8px; text-transform:uppercase; letter-spacing:0.5px;">YOUR DIGITAL LOYALTY QR PASS</div>
+      <canvas id="cust-qr-canvas" style="background:#fff; padding:12px; border-radius:12px; border:1px solid var(--border-color); max-width:180px; width:100%; margin:auto;"></canvas>
+      <div style="font-size:12px; color:var(--text-sub); margin-top:8px;">Show this QR pass at the cashier counter to scan your profile in 1 second!</div>
+    </div>
+
     <div class="card">
-      <h2>Redeem Points</h2>
-      <div class="sub" style="margin-bottom:12px;">Enter how many points you want to redeem. Each point = ₹${(settings.redeemVal || 0).toFixed(2)}.</div>
-      <div class="grid" style="margin-top:8px;">
-        <div class="field"><label>Points to Redeem</label><input id="c-redeem-amt" type="number" min="1" max="${c.totalPoints}" class="mono" placeholder="e.g. 50"></div>
+      <div class="code-box">
+        <div style="font-size:11.5px; color:var(--text-sub); margin-bottom:4px; font-weight:700;">YOUR REFERRAL CODE — SHARE WITH FRIENDS</div>
+        <div class="code">${escapeHtml(c.referralCode || '—')}</div>
+        <div style="font-size:12.5px; margin-top:6px; color:var(--text-sub);">You get ${settings.refBonusReferrer || 0} pts, they get ${settings.refBonusReferee || 0} pts on their first bill</div>
       </div>
-      <button class="btn" id="c-redeem-btn" style="width:100%;" ${c.totalPoints <= 0 ? 'disabled' : ''}>Request Redemption Voucher</button>
-      <div class="save-status" id="c-redeem-status"></div>
-      <div id="c-code-box"></div>
+      <div style="margin-top:16px;">
+        <h2 style="margin-bottom:8px;">Redeem Points</h2>
+        <div class="sub" style="margin-bottom:12px;">Each point = ₹${(settings.redeemVal || 0).toFixed(2)}.</div>
+        <div class="field"><label>Points to Redeem</label><input id="c-redeem-amt" type="number" min="1" max="${c.totalPoints}" class="mono" placeholder="e.g. 50"></div>
+        <button class="btn" id="c-redeem-btn" style="width:100%; margin-top:8px;" ${c.totalPoints <= 0 ? 'disabled' : ''}>Request Redemption Voucher</button>
+        <div class="save-status" id="c-redeem-status"></div>
+        <div id="c-code-box"></div>
+      </div>
     </div>
 
     <div class="card">
@@ -2361,6 +2372,11 @@ function renderCustomerPortal(c) {
   result.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
   setTimeout(() => {
+    // Render QR Pass
+    if (window.QRious) {
+      const canvas = document.getElementById('cust-qr-canvas');
+      if (canvas) new QRious({ element: canvas, value: c.phone, size: 200, level: 'H' });
+    }
     const redeemBtn = document.getElementById('c-redeem-btn');
     if (redeemBtn) redeemBtn.addEventListener('click', () => {
       const amt = parseFloat(document.getElementById('c-redeem-amt').value) || 0;
