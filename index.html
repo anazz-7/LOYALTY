@@ -374,6 +374,16 @@
 </head>
 <body>
 
+<!-- Full-Screen Loading Overlay -->
+<div id="app-loading" style="position:fixed; inset:0; background:#14202E; z-index:999999; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px;">
+  <div style="width:64px; height:64px; background:linear-gradient(135deg,#1d4ed8,#3b82f6); border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:32px; font-weight:900; color:#fff; font-family:'Plus Jakarta Sans',sans-serif; box-shadow:0 8px 32px rgba(59,130,246,0.4);">B</div>
+  <div style="text-align:center;">
+    <div style="font-family:'Plus Jakarta Sans',sans-serif; font-size:18px; font-weight:800; color:#fff; letter-spacing:0.5px;">B-INDUSTRIES LOYALTY</div>
+    <div style="font-size:13px; color:rgba(255,255,255,0.55); margin-top:4px;" id="loading-status">Connecting to cloud database...</div>
+  </div>
+  <div style="width:40px; height:40px; border:3px solid rgba(255,255,255,0.15); border-top-color:#3b82f6; border-radius:50%; animation:spin 0.8s linear infinite;"></div>
+</div>
+
 <div class="online-strip">
   <span class="pulse-dot"></span>
   <span id="sync-strip-text">ONLINE CLOUD SYSTEM — ACCESSIBLE FROM ANY DEVICE & PHONE</span>
@@ -797,6 +807,11 @@ function generateReferralCode(name, phone) {
 }
 
 async function loadAll() {
+  // Show loading overlay
+  const loadingEl = document.getElementById('app-loading');
+  const loadingStatus = document.getElementById('loading-status');
+  if (loadingEl) loadingEl.style.display = 'flex';
+
   customers = {};
   transactions = [];
   redemptions = [];
@@ -825,11 +840,22 @@ async function loadAll() {
 
   const hasCloud = initSupabase();
   if (hasCloud) {
+    if (loadingStatus) loadingStatus.textContent = 'Loading customers & bills from cloud...';
     await fetchCloudData();
+    if (loadingStatus) loadingStatus.textContent = 'Synced! Starting app...';
+  } else {
+    if (loadingStatus) loadingStatus.textContent = 'Starting in offline mode...';
   }
 
   renderStaffList();
   renderRecent(); renderCustomers(); renderDashboard(); renderRedemptions();
+
+  // Hide loading overlay
+  if (loadingEl) {
+    loadingEl.style.opacity = '0';
+    loadingEl.style.transition = 'opacity 0.4s ease';
+    setTimeout(() => { loadingEl.style.display = 'none'; }, 400);
+  }
 
   // Restore Persisted Staff Session for Future App Opens
   const sess = Storage.get('bm-loyalty-session');
