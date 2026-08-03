@@ -77,7 +77,7 @@
     font-size: 14px;
     line-height: 1.5;
     min-height: 100vh;
-    padding-bottom: 80px;
+    padding-bottom: 60px;
     overflow-x: hidden;
   }
 
@@ -876,15 +876,18 @@
 <div class="toast" id="toast"></div>
 <div id="print-receipt"></div>
 
-<!-- Camera QR Code Scanner Overlay Modal -->
-<div id="qr-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:99999; align-items:center; justify-content:center; padding:16px;">
-  <div class="card" style="width:100%; max-width:440px; margin:0; text-align:center;">
-    <h2>Scan Customer QR Code</h2>
-    <div class="sub">Point your camera at the customer's digital QR pass.</div>
-    <div id="qr-reader" style="width:100%; border-radius:12px; overflow:hidden; background:#000; min-height:250px; margin:16px 0;"></div>
-    <button class="btn danger" type="button" onclick="closeQRScanner()" style="width:100%;">Cancel &amp; Close Camera</button>
+<!-- Sticky Floating Bottom Session & Logout Bar -->
+<footer id="bottom-session-bar" style="display:none; position:fixed; bottom:0; left:0; right:0; background:rgba(20, 32, 46, 0.96); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); border-top:1px solid rgba(255,255,255,0.15); padding:10px 16px; z-index:9999; color:#fff; box-shadow:0 -6px 24px rgba(0,0,0,0.35);">
+  <div style="max-width:1200px; margin:0 auto; display:flex; justify-content:space-between; align-items:center; gap:12px;">
+    <div style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:700;">
+      <span style="width:8px; height:8px; background:#4ADE80; border-radius:50%; display:inline-block;"></span>
+      <span id="bottom-role-text" style="color:rgba(255,255,255,0.95);">Active Session</span>
+    </div>
+    <button class="btn danger" id="bottom-logout-btn" onclick="handleBottomLogout()" style="padding:4px 14px; font-size:12px; height:auto; min-height:32px; border-radius:8px; width:auto; flex-shrink:0;">
+      <svg class="icon icon-sm" viewBox="0 0 24 24" style="margin-right:4px;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg> Logout
+    </button>
   </div>
-</div>
+</footer>
 
 <script>
 // Default Supabase Configuration for Instant Vercel & Multi-Mobile Sync
@@ -1081,6 +1084,40 @@ function escapeHtml(s) {
   return String(s || '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 }
 
+window.updateBottomSessionBar = function() {
+  const bar = document.getElementById('bottom-session-bar');
+  const roleTxt = document.getElementById('bottom-role-text');
+  if (!bar || !roleTxt) return;
+
+  const staffSess = Storage.get('bm-loyalty-session');
+  const custSess = Storage.get('bm-loyalty-cust-session');
+  const staffModeActive = document.getElementById('btn-mode-staff')?.classList.contains('active');
+
+  if (staffUnlocked && staffSess && staffSess.name && staffModeActive) {
+    bar.style.display = 'block';
+    const roleLabel = currentStaffRole === 'owner' ? 'Owner' : 'Staff';
+    roleTxt.innerHTML = `Logged in as: <b style="color:#38BDF8;">${escapeHtml(currentStaffName)}</b> (${roleLabel})`;
+  } else if (custSess && custSess.phone && !staffModeActive) {
+    bar.style.display = 'block';
+    const phone10 = get10DigitPhone(custSess.phone);
+    const c = customers[phone10] || customers[custSess.phone];
+    const name = c ? c.name : 'Customer';
+    roleTxt.innerHTML = `Active Account: <b style="color:#4ADE80;">${escapeHtml(name)}</b> (${escapeHtml(custSess.phone)})`;
+  } else {
+    bar.style.display = 'none';
+  }
+};
+
+window.handleBottomLogout = function() {
+  const staffModeActive = document.getElementById('btn-mode-staff')?.classList.contains('active');
+  if (staffUnlocked && staffModeActive) {
+    lockTerminal();
+  } else {
+    logoutCustomer();
+  }
+  updateBottomSessionBar();
+};
+
 window.generateUUID = function generateUUID() {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
     try { return crypto.randomUUID(); } catch(e) {}
@@ -1191,6 +1228,8 @@ async function loadAll() {
     }
   }
 
+  updateBottomSessionBar();
+
   if (!window.autoSyncInterval) {
     window.autoSyncInterval = setInterval(async () => {
       if (supabaseClient) {
@@ -1286,6 +1325,7 @@ document.getElementById('btn-mode-staff').addEventListener('click', () => {
   document.getElementById('customer-app').style.display = 'none';
   document.getElementById('staff-gate').style.display = staffUnlocked ? 'none' : 'block';
   document.getElementById('staff-app').style.display = staffUnlocked ? 'block' : 'none';
+  updateBottomSessionBar();
 });
 
 document.getElementById('btn-mode-customer').addEventListener('click', () => {
@@ -1304,6 +1344,7 @@ document.getElementById('btn-mode-customer').addEventListener('click', () => {
       renderCustomerPortal(c);
     }
   }
+  updateBottomSessionBar();
 });
 
 document.getElementById('pin-submit').addEventListener('click', () => {
@@ -1388,6 +1429,7 @@ window.lockTerminal = function() {
   document.getElementById('pin-input').value = '';
   document.getElementById('pin-status').textContent = '';
   toast('Logged out successfully');
+  updateBottomSessionBar();
 };
 
 document.getElementById('pin-input').addEventListener('keyup', (e) => {
@@ -2721,6 +2763,7 @@ window.logoutCustomer = function() {
   document.getElementById('c-phone').value = '';
   document.getElementById('c-status').textContent = '';
   toast('Logged out of customer account');
+  updateBottomSessionBar();
 };
 
 window.toggleCardFlip = function() {
@@ -2747,6 +2790,7 @@ function renderCustomerPortal(c) {
   const btnLogout = document.getElementById('btn-logout-cust');
   if (btnLogout) btnLogout.style.display = 'inline-flex';
   document.getElementById('c-status').textContent = '';
+  updateBottomSessionBar();
 
   const pts = Number(c.totalPoints || 0);
   let tierName = 'MEMBER PASS';
