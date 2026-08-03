@@ -836,6 +836,7 @@
       <div class="sub">Export bills to CSV, download JSON backups, or restore from a previous backup file.</div>
       <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px;">
         <button class="btn secondary" id="export-csv">Export Bills (CSV)</button>
+        <button class="btn secondary" onclick="exportCustomersCSV()">Export All Customers (CSV / Excel)</button>
         <button class="btn secondary" id="export-json">Export Database (JSON)</button>
         <label class="btn secondary" style="cursor:pointer;">
           Restore Database (JSON)
@@ -1975,6 +1976,13 @@ function renderRecent() {
     <div class="mobile-only">${cards}</div>`;
 }
 
+function getCustomerTierBadge(pts) {
+  pts = Number(pts || 0);
+  if (pts >= 500) return `<span class="badge" style="background:#FEF3C7; color:#92400E; border-color:#F59E0B; font-size:10.5px;">👑 VIP DIAMOND</span>`;
+  if (pts >= 200) return `<span class="badge" style="background:#E0F2FE; color:#0369A1; border-color:#38BDF8; font-size:10.5px;">⚡ GOLD</span>`;
+  return `<span class="badge" style="background:#F1F5F9; color:#475569; border-color:#CBD5E1; font-size:10.5px;">🥉 BRONZE</span>`;
+}
+
 function renderCustomers() {
   const searchEl = document.getElementById('cust-search');
   const q = (searchEl ? searchEl.value : '').toLowerCase().trim();
@@ -2000,7 +2008,7 @@ function renderCustomers() {
 
   let tableRows = arr.map(c => `
     <tr>
-      <td><b>${escapeHtml(c.name)}</b></td>
+      <td><b>${escapeHtml(c.name)}</b> &nbsp; ${getCustomerTierBadge(c.totalPoints)}</td>
       <td class="mono">${escapeHtml(c.phone)}</td>
       <td>${c.visits}</td>
       <td class="mono">₹${c.totalSpent.toFixed(2)}</td>
@@ -2012,10 +2020,13 @@ function renderCustomers() {
   let cards = arr.map(c => `
     <div class="cust-mobile-card" onclick="showCustomer('${c.phone}')" style="background:var(--bg-card); border:1.5px solid var(--border-color); border-radius:12px; padding:14px; margin-bottom:10px; cursor:pointer;">
       <div style="display:flex; justify-content:space-between; align-items:center;">
-        <div style="font-weight:700; font-size:14.5px; color:var(--text-main);">${escapeHtml(c.name)}</div>
+        <div>
+          <span style="font-weight:700; font-size:14.5px; color:var(--text-main);">${escapeHtml(c.name)}</span>
+          <div style="margin-top:2px;">${getCustomerTierBadge(c.totalPoints)}</div>
+        </div>
         <span class="badge">${c.totalPoints} pts</span>
       </div>
-      <div style="font-size:12px; color:var(--text-sub); margin-top:6px; display:flex; justify-content:space-between;" class="mono">
+      <div style="font-size:12px; color:var(--text-sub); margin-top:8px; display:flex; justify-content:space-between;" class="mono">
         <span>${escapeHtml(c.phone)}</span>
         <span>${c.visits} visits · ₹${c.totalSpent.toFixed(0)} spent</span>
       </div>
@@ -2758,6 +2769,22 @@ window.exportFilteredCSV = function() {
   });
   downloadFile(csv, `sales-report-${from}-to-${to}.csv`, 'text/csv');
   toast('Filtered Sales Report exported!');
+};
+
+window.exportCustomersCSV = function() {
+  const arr = Object.values(customers);
+  if (arr.length === 0) { toast('No customers to export'); return; }
+
+  let csv = 'Phone Number,Customer Name,Points Balance,Total Spent (Rs),Visits,Tier,First Visit,Last Visit,Referral Code\n';
+  arr.forEach(c => {
+    const pts = Number(c.totalPoints || 0);
+    const tier = pts >= 500 ? 'VIP Diamond' : (pts >= 200 ? 'Gold Member' : 'Bronze Member');
+    csv += `="${c.phone}","${(c.name||'').replace(/"/g, '""')}",${pts},${(c.totalSpent||0).toFixed(2)},${c.visits||0},"${tier}","${c.firstVisit||''}","${c.lastVisit||''}","${c.referralCode||''}"\n`;
+  });
+
+  const dateStr = new Date().toISOString().slice(0, 10);
+  downloadFile(csv, `customers-database-${dateStr}.csv`, 'text/csv');
+  toast(`Exported ${arr.length} customer records to CSV!`);
 };
 
 // ---- SMS & Thermal Print Receipts ----
