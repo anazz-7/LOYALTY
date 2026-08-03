@@ -676,6 +676,26 @@
         <div class="stat"><div class="num" id="ledger-liability">₹0.00</div><div class="lbl">Store Cash Liability</div></div>
       </div>
 
+      <!-- Directory Search, Tier Filters & Sort Bar -->
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
+        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+          <button class="btn secondary dir-filter-btn active" data-filter="all" onclick="setDirectoryFilter('all')" style="padding:4px 10px; font-size:12px;">All Accounts</button>
+          <button class="btn secondary dir-filter-btn" data-filter="vip" onclick="setDirectoryFilter('vip')" style="padding:4px 10px; font-size:12px; color:#F59E0B; border-color:rgba(245,158,11,0.3);">👑 VIP Diamond</button>
+          <button class="btn secondary dir-filter-btn" data-filter="gold" onclick="setDirectoryFilter('gold')" style="padding:4px 10px; font-size:12px; color:#38BDF8; border-color:rgba(56,189,248,0.3);">⚡ Gold</button>
+          <button class="btn secondary dir-filter-btn" data-filter="bronze" onclick="setDirectoryFilter('bronze')" style="padding:4px 10px; font-size:12px; color:#94A3B8; border-color:rgba(148,163,184,0.3);">🥉 Bronze</button>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:6px;">
+          <span style="font-size:12px; color:var(--text-sub);">Sort:</span>
+          <select id="dir-sort-select" onchange="setDirectorySort(this.value)" style="padding:4px 8px; font-size:12px; border-radius:8px; background:var(--bg-card); color:var(--text-main); border:1px solid var(--border-dark);">
+            <option value="lastVisit">Recent Visit</option>
+            <option value="points">Most Points</option>
+            <option value="spent">Highest Spent (₹)</option>
+            <option value="visits">Most Visits</option>
+          </select>
+        </div>
+      </div>
+
       <div class="searchbar">
         <div style="position:relative;">
           <input id="cust-search" placeholder="Search customer name, phone number, or referral code..." style="padding-left:38px;">
@@ -884,6 +904,48 @@
 
 <div class="toast" id="toast"></div>
 <div id="print-receipt"></div>
+
+<!-- Edit Customer Profile & Ledger Modal -->
+<div id="edit-cust-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); z-index:99999; align-items:center; justify-content:center; padding:16px;">
+  <div class="card" style="width:100%; max-width:450px; margin:0; position:relative; background:#14202E; border:1px solid rgba(255,255,255,0.18); box-shadow:0 20px 50px rgba(0,0,0,0.6); border-radius:20px; color:#fff;">
+    <button type="button" onclick="closeEditCustModal()" style="position:absolute; top:14px; right:14px; background:rgba(255,255,255,0.1); border:none; color:#fff; width:32px; height:32px; border-radius:50%; font-size:18px; cursor:pointer;">✕</button>
+
+    <h2 style="color:#fff; font-size:20px; font-weight:800; margin-bottom:4px;">Edit Customer Profile</h2>
+    <div class="sub" style="color:rgba(255,255,255,0.7); font-size:13px; margin-bottom:16px;">Update customer name, phone number, security PIN, or points balance.</div>
+
+    <input type="hidden" id="edit-cust-old-phone">
+
+    <div class="field" style="margin-bottom:12px;">
+      <label style="color:rgba(255,255,255,0.85);">Customer Full Name</label>
+      <input id="edit-cust-name" style="background:rgba(255,255,255,0.08); border-color:rgba(255,255,255,0.2); color:#fff;" placeholder="Full Name">
+    </div>
+
+    <div class="field" style="margin-bottom:12px;">
+      <label style="color:rgba(255,255,255,0.85);">Phone Number (10 Digits)</label>
+      <input id="edit-cust-phone" class="mono" style="background:rgba(255,255,255,0.08); border-color:rgba(255,255,255,0.2); color:#fff;" placeholder="Phone Number">
+    </div>
+
+    <div class="grid" style="grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px;">
+      <div class="field">
+        <label style="color:rgba(255,255,255,0.85);">Points Balance</label>
+        <input id="edit-cust-points" type="number" min="0" class="mono" style="background:rgba(255,255,255,0.08); border-color:rgba(255,255,255,0.2); color:#fff;" placeholder="0">
+      </div>
+      <div class="field">
+        <label style="color:rgba(255,255,255,0.85);">4-Digit PIN</label>
+        <input id="edit-cust-pin" class="mono" maxlength="4" style="background:rgba(255,255,255,0.08); border-color:rgba(255,255,255,0.2); color:#fff;" placeholder="1234">
+      </div>
+    </div>
+
+    <div style="display:flex; gap:10px;">
+      <button class="btn" onclick="saveCustomerProfileEdit()" style="flex:2; background:#2563EB;">
+        Save Customer Changes
+      </button>
+      <button class="btn secondary" onclick="closeEditCustModal()" style="flex:1; border-color:rgba(255,255,255,0.2); color:#fff;">
+        Cancel
+      </button>
+    </div>
+  </div>
+</div>
 
 
 
@@ -1986,15 +2048,46 @@ function getCustomerTierBadge(pts) {
   return `<span class="badge" style="background:#F1F5F9; color:#475569; border-color:#CBD5E1; font-size:10.5px;">🥉 BRONZE</span>`;
 }
 
+let currentDirectoryFilter = 'all';
+let currentDirectorySort = 'lastVisit';
+
+window.setDirectoryFilter = function(filter) {
+  currentDirectoryFilter = filter;
+  document.querySelectorAll('.dir-filter-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.filter === filter);
+  });
+  renderCustomers();
+};
+
+window.setDirectorySort = function(sort) {
+  currentDirectorySort = sort;
+  renderCustomers();
+};
+
 function renderCustomers() {
   const searchEl = document.getElementById('cust-search');
   const q = (searchEl ? searchEl.value : '').toLowerCase().trim();
   const list = document.getElementById('customer-list');
   if (!list) return;
 
-  const arr = Object.values(customers).filter(c => 
-    c && c.name && (!q || c.phone.toLowerCase().includes(q) || c.name.toLowerCase().includes(q) || (c.referralCode && c.referralCode.toLowerCase().includes(q)))
-  ).sort((a, b) => (b.lastVisit || '').localeCompare(a.lastVisit || ''));
+  let arr = Object.values(customers).filter(c => {
+    if (!c || !c.name) return false;
+    const matchSearch = (!q || c.phone.toLowerCase().includes(q) || c.name.toLowerCase().includes(q) || (c.referralCode && c.referralCode.toLowerCase().includes(q)));
+    if (!matchSearch) return false;
+
+    const pts = Number(c.totalPoints || 0);
+    if (currentDirectoryFilter === 'vip') return pts >= 500;
+    if (currentDirectoryFilter === 'gold') return pts >= 200 && pts < 500;
+    if (currentDirectoryFilter === 'bronze') return pts < 200;
+    return true;
+  });
+
+  arr.sort((a, b) => {
+    if (currentDirectorySort === 'points') return (b.totalPoints || 0) - (a.totalPoints || 0);
+    if (currentDirectorySort === 'spent') return (b.totalSpent || 0) - (a.totalSpent || 0);
+    if (currentDirectorySort === 'visits') return (b.visits || 0) - (a.visits || 0);
+    return (b.lastVisit || '').localeCompare(a.lastVisit || '');
+  });
 
   // Calculate General Ledger Totals
   const totalAccs = Object.keys(customers).length;
@@ -2011,20 +2104,30 @@ function renderCustomers() {
 
   let tableRows = arr.map(c => `
     <tr>
-      <td><b>${escapeHtml(c.name)}</b> &nbsp; ${getCustomerTierBadge(c.totalPoints)}</td>
-      <td class="mono">${escapeHtml(c.phone)}</td>
+      <td>
+        <b>${escapeHtml(c.name)}</b> &nbsp; ${getCustomerTierBadge(c.totalPoints)}
+      </td>
+      <td class="mono">
+        ${escapeHtml(c.phone)}
+        <div style="display:inline-flex; gap:4px; margin-left:6px;">
+          <a href="tel:${c.phone}" title="Call Customer" style="color:var(--accent-blue); text-decoration:none; padding:2px 5px; background:rgba(56,189,248,0.1); border-radius:4px; font-size:11px; font-weight:700;">📞 Call</a>
+          <a href="https://wa.me/${(settings.countryCode||'91')}${c.phone}" target="_blank" title="WhatsApp Customer" style="color:#10B981; text-decoration:none; padding:2px 5px; background:rgba(16,185,129,0.1); border-radius:4px; font-size:11px; font-weight:700;">💚 WA</a>
+        </div>
+      </td>
       <td>${c.visits}</td>
       <td class="mono">₹${c.totalSpent.toFixed(2)}</td>
       <td><span class="badge">${c.totalPoints} pts</span></td>
       <td class="mono">₹${(c.totalPoints * (settings.redeemVal || 0)).toFixed(2)}</td>
-      <td><button class="btn secondary" style="padding:4px 10px; font-size:11.5px;" onclick="showCustomer('${c.phone}')"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> Ledger Statement</button></td>
+      <td>
+        <button class="btn secondary" style="padding:4px 10px; font-size:11.5px;" onclick="showCustomer('${c.phone}')"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> Ledger Statement</button>
+      </td>
     </tr>`).join('');
 
   let cards = arr.map(c => `
-    <div class="cust-mobile-card" onclick="showCustomer('${c.phone}')" style="background:var(--bg-card); border:1.5px solid var(--border-color); border-radius:12px; padding:14px; margin-bottom:10px; cursor:pointer;">
+    <div class="cust-mobile-card" style="background:var(--bg-card); border:1.5px solid var(--border-color); border-radius:12px; padding:14px; margin-bottom:10px;">
       <div style="display:flex; justify-content:space-between; align-items:center;">
         <div>
-          <span style="font-weight:700; font-size:14.5px; color:var(--text-main);">${escapeHtml(c.name)}</span>
+          <span style="font-weight:700; font-size:14.5px; color:var(--text-main);" onclick="showCustomer('${c.phone}')">${escapeHtml(c.name)}</span>
           <div style="margin-top:2px;">${getCustomerTierBadge(c.totalPoints)}</div>
         </div>
         <span class="badge">${c.totalPoints} pts</span>
@@ -2033,14 +2136,17 @@ function renderCustomers() {
         <span>${escapeHtml(c.phone)}</span>
         <span>${c.visits} visits · ₹${c.totalSpent.toFixed(0)} spent</span>
       </div>
-      <div style="margin-top:8px; border-top:1px dashed var(--border-color); padding-top:6px; display:flex; justify-content:space-between; align-items:center; font-size:11.5px;">
-        <span style="color:var(--text-sub);">Cash Liability: <b class="mono" style="color:var(--ink);">₹${(c.totalPoints * (settings.redeemVal || 0)).toFixed(2)}</b></span>
-        <span style="color:var(--accent-blue); font-weight:700;">View Ledger Statement ➔</span>
+      <div style="margin-top:10px; display:flex; gap:6px; flex-wrap:wrap; align-items:center; justify-content:space-between;">
+        <div style="display:flex; gap:6px;">
+          <a href="tel:${c.phone}" class="btn secondary" style="padding:3px 8px; font-size:11px; text-decoration:none;">📞 Call</a>
+          <a href="https://wa.me/${(settings.countryCode||'91')}${c.phone}" target="_blank" class="btn secondary" style="padding:3px 8px; font-size:11px; text-decoration:none; color:#10B981; border-color:rgba(16,185,129,0.3);">💚 WA</a>
+        </div>
+        <button class="btn secondary" style="padding:4px 10px; font-size:11.5px;" onclick="showCustomer('${c.phone}')">Ledger Statement ➔</button>
       </div>
     </div>`).join('');
 
   list.innerHTML = `
-    <div class="desktop-only"><div class="table-responsive"><table><thead><tr><th>Customer Account</th><th>Phone</th><th>Visits</th><th>Total Debits (Spent ₹)</th><th>Closing Balance</th><th>Cash Liability</th><th></th></tr></thead><tbody>${tableRows}</tbody></table></div></div>
+    <div class="desktop-only"><div class="table-responsive"><table><thead><tr><th>Customer Account</th><th>Phone &amp; Contact</th><th>Visits</th><th>Total Debits (Spent ₹)</th><th>Closing Balance</th><th>Cash Liability</th><th></th></tr></thead><tbody>${tableRows}</tbody></table></div></div>
     <div class="mobile-only">${cards}</div>`;
 }
 document.getElementById('cust-search').addEventListener('input', renderCustomers);
@@ -2123,12 +2229,18 @@ window.showCustomer = function(phone) {
       </div>`;
   }).join('');
 
-  detail.innerHTML = `
+      detail.innerHTML = `
     <div class="customer-detail">
       <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
         <div>
           <h3 style="font-size:18px; color:var(--text-main);">${escapeHtml(c.name)} — Statement of Account</h3>
-          <div class="sub" style="margin-bottom:0;">Account Phone: <b class="mono">${escapeHtml(c.phone)}</b> · ${c.visits} total visits · Security PIN: <b class="mono">${c.pin}</b> <button class="btn secondary" type="button" onclick="resetCustomerPin('${c.phone}')" style="padding:2px 6px; font-size:11px; margin-left:4px;">Reset PIN</button></div>
+          <div class="sub" style="margin-bottom:0;">
+            Account Phone: <b class="mono">${escapeHtml(c.phone)}</b> · ${c.visits} total visits · Security PIN: <b class="mono">${c.pin}</b> 
+            <button class="btn secondary" type="button" onclick="editCustomerModal('${c.phone}')" style="padding:2px 8px; font-size:11.5px; margin-left:6px; background:var(--accent-blue); color:#fff; border:none; border-radius:6px; font-weight:700;" title="Edit Customer Details">
+              ✏️ Edit Profile
+            </button>
+            <button class="btn secondary" type="button" onclick="resetCustomerPin('${c.phone}')" style="padding:2px 6px; font-size:11px; margin-left:4px;">Reset PIN</button>
+          </div>
         </div>
         <div style="text-align:right;">
           <div style="font-size:22px; font-weight:800; color:var(--ink);" class="mono">${c.totalPoints} pts</div>
@@ -2886,6 +2998,76 @@ window.closeQRScanner = function() {
   if (html5QrScanner) {
     try { html5QrScanner.stop(); } catch(e) {}
   }
+};
+
+window.editCustomerModal = function(phone) {
+  const c = customers[phone];
+  if (!c) return;
+
+  document.getElementById('edit-cust-old-phone').value = c.phone;
+  document.getElementById('edit-cust-name').value = c.name || '';
+  document.getElementById('edit-cust-phone').value = c.phone || '';
+  document.getElementById('edit-cust-points').value = c.totalPoints || 0;
+  document.getElementById('edit-cust-pin').value = c.pin || '';
+
+  const modal = document.getElementById('edit-cust-modal');
+  if (modal) modal.style.display = 'flex';
+};
+
+window.closeEditCustModal = function() {
+  const modal = document.getElementById('edit-cust-modal');
+  if (modal) modal.style.display = 'none';
+};
+
+window.saveCustomerProfileEdit = async function() {
+  const oldPhone = document.getElementById('edit-cust-old-phone').value;
+  const newName = document.getElementById('edit-cust-name').value.trim();
+  const newPhoneRaw = document.getElementById('edit-cust-phone').value.trim();
+  const newPhone = get10DigitPhone(newPhoneRaw) || newPhoneRaw;
+  const newPoints = parseInt(document.getElementById('edit-cust-points').value) || 0;
+  const newPin = document.getElementById('edit-cust-pin').value.trim() || '1234';
+
+  if (!newName || !newPhone) {
+    toast('Customer name and phone number are required');
+    return;
+  }
+
+  const oldC = customers[oldPhone];
+  if (!oldC) return;
+
+  if (oldPhone !== newPhone) {
+    delete customers[oldPhone];
+    transactions.forEach(t => {
+      if (get10DigitPhone(t.phone) === get10DigitPhone(oldPhone)) {
+        t.phone = newPhone;
+        t.name = newName;
+      }
+    });
+    persistTransactions();
+  }
+
+  const updatedC = {
+    ...oldC,
+    phone: newPhone,
+    name: newName,
+    totalPoints: newPoints,
+    pin: newPin
+  };
+
+  customers[newPhone] = updatedC;
+  persistCustomers();
+
+  if (supabaseClient) {
+    try {
+      await saveCustomerCloud(updatedC);
+    } catch(e) {}
+  }
+
+  logActivity('staff', 'Customer Profile Updated', `Profile edited for ${newName} (${newPhone}). Balance: ${newPoints} PTS.`, { phone: newPhone, staffName: currentStaffName });
+  toast('Customer profile updated!');
+  closeEditCustModal();
+  renderCustomers();
+  showCustomer(newPhone);
 };
 
 
