@@ -480,10 +480,11 @@
         <div class="field" style="grid-column: 1 / -1;"><label>Referral Code (new customers only)</label><input id="f-refcode" class="mono" placeholder="e.g. BIND4521"></div>
       </div>
       <div class="preview" id="preview">
-        <span>Existing customer: <b id="pv-status">—</b></span>
-        <span>Points earned: <b id="pv-earn">0</b></span>
-        <span>Redeem value: <b id="pv-redeemval">₹0</b></span>
-        <span>New balance: <b id="pv-balance">0</b></span>
+        <span>Existing Customer: <b id="pv-status">—</b></span>
+        <span>Current Balance: <b id="pv-curbal">0 pts</b></span>
+        <span>Points Earned: <b id="pv-earn">+0</b></span>
+        <span>Redeem Value: <b id="pv-redeemval">₹0.00</b></span>
+        <span>New Balance: <b id="pv-balance">0 pts</b></span>
       </div>
       <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
         <button class="btn" id="save-bill">Save Entry</button>
@@ -1019,7 +1020,7 @@ function currentBalance(phone) { const c = customers[phone]; return c ? c.totalP
 function updatePreview() {
   const phone = fPhone.value.trim(), amount = parseFloat(fAmount.value) || 0, redeem = parseFloat(fRedeem.value) || 0;
   const existing = customers[phone];
-  document.getElementById('pv-status').textContent = existing ? `Yes — ${existing.name} (${existing.visits} visits)` : (phone ? "New customer" : "—");
+  document.getElementById('pv-status').textContent = existing ? `Yes — ${existing.name} (${existing.visits} visits)` : (phone ? "New Customer" : "—");
   if (existing && fName.value.trim() === '') fName.value = existing.name;
   const earn = settings.rate > 0 ? Math.floor(amount / settings.rate) : 0;
   const balBefore = currentBalance(phone);
@@ -1027,9 +1028,10 @@ function updatePreview() {
   const redeemVal = redeemClamped * (settings.redeemVal || 0);
   const newBalance = balBefore - redeemClamped + earn;
 
-  document.getElementById('pv-earn').textContent = earn;
+  document.getElementById('pv-curbal').textContent = `${balBefore} pts`;
+  document.getElementById('pv-earn').textContent = `+${earn}`;
   document.getElementById('pv-redeemval').textContent = '₹' + redeemVal.toFixed(2);
-  document.getElementById('pv-balance').textContent = newBalance;
+  document.getElementById('pv-balance').textContent = `${newBalance} pts`;
 }
 
 function handleCustomerSearch(query, dropdownEl) {
