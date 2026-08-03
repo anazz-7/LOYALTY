@@ -1056,8 +1056,9 @@ window.switchTab = function(tabName) {
   if (tabName === 'customers') renderCustomers();
   if (tabName === 'redemptions') renderRedemptions();
   if (tabName === 'reports') {
-    const todayBtn = document.querySelector('.quick-range button[data-range="today"]');
-    if (todayBtn) todayBtn.click();
+    const allBtn = document.querySelector('.quick-range button[data-range="all"]');
+    if (allBtn) allBtn.click();
+    else renderReports();
   }
 };
 
@@ -1187,7 +1188,11 @@ document.getElementById('save-bill').addEventListener('click', () => {
     btn.disabled = false;
 
     if (!bill || !date || !phone || !name || amount <= 0) {
-      document.getElementById('save-status').textContent = 'Please fill bill amount and customer name or phone.'; return;
+      document.getElementById('save-status').style.color = 'var(--accent-red)';
+      document.getElementById('save-status').innerHTML = '⚠️ Please fill <b>Bill Amount (₹)</b> and <b>Customer Name or Phone</b>.';
+      btn.innerHTML = originalText;
+      btn.disabled = false;
+      return;
     }
 
     const isNewCustomer = !customers[phone];
@@ -1710,22 +1715,27 @@ window.syncAllLocalToCloud = async function() {
 async function saveCustomerCloud(c) {
   if (!supabaseClient) return;
   try {
-    await supabaseClient.from('customers').upsert({
+    const { error } = await supabaseClient.from('customers').upsert({
       phone: c.phone, name: c.name, total_points: c.totalPoints,
       total_spent: c.totalSpent, visits: c.visits, first_visit: c.firstVisit,
       last_visit: c.lastVisit, referral_code: c.referralCode, referred_by: c.referredBy
     });
+    if (error) console.warn('Supabase customer error:', error.message);
   } catch(e) { console.warn('Supabase customer save failed:', e); }
 }
 
 async function saveTransactionCloud(t) {
   if (!supabaseClient) return;
   try {
-    await supabaseClient.from('transactions').upsert({
+    const { error } = await supabaseClient.from('transactions').upsert({
       id: t.id, bill_no: t.billNo, date: t.date, phone: t.phone,
       name: t.name, amount: t.amount, earned: t.earned, redeemed: t.redeemed,
       staff_name: t.staffName
     });
+    if (error) {
+      console.warn('Supabase transaction error:', error.message);
+      toast('Supabase sync alert: ' + error.message);
+    }
   } catch(e) { console.warn('Supabase transaction save failed:', e); }
 }
 
