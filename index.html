@@ -632,7 +632,8 @@
           <label>Bill Amount (₹)</label>
           <input id="f-amount" type="number" min="0" class="mono" placeholder="0">
         </div>
-        <div class="field"><label>Redeem Points (optional)</label><input id="f-redeem" type="number" min="0" class="mono" placeholder="0"></div>
+        <div class="field"><label>Redeem Points (Min 500 PTS)</label><input id="f-redeem" type="number" min="0" class="mono" placeholder="0"></div>
+        <div id="pv-redeem-warn" style="display:none; grid-column:1 / -1; font-size:12px; color:var(--accent-red); background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.25); padding:8px 12px; border-radius:8px; font-weight:700;"></div>
         <div class="field" style="grid-column: 1 / -1;"><label>Referral Code (new customers only)</label><input id="f-refcode" class="mono" placeholder="e.g. BIND4521"></div>
       </div>
       <div class="preview" id="preview">
@@ -802,6 +803,7 @@
         <div class="field"><label>Shop Name</label><input id="s-bizname" placeholder="B INDUSTRIES"></div>
         <div class="field"><label>Earn rate — ₹ spent per 1 point</label><input id="s-rate" type="number" min="1" class="mono" placeholder="100"></div>
         <div class="field"><label>Redemption value — ₹ per point</label><input id="s-redeemval" type="number" min="0" step="0.1" class="mono" placeholder="1"></div>
+        <div class="field"><label>Min Points Required to Redeem</label><input id="s-min-redeem-pts" type="number" min="0" class="mono" placeholder="500"></div>
         <div class="field"><label>WhatsApp country code (no +)</label><input id="s-countrycode" class="mono" placeholder="91"></div>
         <div class="field"><label>Referral bonus — referrer gets (pts)</label><input id="s-refbonus-referrer" type="number" min="0" class="mono" placeholder="20"></div>
         <div class="field"><label>Referral bonus — new customer gets (pts)</label><input id="s-refbonus-referee" type="number" min="0" class="mono" placeholder="10"></div>
@@ -1411,6 +1413,7 @@ async function loadAll() {
   document.getElementById('s-bizname').value = settings.bizName || "";
   document.getElementById('s-rate').value = settings.rate;
   document.getElementById('s-redeemval').value = settings.redeemVal;
+  document.getElementById('s-min-redeem-pts').value = settings.minRedeemPts ?? 500;
   document.getElementById('s-countrycode').value = settings.countryCode || '91';
   document.getElementById('s-refbonus-referrer').value = settings.refBonusReferrer ?? 20;
   document.getElementById('s-refbonus-referee').value = settings.refBonusReferee ?? 10;
@@ -1502,6 +1505,7 @@ async function fetchCloudData() {
       settings.bizName = setRow.biz_name || settings.bizName;
       settings.rate = Number(setRow.rate || settings.rate);
       settings.redeemVal = Number(setRow.redeem_val || settings.redeemVal);
+      settings.minRedeemPts = Number(setRow.min_redeem_pts ?? settings.minRedeemPts ?? 500);
       settings.countryCode = setRow.country_code || settings.countryCode;
       settings.refBonusReferrer = Number(setRow.ref_bonus_referrer ?? settings.refBonusReferrer);
       settings.refBonusReferee = Number(setRow.ref_bonus_referee ?? settings.refBonusReferee);
@@ -1759,7 +1763,22 @@ function updatePreview() {
   if (existing && fName.value.trim() === '') fName.value = existing.name;
   const earn = settings.rate > 0 ? Math.floor(amount / settings.rate) : 0;
   const balBefore = currentBalance(phone);
-  const redeemClamped = Math.min(redeem, balBefore);
+  const minPtsThreshold = Number(settings.minRedeemPts ?? 500);
+
+  let redeemClamped = 0;
+  const redeemWarnEl = document.getElementById('pv-redeem-warn');
+
+  if (balBefore < minPtsThreshold) {
+    redeemClamped = 0;
+    if (redeemWarnEl) {
+      redeemWarnEl.style.display = 'block';
+      redeemWarnEl.innerHTML = `⚠️ <b>Redemption Locked:</b> Minimum <b>${minPtsThreshold} PTS</b> required to redeem. (Customer balance: ${balBefore} PTS).`;
+    }
+  } else {
+    redeemClamped = Math.min(redeem, balBefore);
+    if (redeemWarnEl) redeemWarnEl.style.display = 'none';
+  }
+
   const redeemVal = redeemClamped * (settings.redeemVal || 0);
   const newBalance = balBefore - redeemClamped + earn;
 
@@ -1919,6 +1938,18 @@ document.getElementById('save-bill').addEventListener('click', async () => {
     }
 
     const c = customers[phone];
+    const minPtsThreshold = Number(settings.minRedeemPts ?? 500);
+
+    if (redeem > 0 && c.totalPoints < minPtsThreshold) {
+      statusEl.style.color = 'var(--accent-red)';
+      statusEl.innerHTML = `⚠️ <b>Redemption Blocked:</b> Minimum <b>${minPtsThreshold} PTS</b> required to redeem. (Customer balance: ${c.totalPoints} PTS).`;
+      btn.innerHTML = originalText;
+      btn.disabled = false;
+      toast(`Minimum ${minPtsThreshold} PTS required to redeem`);
+      playSound('error');
+      return;
+    }
+
     redeem = Math.min(redeem, c.totalPoints);
     const earned = settings.rate > 0 ? Math.floor(amount / settings.rate) : 0;
 
@@ -2445,6 +2476,7 @@ document.getElementById('save-settings').addEventListener('click', () => {
   settings.bizName = document.getElementById('s-bizname').value.trim() || 'B INDUSTRIES';
   settings.rate = parseFloat(document.getElementById('s-rate').value) || 100;
   settings.redeemVal = parseFloat(document.getElementById('s-redeemval').value) || 1;
+  settings.minRedeemPts = parseFloat(document.getElementById('s-min-redeem-pts').value) ?? 500;
   settings.countryCode = (document.getElementById('s-countrycode').value || '91').replace(/\D/g, '') || '91';
   settings.refBonusReferrer = parseFloat(document.getElementById('s-refbonus-referrer').value) || 0;
   settings.refBonusReferee = parseFloat(document.getElementById('s-refbonus-referee').value) || 0;
@@ -2624,6 +2656,7 @@ async function saveSettingsCloud() {
       biz_name: settings.bizName || 'B-INDUSTRIES LOYALTY',
       rate: settings.rate || 100,
       redeem_val: settings.redeemVal || 1,
+      min_redeem_pts: settings.minRedeemPts ?? 500,
       country_code: settings.countryCode || '91',
       ref_bonus_referrer: settings.refBonusReferrer || 20,
       ref_bonus_referee: settings.refBonusReferee || 10
@@ -3495,9 +3528,15 @@ function renderCustomerPortal(c) {
 
       <div style="margin-top:18px;">
         <h2 style="margin-bottom:8px;">Redeem Points</h2>
-        <div class="sub" style="margin-bottom:12px;">Each point = ₹${(settings.redeemVal || 0).toFixed(2)}.</div>
-        <div class="field"><label>Points to Redeem</label><input id="c-redeem-amt" type="number" min="1" max="${c.totalPoints}" class="mono" placeholder="e.g. 50"></div>
-        <button class="btn" id="c-redeem-btn" style="width:100%; margin-top:8px;" ${c.totalPoints <= 0 ? 'disabled' : ''}>Request Redemption Voucher</button>
+        <div class="sub" style="margin-bottom:12px;">Each point = ₹${(settings.redeemVal || 0).toFixed(2)}. (Minimum ${(settings.minRedeemPts ?? 500)} PTS required to redeem).</div>
+        ${pts < (settings.minRedeemPts ?? 500) ? `
+          <div style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); color:var(--accent-red); padding:14px; border-radius:12px; font-size:13px; font-weight:700; text-align:center; margin-top:8px;">
+            🔒 <b>Redemption Locked:</b> Minimum ${(settings.minRedeemPts ?? 500)} PTS required to unlock redemption vouchers. You currently have <b>${pts} PTS</b>. Earn ${(settings.minRedeemPts ?? 500) - pts} more points to unlock!
+          </div>
+        ` : `
+          <div class="field"><label>Points to Redeem (Min ${(settings.minRedeemPts ?? 500)} PTS)</label><input id="c-redeem-amt" type="number" min="${(settings.minRedeemPts ?? 500)}" max="${pts}" class="mono" placeholder="e.g. 500"></div>
+          <button class="btn" id="c-redeem-btn" style="width:100%; margin-top:8px;">Request Redemption Voucher</button>
+        `}
         <div class="save-status" id="c-redeem-status"></div>
         <div id="c-code-box"></div>
       </div>
