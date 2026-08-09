@@ -1695,13 +1695,13 @@ document.getElementById('pin-submit').addEventListener('click', async () => {
   }
 });
 
-// Owner-only server-side actions (staff roster, manual point
-// adjustments) require the owner PIN to be passed to the RPC, not
-// just a client-side role flag. If the session was restored from a
-// page refresh, currentStaffPin won't be set yet — ask for it once.
+// Server-side owner/staff actions (deletes, refunds, manual point
+// adjustments, staff roster) require a real PIN to be passed to the
+// RPC, not just a client-side role flag. If the session was restored
+// from a page refresh, currentStaffPin won't be set yet — ask once.
 function getOwnerPin() {
   if (currentStaffPin) return currentStaffPin;
-  const p = prompt('Re-enter your Owner PIN to confirm this action:');
+  const p = prompt('Re-enter your PIN to confirm this action:');
   if (p) currentStaffPin = p;
   return currentStaffPin;
 }
@@ -2365,7 +2365,7 @@ window.showCustomer = function(phone) {
         <td>${escapeHtml(t.staffName || '—')}</td>
         <td>
           <button class="btn sms" style="padding:3px 8px; font-size:11.5px;" onclick="sendSMSReceipt('${t.id}')">SMS Receipt</button>
-          ${currentStaffRole === 'owner' ? `<button class="btn danger" onclick="deleteTxn('${t.id}')">Delete</button>` : ''}
+          ${currentStaffRole === 'owner' ? (String(t.id).startsWith('op-') ? `<button class="btn danger" onclick="clearOpeningBalance('${phone}')">Clear</button>` : `<button class="btn danger" onclick="deleteTxn('${t.id}')">Delete</button>`) : ''}
         </td>
       </tr>`;
   }).join('');
@@ -2388,7 +2388,7 @@ window.showCustomer = function(phone) {
         </div>
         <div style="margin-top:8px; display:flex; gap:6px; justify-content:flex-end;">
           <button class="btn sms" style="padding:3px 8px; font-size:11px;" onclick="sendSMSReceipt('${t.id}')">SMS Receipt</button>
-          ${currentStaffRole === 'owner' ? `<button class="btn danger" style="padding:3px 8px; font-size:11px;" onclick="deleteTxn('${t.id}')">Delete</button>` : ''}
+          ${currentStaffRole === 'owner' ? (String(t.id).startsWith('op-') ? `<button class="btn danger" style="padding:3px 8px; font-size:11px;" onclick="clearOpeningBalance('${phone}')">Clear</button>` : `<button class="btn danger" style="padding:3px 8px; font-size:11px;" onclick="deleteTxn('${t.id}')">Delete</button>`) : ''}
         </div>
       </div>`;
   }).join('');
@@ -2445,8 +2445,10 @@ window.deleteTxn = async function(id) {
 
   let c = customers[t.phone];
   if (supabaseClient) {
-    const { data, error } = await supabaseClient.rpc('delete_bill', { p_tx_id: id, p_staff_name: currentStaffName || 'Owner' });
-    if (error) { toast(error.message || 'Could not delete bill'); return; }
+    const pin = getOwnerPin();
+    if (!pin) return;
+    const { data, error } = await supabaseClient.rpc('delete_bill', { p_requestor_pin: pin, p_tx_id: id, p_staff_name: currentStaffName || 'Owner' });
+    if (error) { toast(error.message || 'Could not delete bill'); currentStaffPin = ''; return; }
     const payload = (data && data.customer) ? data : (data && data[0] ? data[0] : data);
     const cust = payload.customer;
     if (cust && customers[cust.phone]) {
@@ -2505,8 +2507,10 @@ function renderRedemptions() {
 window.fulfillRedemption = async function(id) {
   const r = redemptions.find(x => x.id === id); if (!r) return;
   if (supabaseClient) {
-    const { error } = await supabaseClient.rpc('fulfill_redemption', { p_red_id: id, p_staff_name: currentStaffName || '—' });
-    if (error) { toast(error.message || 'Could not update redemption'); return; }
+    const pin = getOwnerPin();
+    if (!pin) return;
+    const { error } = await supabaseClient.rpc('fulfill_redemption', { p_requestor_pin: pin, p_red_id: id, p_staff_name: currentStaffName || '—' });
+    if (error) { toast(error.message || 'Could not update redemption'); currentStaffPin = ''; return; }
   }
   r.status = 'fulfilled'; r.fulfilledAt = Date.now();
   persistRedemptions();
@@ -2518,8 +2522,10 @@ window.cancelRedemption = async function(id) {
   const r = redemptions.find(x => x.id === id); if (!r) return;
   let c = customers[r.phone];
   if (supabaseClient) {
-    const { data, error } = await supabaseClient.rpc('cancel_redemption', { p_red_id: id, p_staff_name: currentStaffName || 'Owner' });
-    if (error) { toast(error.message || 'Could not cancel redemption'); return; }
+    const pin = getOwnerPin();
+    if (!pin) return;
+    const { data, error } = await supabaseClient.rpc('cancel_redemption', { p_requestor_pin: pin, p_red_id: id, p_staff_name: currentStaffName || 'Owner' });
+    if (error) { toast(error.message || 'Could not cancel redemption'); currentStaffPin = ''; return; }
     const cust = data && data.customer ? data.customer : (data && data[0] ? data[0].customer : null);
     if (cust && c) { c.totalPoints = cust.total_points; }
   } else if (c) {
@@ -2529,6 +2535,25 @@ window.cancelRedemption = async function(id) {
   persistCustomers(); persistRedemptions();
   if (!supabaseClient) { saveRedemptionCloud(r); if (c) saveCustomerCloud(c); }
   toast('Points refunded to customer'); renderRedemptions(); renderCustomers();
+};
+
+window.clearOpeningBalance = async function(phone) {
+  const c = customers[phone]; if (!c) return;
+  if (currentStaffRole !== 'owner') { toast('Access Restricted to Owner'); return; }
+  if (!confirm(`Clear the opening balance summary for ${c.name}? This zeroes their points, spend and visit count — it does not correspond to a real bill, so it can't be "deleted" the normal way.`)) return;
+
+  if (supabaseClient) {
+    const pin = getOwnerPin();
+    if (!pin) return;
+    const { data, error } = await supabaseClient.rpc('clear_opening_balance', { p_requestor_pin: pin, p_phone: phone, p_staff_name: currentStaffName || 'Owner' });
+    if (error) { toast(error.message || 'Could not clear opening balance'); currentStaffPin = ''; return; }
+    const cust = data && data.customer ? data.customer : (data && data[0] ? data[0].customer : null);
+    if (cust) { c.totalPoints = cust.total_points; c.totalSpent = cust.total_spent; c.visits = cust.visits; }
+  } else {
+    c.totalPoints = 0; c.totalSpent = 0; c.visits = 0;
+  }
+  persistCustomers();
+  toast('Opening balance cleared'); renderCustomers(); showCustomer(phone);
 };
 
 // ---- Dashboard ----
@@ -3705,7 +3730,7 @@ function renderCustomerPortal(c) {
         // Balance check + deduction happens under a row lock in the
         // database, so two redemption requests in flight at once
         // can't both spend the same points.
-        const { data, error } = await supabaseClient.rpc('request_redemption', { p_phone: c.phone, p_points: amt, p_value: value });
+        const { data, error } = await supabaseClient.rpc('request_redemption', { p_phone: c.phone, p_pin: c.pin, p_points: amt, p_value: value });
         if (error) { document.getElementById('c-redeem-status').textContent = error.message || 'Could not process redemption.'; return; }
         const payload = data && data.customer ? data : (data && data[0] ? data[0] : data);
         code = payload.code;
