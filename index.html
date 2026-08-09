@@ -1044,6 +1044,7 @@ let lastSavedId = null;
 let staffUnlocked = false;
 let currentStaffName = "";
 let currentStaffRole = "";
+let currentStaffPin = ""; // kept in memory only (never persisted) to authorize owner-only RPCs this session
 let supabaseClient = null;
 
 let activityLogs = Storage.get('bm-loyalty-activity-logs') || [];
@@ -1423,10 +1424,10 @@ async function loadAll() {
   const soundInput = document.getElementById('s-sound-fx');
   if (soundInput) soundInput.checked = settings.soundFxEnabled !== false;
 
-  if (!settings.staff || settings.staff.length === 0) {
-    settings.staff = [{ name: "Owner", pin: "1234", role: "owner" }];
-  }
-  settings.staff.forEach(st => { if (!st.role) st.role = 'owner'; });
+  // Staff PINs are never loaded into the browser anymore — login and
+  // roster management go through server-side RPCs (verify_staff_pin,
+  // list_staff) instead. No hardcoded "1234" fallback account.
+  if (!settings.staff) settings.staff = [];
 
   // Safety timer to guarantee loading screen disappears within 3 seconds maximum no matter what
   const hideLoading = () => {
@@ -1512,12 +1513,10 @@ async function fetchCloudData() {
       document.getElementById('bizNameHeader').textContent = settings.bizName;
     }
 
-    // 2. Fetch Cloud Staff Logins & Roles (100% Supabase Direct)
-    const { data: staffRows } = await supabaseClient.from('staff').select('*');
-    if (staffRows && staffRows.length) {
-      settings.staff = staffRows.map(st => ({ name: st.name, pin: st.pin, role: st.role || 'staff' }));
-      renderStaffList();
-    }
+    // Staff roster (names/roles, never PINs) is only fetched via the
+    // list_staff RPC when the owner opens the Settings tab and enters
+    // their PIN — see openStaffRoster(). The staff table itself can no
+    // longer be read directly with the anon key.
 
     // 3. Fetch Cloud Customers (100% Supabase Direct + Auto-Sanitize Swapped Data)
     const { data: custData } = await supabaseClient.from('customers').select('*');
@@ -1627,21 +1626,37 @@ document.getElementById('btn-mode-customer').addEventListener('click', () => {
   updateBottomSessionBar();
 });
 
-document.getElementById('pin-submit').addEventListener('click', () => {
+document.getElementById('pin-submit').addEventListener('click', async () => {
   const btn = document.getElementById('pin-submit');
   const originalText = btn.innerHTML;
   btn.innerHTML = `<span class="spinner"></span> Verifying...`;
   btn.disabled = true;
 
-  setTimeout(() => {
-    const val = document.getElementById('pin-input').value.trim();
-    let match = (settings.staff || []).find(s => String(s.pin).trim() === val);
+  const val = document.getElementById('pin-input').value.trim();
+  let match = null;
 
-    // Master Fallback if no custom staff configured
-    if (!match && val === '1234' && (!settings.staff || settings.staff.length === 0 || !settings.staff.some(s => String(s.pin).trim() === '1234'))) {
-      match = { name: "Owner", pin: "1234", role: "owner" };
+  if (supabaseClient) {
+    // PIN is verified inside the database (pgcrypto hash compare) —
+    // the browser never receives the staff list or any PIN.
+    const { data, error } = await supabaseClient.rpc('verify_staff_pin', { p_pin: val });
+    if (!error && data && data.length) {
+      match = data[0];
+    } else if (!error && (!data || !data.length)) {
+      // No match — check if this is first-run (no staff configured
+      // at all yet) and offer to create the initial owner account.
+      const { data: created, error: setupErr } = await supabaseClient.rpc('create_initial_owner', { p_name: 'Owner', p_pin: val });
+      if (!setupErr && created && created.length) {
+        match = created[0];
+        toast('Owner account created with this PIN');
+      }
     }
+    if (match) currentStaffPin = val; // kept in memory only, for this session, to authorize owner-only actions later
+  } else {
+    // Offline/local-only fallback
+    match = (settings.staff || []).find(s => String(s.pin).trim() === val) || null;
+  }
 
+  {
     btn.innerHTML = originalText;
     btn.disabled = false;
 
@@ -1671,13 +1686,25 @@ document.getElementById('pin-submit').addEventListener('click', () => {
       });
       logActivity('staff', 'Staff Login', `${currentStaffName} (${currentStaffRole}) unlocked terminal.`);
       playSound('success');
+      if (currentStaffRole === 'owner') loadStaffRoster();
     } else {
       document.getElementById('pin-status').style.color = 'var(--accent-red)';
       document.getElementById('pin-status').textContent = 'Incorrect Security PIN.';
       playSound('error');
     }
-  }, 250);
+  }
 });
+
+// Owner-only server-side actions (staff roster, manual point
+// adjustments) require the owner PIN to be passed to the RPC, not
+// just a client-side role flag. If the session was restored from a
+// page refresh, currentStaffPin won't be set yet — ask for it once.
+function getOwnerPin() {
+  if (currentStaffPin) return currentStaffPin;
+  const p = prompt('Re-enter your Owner PIN to confirm this action:');
+  if (p) currentStaffPin = p;
+  return currentStaffPin;
+}
 
 function applyRoleRestrictions() {
   const isOwner = (currentStaffRole === 'owner');
@@ -1703,6 +1730,7 @@ window.lockTerminal = function() {
   staffUnlocked = false;
   currentStaffName = "";
   currentStaffRole = "";
+  currentStaffPin = "";
   Storage.remove('bm-loyalty-session');
   document.getElementById('staff-gate').style.display = 'block';
   document.getElementById('staff-app').style.display = 'none';
@@ -1869,18 +1897,27 @@ document.getElementById('save-bill').addEventListener('click', async () => {
   let redeem = parseFloat(fRedeem.value) || 0;
   const refCode = document.getElementById('f-refcode').value.trim().toUpperCase();
 
+  // Normalize phone to one canonical 10-digit form everywhere, so the
+  // same customer can never end up as two records (+91xxxx vs xxxx).
+  if (phone) phone = get10DigitPhone(phone);
+
   // Smart Name-to-Phone Resolution (Allows recording bills by Customer Name directly!)
   if (!phone && name) {
-    const match = Object.values(customers).find(c => c.name.toLowerCase() === name.toLowerCase())
-               || Object.values(customers).find(c => c.name.toLowerCase().includes(name.toLowerCase()));
+    const match = Object.values(customers).find(c => c.name.toLowerCase() === name.toLowerCase());
     if (match) {
       phone = match.phone;
       name = match.name;
       fPhone.value = phone;
       fName.value = name;
     } else {
-      phone = '90' + Date.now().toString().slice(-8);
-      fPhone.value = phone;
+      // No fabricated phone numbers — a real phone is required to
+      // create a new customer record, so bills never get silently
+      // attached to a fake/duplicate account by partial name match.
+      statusEl.style.color = 'var(--accent-red)';
+      statusEl.innerHTML = '⚠️ No existing customer matches that name exactly. Please enter their <b>Phone Number</b> to create a new account.';
+      fPhone.focus();
+      toast('Enter Customer Phone Number');
+      return;
     }
   } else if (phone && !name) {
     const match = customers[phone];
@@ -1922,73 +1959,93 @@ document.getElementById('save-bill').addEventListener('click', async () => {
   btn.disabled = true;
 
   try {
-    const isNewCustomer = !customers[phone];
-    if (isNewCustomer) {
-      const code = generateReferralCode(name, phone);
-      const custPin = generateCustomerPin();
-      customers[phone] = { phone, name, pin: custPin, totalPoints: 0, totalSpent: 0, visits: 0, firstVisit: date, lastVisit: date, referralCode: code, referredBy: null };
-      if (refCode) {
-        const referrer = Object.values(customers).find(c => c.referralCode === refCode && c.phone !== phone);
-        if (referrer) {
-          referrer.totalPoints += (settings.refBonusReferrer || 0);
-          customers[phone].totalPoints += (settings.refBonusReferee || 0);
-          customers[phone].referredBy = referrer.phone;
+    let earned, newTx;
+
+    if (supabaseClient) {
+      // Single atomic database call: locks the customer row, applies
+      // referral bonus, validates the redeem threshold, computes
+      // earned points, writes the transaction, and updates the
+      // cached balance — all inside one Postgres transaction. This
+      // is what stops two devices racing on the same balance.
+      const { data, error } = await supabaseClient.rpc('create_bill', {
+        p_bill_no: bill, p_date: date, p_phone: phone, p_name: name,
+        p_amount: amount, p_redeem: Math.round(redeem),
+        p_staff_name: currentStaffName || '—', p_referral_code: refCode || null
+      });
+      if (error) {
+        statusEl.style.color = 'var(--accent-red)';
+        statusEl.innerHTML = `⚠️ ${escapeHtml(error.message || 'Could not save bill')}`;
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+        toast(error.message || 'Could not save bill');
+        playSound('error');
+        return;
+      }
+      const result = data && data[0] ? data[0] : data; // supabase-js may wrap single jsonb row
+      const payload = result.create_bill || result; // handle either raw jsonb or {create_bill: {...}}
+      const cust = payload.customer;
+      earned = payload.earned;
+      redeem = payload.redeemed;
+
+      customers[phone] = {
+        phone: cust.phone, name: cust.name, pin: cust.pin,
+        totalPoints: cust.total_points, totalSpent: cust.total_spent, visits: cust.visits,
+        firstVisit: cust.first_visit, lastVisit: cust.last_visit,
+        referralCode: cust.referral_code, referredBy: cust.referred_by
+      };
+      newTx = { id: payload.transaction_id, billNo: bill, date, phone, name, amount, earned, redeemed: redeem, ts: Date.now(), staffName: currentStaffName || '—' };
+      transactions.unshift(newTx);
+      persistCustomers(); persistTransactions();
+    } else {
+      // Offline/local-only fallback (no Supabase configured). Same
+      // rules as the RPC above, applied locally since there's no
+      // shared database to race against.
+      const isNewCustomer = !customers[phone];
+      if (isNewCustomer) {
+        const code = generateReferralCode(name, phone);
+        const custPin = generateCustomerPin();
+        customers[phone] = { phone, name, pin: custPin, totalPoints: 0, totalSpent: 0, visits: 0, firstVisit: date, lastVisit: date, referralCode: code, referredBy: null };
+        if (refCode) {
+          const referrer = Object.values(customers).find(c => c.referralCode === refCode && c.phone !== phone);
+          if (referrer) {
+            referrer.totalPoints += (settings.refBonusReferrer || 0);
+            customers[phone].totalPoints += (settings.refBonusReferee || 0);
+            customers[phone].referredBy = referrer.phone;
+          }
         }
       }
-    }
-
-    const c = customers[phone];
-    const minPtsThreshold = Number(settings.minRedeemPts ?? 500);
-
-    if (redeem > 0 && c.totalPoints < minPtsThreshold) {
-      statusEl.style.color = 'var(--accent-red)';
-      statusEl.innerHTML = `⚠️ <b>Redemption Blocked:</b> Minimum <b>${minPtsThreshold} PTS</b> required to redeem. (Customer balance: ${c.totalPoints} PTS).`;
-      btn.innerHTML = originalText;
-      btn.disabled = false;
-      toast(`Minimum ${minPtsThreshold} PTS required to redeem`);
-      playSound('error');
-      return;
-    }
-
-    redeem = Math.min(redeem, c.totalPoints);
-    const earned = settings.rate > 0 ? Math.floor(amount / settings.rate) : 0;
-
-    c.name = name;
-    c.totalPoints = c.totalPoints - redeem + earned;
-    c.totalSpent += amount;
-    c.visits += 1;
-    c.lastVisit = date;
-
-    const txId = (typeof generateUUID === 'function') ? generateUUID() : (window.generateUUID ? window.generateUUID() : ('xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => { const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8); return v.toString(16); })));
-
-    const newTx = {
-      id: txId,
-      billNo: bill,
-      date,
-      phone,
-      name,
-      amount,
-      earned,
-      redeemed: redeem,
-      ts: Date.now(),
-      staffName: currentStaffName || '—'
-    };
-    transactions.unshift(newTx);
-    logActivity('bill', `Bill #${bill} Saved`, `Bill of ₹${amount} recorded for ${name} (${phone}). Earned +${earned} pts.`, { phone, amount });
-
-    persistCustomers();
-    persistTransactions();
-
-    // Sync to Cloud asynchronously with fallbacks
-    if (supabaseClient) {
-      try {
-        await saveCustomerCloud(c);
-        await saveTransactionCloud(newTx);
-      } catch(cloudErr) {
-        console.warn('Cloud bill sync notice:', cloudErr);
+      const c = customers[phone];
+      const minPtsThreshold = Number(settings.minRedeemPts ?? 500);
+      if (redeem > 0 && c.totalPoints < minPtsThreshold) {
+        statusEl.style.color = 'var(--accent-red)';
+        statusEl.innerHTML = `⚠️ <b>Redemption Blocked:</b> Minimum <b>${minPtsThreshold} PTS</b> required to redeem. (Customer balance: ${c.totalPoints} PTS).`;
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+        toast(`Minimum ${minPtsThreshold} PTS required to redeem`);
+        playSound('error');
+        return;
       }
+      if (transactions.some(t => t.billNo === bill)) {
+        statusEl.style.color = 'var(--accent-red)';
+        statusEl.innerHTML = `⚠️ Bill #${escapeHtml(bill)} already exists.`;
+        btn.innerHTML = originalText; btn.disabled = false;
+        return;
+      }
+      redeem = Math.round(Math.min(redeem, c.totalPoints));
+      earned = settings.rate > 0 ? Math.floor(amount / settings.rate) : 0;
+      c.name = name;
+      c.totalPoints = c.totalPoints - redeem + earned;
+      c.totalSpent += amount;
+      c.visits += 1;
+      c.lastVisit = date;
+      const txId = (typeof generateUUID === 'function') ? generateUUID() : (window.generateUUID ? window.generateUUID() : ('xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => { const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8); return v.toString(16); })));
+      newTx = { id: txId, billNo: bill, date, phone, name, amount, earned, redeemed: redeem, ts: Date.now(), staffName: currentStaffName || '—' };
+      transactions.unshift(newTx);
+      persistCustomers();
+      persistTransactions();
     }
 
+    logActivity('bill', `Bill #${bill} Saved`, `Bill of ₹${amount} recorded for ${name} (${phone}). Earned +${earned} pts.`, { phone, amount });
     lastSavedId = newTx.id;
 
     statusEl.style.color = 'var(--accent-emerald)';
@@ -2378,7 +2435,7 @@ window.showCustomer = function(phone) {
   detail.scrollIntoView({ behavior: 'smooth' });
 };
 
-window.deleteTxn = function(id) {
+window.deleteTxn = async function(id) {
   if (currentStaffRole !== 'owner') {
     toast('Access Restricted to Owner');
     return;
@@ -2386,16 +2443,23 @@ window.deleteTxn = function(id) {
   const t = transactions.find(x => x.id === id); if (!t) return;
   if (!confirm(`Are you sure you want to delete Bill #${t.billNo}? This will reverse customer points.`)) return;
 
-  const c = customers[t.phone];
-  if (c) { 
-    c.totalPoints = Math.max(0, c.totalPoints - t.earned + t.redeemed); 
-    c.totalSpent = Math.max(0, c.totalSpent - t.amount); 
-    c.visits = Math.max(0, c.visits - 1); 
+  let c = customers[t.phone];
+  if (supabaseClient) {
+    const { data, error } = await supabaseClient.rpc('delete_bill', { p_tx_id: id, p_staff_name: currentStaffName || 'Owner' });
+    if (error) { toast(error.message || 'Could not delete bill'); return; }
+    const payload = (data && data.customer) ? data : (data && data[0] ? data[0] : data);
+    const cust = payload.customer;
+    if (cust && customers[cust.phone]) {
+      c = customers[cust.phone];
+      c.totalPoints = cust.total_points; c.totalSpent = cust.total_spent; c.visits = cust.visits;
+    }
+  } else if (c) {
+    c.totalPoints = Math.max(0, c.totalPoints - t.earned + t.redeemed);
+    c.totalSpent = Math.max(0, c.totalSpent - t.amount);
+    c.visits = Math.max(0, c.visits - 1);
   }
   transactions = transactions.filter(x => x.id !== id);
   persistCustomers(); persistTransactions();
-  if (c) saveCustomerCloud(c);
-  deleteTransactionCloud(id);
 
   logActivity('staff', 'Transaction Deleted', `Bill #${t.billNo} (₹${t.amount}) deleted by ${currentStaffName || 'Owner'} (${currentStaffRole}).`, { phone: t.phone, amount: t.amount, staffName: currentStaffName });
   toast('Transaction deleted and points adjusted');
@@ -2438,20 +2502,32 @@ function renderRedemptions() {
     <div class="table-responsive"><table><thead><tr><th>Code</th><th>Name</th><th>Phone</th><th>Points</th><th>Status</th><th></th></tr></thead><tbody>${doneRows || '<tr><td colspan="6" class="empty">None yet</td></tr>'}</tbody></table></div>`;
 }
 
-window.fulfillRedemption = function(id) {
+window.fulfillRedemption = async function(id) {
   const r = redemptions.find(x => x.id === id); if (!r) return;
+  if (supabaseClient) {
+    const { error } = await supabaseClient.rpc('fulfill_redemption', { p_red_id: id, p_staff_name: currentStaffName || '—' });
+    if (error) { toast(error.message || 'Could not update redemption'); return; }
+  }
   r.status = 'fulfilled'; r.fulfilledAt = Date.now();
-  persistRedemptions(); saveRedemptionCloud(r);
+  persistRedemptions();
+  if (!supabaseClient) saveRedemptionCloud(r);
   toast('Marked as applied'); renderRedemptions();
 };
 
-window.cancelRedemption = function(id) {
+window.cancelRedemption = async function(id) {
   const r = redemptions.find(x => x.id === id); if (!r) return;
-  const c = customers[r.phone];
-  if (c) c.totalPoints += r.points;
+  let c = customers[r.phone];
+  if (supabaseClient) {
+    const { data, error } = await supabaseClient.rpc('cancel_redemption', { p_red_id: id, p_staff_name: currentStaffName || 'Owner' });
+    if (error) { toast(error.message || 'Could not cancel redemption'); return; }
+    const cust = data && data.customer ? data.customer : (data && data[0] ? data[0].customer : null);
+    if (cust && c) { c.totalPoints = cust.total_points; }
+  } else if (c) {
+    c.totalPoints += r.points;
+  }
   r.status = 'cancelled'; r.fulfilledAt = Date.now();
   persistCustomers(); persistRedemptions();
-  saveRedemptionCloud(r); if (c) saveCustomerCloud(c);
+  if (!supabaseClient) { saveRedemptionCloud(r); if (c) saveCustomerCloud(c); }
   toast('Points refunded to customer'); renderRedemptions(); renderCustomers();
 };
 
@@ -2544,22 +2620,22 @@ window.syncAllLocalToCloud = async function() {
   statusEl.innerHTML = `<span class="spinner dark"></span> Uploading all local data to Supabase Cloud...`;
 
   try {
-    // 1. Sync Settings
-    await supabaseClient.from('settings').upsert({
-      id: 1,
-      biz_name: settings.bizName || 'B INDUSTRIES',
-      rate: settings.rate || 100,
-      redeem_val: settings.redeemVal || 1,
-      country_code: settings.countryCode || '91',
-      ref_bonus_referrer: settings.refBonusReferrer || 20,
-      ref_bonus_referee: settings.refBonusReferee || 10
-    });
-
-    // 2. Sync Staff
-    if (settings.staff && settings.staff.length) {
-      await supabaseClient.from('staff').delete().neq('name', '___');
-      await supabaseClient.from('staff').insert(settings.staff.map(s => ({ name: s.name, pin: s.pin, role: s.role || 'staff' })));
+    // 1. Sync Settings (via RPC — requires the owner PIN now)
+    const ownerPin = getOwnerPin();
+    if (ownerPin) {
+      const { error: setErr } = await supabaseClient.rpc('update_settings', {
+        p_requestor_pin: ownerPin, p_biz_name: settings.bizName || 'B INDUSTRIES',
+        p_rate: settings.rate || 100, p_redeem_val: settings.redeemVal || 1,
+        p_min_redeem_pts: settings.minRedeemPts ?? 500, p_country_code: settings.countryCode || '91',
+        p_ref_bonus_referrer: settings.refBonusReferrer || 20, p_ref_bonus_referee: settings.refBonusReferee || 10
+      });
+      if (setErr) currentStaffPin = '';
     }
+
+    // 2. Staff logins are managed from the Staff Roster panel (which
+    // uses upsert_staff/delete_staff) — plaintext staff sync here has
+    // been removed since the staff table no longer accepts direct
+    // writes with the anon key.
 
     // 3. Sync Customers
     const custArr = Object.values(customers);
@@ -2650,18 +2726,35 @@ async function saveRedemptionCloud(r) {
 
 async function saveSettingsCloud() {
   if (!supabaseClient) return;
+  const pin = getOwnerPin();
+  if (!pin) { toast('Owner PIN required to change settings'); return; }
   try {
-    await supabaseClient.from('settings').upsert({
-      id: 1,
-      biz_name: settings.bizName || 'B-INDUSTRIES LOYALTY',
-      rate: settings.rate || 100,
-      redeem_val: settings.redeemVal || 1,
-      min_redeem_pts: settings.minRedeemPts ?? 500,
-      country_code: settings.countryCode || '91',
-      ref_bonus_referrer: settings.refBonusReferrer || 20,
-      ref_bonus_referee: settings.refBonusReferee || 10
+    const { error } = await supabaseClient.rpc('update_settings', {
+      p_requestor_pin: pin,
+      p_biz_name: settings.bizName || 'B-INDUSTRIES LOYALTY',
+      p_rate: settings.rate || 100,
+      p_redeem_val: settings.redeemVal || 1,
+      p_min_redeem_pts: settings.minRedeemPts ?? 500,
+      p_country_code: settings.countryCode || '91',
+      p_ref_bonus_referrer: settings.refBonusReferrer || 20,
+      p_ref_bonus_referee: settings.refBonusReferee || 10
     });
+    if (error) { toast(error.message || 'Could not save settings'); currentStaffPin = ''; }
   } catch(e) { console.warn('Supabase settings save failed:', e); }
+}
+
+// Staff roster now lives in the database and is fetched via the
+// owner-gated list_staff RPC — PINs are write-only from here on
+// (leaving a PIN field blank when saving keeps that person's
+// existing PIN unchanged; nothing round-trips through the browser).
+async function loadStaffRoster() {
+  if (!supabaseClient) return; // offline mode keeps using settings.staff locally
+  const pin = getOwnerPin();
+  if (!pin) return;
+  const { data, error } = await supabaseClient.rpc('list_staff', { p_requestor_pin: pin });
+  if (error) { toast(error.message || 'Could not load staff roster'); currentStaffPin = ''; return; }
+  settings.staff = (data || []).map(s => ({ id: s.id, name: s.name, role: s.role, pin: '' }));
+  renderStaffList();
 }
 
 function renderStaffList() {
@@ -2673,7 +2766,7 @@ function renderStaffList() {
   list.innerHTML = (settings.staff || []).map((s, i) => `
     <div class="staff-row">
       <input data-i="${i}" class="staff-name" placeholder="Name" value="${escapeHtml(s.name)}">
-      <input data-i="${i}" class="staff-pin mono" placeholder="PIN" value="${escapeHtml(s.pin)}">
+      <input data-i="${i}" class="staff-pin mono" placeholder="${supabaseClient ? 'New PIN (leave blank to keep)' : 'PIN'}" value="${escapeHtml(s.pin || '')}">
       <select data-i="${i}" class="staff-role">
         <option value="staff" ${s.role !== 'owner' ? 'selected' : ''}>Staff</option>
         <option value="owner" ${s.role === 'owner' ? 'selected' : ''}>Owner</option>
@@ -2682,8 +2775,15 @@ function renderStaffList() {
     </div>`).join('');
 }
 
-window.removeStaffRow = function(i) {
+window.removeStaffRow = async function(i) {
   if (settings.staff.length <= 1) { toast('Keep at least one staff login'); return; }
+  const row = settings.staff[i];
+  if (supabaseClient && row.id) {
+    const pin = getOwnerPin();
+    if (!pin) return;
+    const { error } = await supabaseClient.rpc('delete_staff', { p_requestor_pin: pin, p_id: row.id });
+    if (error) { toast(error.message || 'Could not remove staff member'); currentStaffPin = ''; return; }
+  }
   settings.staff.splice(i, 1); renderStaffList();
 };
 
@@ -2696,27 +2796,34 @@ document.getElementById('save-staff').addEventListener('click', async () => {
   const names = document.querySelectorAll('.staff-name');
   const pins = document.querySelectorAll('.staff-pin');
   const roles = document.querySelectorAll('.staff-role');
-  const newStaff = [];
+  const rows = [];
   names.forEach((el, i) => {
     const name = el.value.trim();
     const pin = pins[i].value.trim();
     const role = roles[i].value;
-    if (name && pin) newStaff.push({ name, pin, role });
+    const id = settings.staff[i] && settings.staff[i].id;
+    if (name) rows.push({ id, name, pin, role });
   });
 
-  if (newStaff.length === 0) { document.getElementById('staff-status').textContent = 'Add at least one staff member with name and PIN.'; return; }
-  if (!newStaff.some(s => s.role === 'owner')) { document.getElementById('staff-status').textContent = 'Keep at least one Owner account.'; return; }
+  if (rows.length === 0) { document.getElementById('staff-status').textContent = 'Add at least one staff member.'; return; }
+  if (!rows.some(s => s.role === 'owner')) { document.getElementById('staff-status').textContent = 'Keep at least one Owner account.'; return; }
 
-  settings.staff = newStaff;
-  persistSettings();
-  renderStaffList();
-
-  // Cloud sync staff roster to Supabase
   if (supabaseClient) {
-    try {
-      await supabaseClient.from('staff').delete().neq('name', '___'); // reset table
-      await supabaseClient.from('staff').insert(newStaff.map(s => ({ name: s.name, pin: s.pin, role: s.role })));
-    } catch(err) { console.warn('Supabase staff save failed:', err); }
+    const pin = getOwnerPin();
+    if (!pin) return;
+    for (const r of rows) {
+      if (!r.id && !r.pin) { document.getElementById('staff-status').textContent = `A PIN is required for new staff member "${r.name}".`; return; }
+      const { error } = await supabaseClient.rpc('upsert_staff', {
+        p_requestor_pin: pin, p_name: r.name, p_pin: r.pin || null, p_role: r.role, p_id: r.id || null
+      });
+      if (error) { document.getElementById('staff-status').textContent = error.message; currentStaffPin = ''; toast(error.message); return; }
+    }
+    await loadStaffRoster();
+  } else {
+    if (!rows.every(r => r.pin)) { document.getElementById('staff-status').textContent = 'Add a PIN for every staff member.'; return; }
+    settings.staff = rows;
+    persistSettings();
+    renderStaffList();
   }
 
   document.getElementById('staff-status').textContent = 'Staff list saved & synced to cloud.';
@@ -3588,16 +3695,31 @@ function renderCustomerPortal(c) {
     }
 
     const redeemBtn = document.getElementById('c-redeem-btn');
-    if (redeemBtn) redeemBtn.addEventListener('click', () => {
-      const amt = parseFloat(document.getElementById('c-redeem-amt').value) || 0;
+    if (redeemBtn) redeemBtn.addEventListener('click', async () => {
+      const amt = Math.round(parseFloat(document.getElementById('c-redeem-amt').value) || 0);
       if (amt <= 0 || amt > c.totalPoints) { document.getElementById('c-redeem-status').textContent = 'Enter a valid points amount up to your balance.'; return; }
-      const code = Math.floor(1000 + Math.random() * 9000).toString();
       const value = amt * (settings.redeemVal || 0);
-      c.totalPoints -= amt;
-      const newRed = { id: generateUUID(), phone: c.phone, name: c.name, points: amt, value, code, status: 'pending', createdAt: Date.now() };
-      redemptions.unshift(newRed);
-      persistCustomers(); persistRedemptions();
-      saveCustomerCloud(c); saveRedemptionCloud(newRed);
+      let code;
+
+      if (supabaseClient) {
+        // Balance check + deduction happens under a row lock in the
+        // database, so two redemption requests in flight at once
+        // can't both spend the same points.
+        const { data, error } = await supabaseClient.rpc('request_redemption', { p_phone: c.phone, p_points: amt, p_value: value });
+        if (error) { document.getElementById('c-redeem-status').textContent = error.message || 'Could not process redemption.'; return; }
+        const payload = data && data.customer ? data : (data && data[0] ? data[0] : data);
+        code = payload.code;
+        c.totalPoints = payload.customer.total_points;
+        redemptions.unshift({ id: payload.redemption_id, phone: c.phone, name: c.name, points: amt, value, code, status: 'pending', createdAt: Date.now() });
+        persistCustomers(); persistRedemptions();
+      } else {
+        code = Math.floor(1000 + Math.random() * 9000).toString();
+        c.totalPoints -= amt;
+        const newRed = { id: generateUUID(), phone: c.phone, name: c.name, points: amt, value, code, status: 'pending', createdAt: Date.now() };
+        redemptions.unshift(newRed);
+        persistCustomers(); persistRedemptions();
+        saveCustomerCloud(c); saveRedemptionCloud(newRed);
+      }
 
       // Trigger Confetti Celebration 🎉
       if (typeof window.triggerConfetti === 'function') window.triggerConfetti();
