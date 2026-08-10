@@ -778,6 +778,61 @@
       <h2>Bills Log in Selected Range</h2>
       <div id="report-bills"></div>
     </div>
+
+    <div class="grid grid-2col" style="gap:16px; margin-top:16px;">
+      <div class="card" style="margin:0;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+          <div>
+            <h2>Redemptions Report</h2>
+            <div class="sub">Pending, fulfilled &amp; cancelled redemptions in the selected date range.</div>
+          </div>
+          <button class="btn secondary" style="padding:6px 10px; font-size:12.5px;" onclick="exportRedemptionsCSV()">Export CSV</button>
+        </div>
+        <div class="stat-grid" id="report-redemptions-stats" style="margin-top:14px;"></div>
+        <div id="report-redemptions-table" style="margin-top:12px;"></div>
+      </div>
+
+      <div class="card" style="margin:0;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+          <div>
+            <h2>Referral Program Report</h2>
+            <div class="sub">Who's bringing in new customers, and what it's costing in bonus points.</div>
+          </div>
+          <button class="btn secondary" style="padding:6px 10px; font-size:12.5px;" onclick="exportReferralCSV()">Export CSV</button>
+        </div>
+        <div class="stat-grid" id="report-referral-stats" style="margin-top:14px;"></div>
+        <div id="report-referral-table" style="margin-top:12px;"></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+        <div>
+          <h2>Inactive / Win-Back Customers</h2>
+          <div class="sub">Customers who haven't visited recently — good candidates for a reminder message.</div>
+        </div>
+        <div style="display:flex; gap:8px; align-items:flex-end;">
+          <div class="field" style="margin:0;"><label>Days Since Last Visit ≥</label><input id="r-inactive-days" type="number" value="30" min="1" style="width:100px;"></div>
+          <button class="btn secondary" onclick="renderInactiveReport()">Apply</button>
+          <button class="btn secondary" onclick="exportInactiveCSV()">Export CSV</button>
+        </div>
+      </div>
+      <div id="report-inactive-table" style="margin-top:14px;"></div>
+    </div>
+
+    <div class="card" style="margin-top:16px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+        <div>
+          <h2>Point Ledger Audit</h2>
+          <div class="sub">Every point movement — purchases, redemptions, referrals, manual adjustments, deletions — with the reason and who made it. This is the authoritative record, straight from the database.</div>
+        </div>
+        <div style="display:flex; gap:8px; align-items:flex-end; flex-wrap:wrap;">
+          <div class="field" style="margin:0;"><label>Customer Phone (optional)</label><input id="r-ledger-phone" type="text" placeholder="Leave blank for all" style="width:160px;"></div>
+          <button class="btn secondary" onclick="searchLedger()">Search</button>
+        </div>
+      </div>
+      <div id="report-ledger-table" style="margin-top:14px;"></div>
+    </div>
   </section>
 
   <section id="tab-dashboard" style="display:none;">
@@ -3144,7 +3199,184 @@ function renderReports() {
     <div class="table-responsive"><table><thead><tr><th>Bill</th><th>Date</th><th>Customer</th><th>Amount</th><th>Points</th><th>Staff</th></tr></thead><tbody>
     ${inRange.slice(0, 50).map(t => `<tr><td class="mono">#${escapeHtml(t.billNo)}</td><td>${t.date}</td><td>${escapeHtml(t.name)}<br><span style="color:var(--text-sub); font-size:12px;" class="mono">${escapeHtml(t.phone)}</span></td><td class="mono">₹${t.amount.toFixed(2)}</td><td><span class="badge">+${t.earned}</span> ${t.redeemed > 0 ? `<span class="badge redeem">-${t.redeemed}</span>` : ''}</td><td>${escapeHtml(t.staffName || '—')}</td></tr>`).join('')}
     </tbody></table></div>${inRange.length > 50 ? `<div class="sub" style="margin-top:8px;">Showing 50 of ${inRange.length} bills. Export CSV for full report.</div>` : ''}` : '<div class="empty">No bills in this range.</div>';
+
+  renderRedemptionsReport(from, to);
+  renderReferralReport();
+  renderInactiveReport();
 }
+
+// 6. Redemptions Report — pending/fulfilled/cancelled breakdown and
+// ₹ value given out, within the same date range as the rest of Reports.
+function _redemptionsInRange(from, to) {
+  return redemptions.filter(r => {
+    const d = new Date(r.createdAt).toISOString().slice(0, 10);
+    return d >= from && d <= to;
+  });
+}
+
+function renderRedemptionsReport(from, to) {
+  from = from || document.getElementById('r-from').value || '2000-01-01';
+  to = to || document.getElementById('r-to').value || '9999-12-31';
+  const inRange = _redemptionsInRange(from, to);
+
+  const pending = inRange.filter(r => r.status === 'pending');
+  const fulfilled = inRange.filter(r => r.status === 'fulfilled');
+  const cancelled = inRange.filter(r => r.status === 'cancelled');
+  const valueGivenOut = fulfilled.reduce((s, r) => s + (r.value || 0), 0);
+  const pointsGivenOut = fulfilled.reduce((s, r) => s + (r.points || 0), 0);
+
+  document.getElementById('report-redemptions-stats').innerHTML = `
+    <div class="stat"><div class="num">${inRange.length}</div><div class="lbl">Total Requests</div></div>
+    <div class="stat"><div class="num">${pending.length}</div><div class="lbl">Pending</div></div>
+    <div class="stat"><div class="num">${fulfilled.length}</div><div class="lbl">Fulfilled</div></div>
+    <div class="stat"><div class="num">${cancelled.length}</div><div class="lbl">Cancelled</div></div>
+    <div class="stat"><div class="num">₹${valueGivenOut.toFixed(0)}</div><div class="lbl">Value Given Out</div></div>
+    <div class="stat"><div class="num">-${pointsGivenOut}</div><div class="lbl">Points Redeemed (Fulfilled)</div></div>`;
+
+  const rows = inRange.slice().sort((a,b) => b.createdAt - a.createdAt).slice(0, 50).map(r => `
+    <tr>
+      <td class="mono">${r.code}</td>
+      <td>${escapeHtml(r.name)}<br><span style="color:var(--text-sub); font-size:12px;" class="mono">${escapeHtml(r.phone)}</span></td>
+      <td><span class="badge redeem">-${r.points}</span></td>
+      <td class="mono">₹${(r.value || 0).toFixed(2)}</td>
+      <td><span class="badge ${r.status === 'pending' ? '' : (r.status === 'cancelled' ? 'redeem' : '')}">${r.status}</span></td>
+      <td>${new Date(r.createdAt).toLocaleString()}</td>
+    </tr>`).join('');
+
+  document.getElementById('report-redemptions-table').innerHTML = rows ? `
+    <div class="table-responsive"><table><thead><tr><th>Code</th><th>Customer</th><th>Points</th><th>Value</th><th>Status</th><th>Requested</th></tr></thead><tbody>${rows}</tbody></table></div>
+    ${inRange.length > 50 ? `<div class="sub" style="margin-top:8px;">Showing 50 of ${inRange.length}. Export CSV for full report.</div>` : ''}`
+    : '<div class="empty">No redemptions in this range.</div>';
+}
+
+window.exportRedemptionsCSV = function() {
+  const from = document.getElementById('r-from').value || '2000-01-01';
+  const to = document.getElementById('r-to').value || '9999-12-31';
+  const inRange = _redemptionsInRange(from, to);
+  if (inRange.length === 0) { toast('No redemptions in selected range to export'); return; }
+  let csv = 'Code,Customer Name,Phone,Points,Value,Status,Requested At,Fulfilled/Cancelled At\n';
+  inRange.forEach(r => {
+    csv += `${r.code},"${r.name}",${r.phone},${r.points},${r.value || 0},${r.status},${new Date(r.createdAt).toISOString()},${r.fulfilledAt ? new Date(r.fulfilledAt).toISOString() : ''}\n`;
+  });
+  downloadFile(csv, `redemptions-report-${from}-to-${to}.csv`, 'text/csv');
+  toast('Redemptions Report exported!');
+};
+
+// 7. Referral Program Report — built from customers.referredBy (no
+// extra network call needed, since it's already loaded locally) plus
+// the fixed bonus amounts from Settings.
+function _referralStats() {
+  const referrers = {};
+  Object.values(customers).forEach(c => {
+    if (c.referredBy && customers[c.referredBy]) {
+      const r = customers[c.referredBy];
+      if (!referrers[r.phone]) referrers[r.phone] = { name: r.name, phone: r.phone, count: 0 };
+      referrers[r.phone].count += 1;
+    }
+  });
+  return referrers;
+}
+
+function renderReferralReport() {
+  const referrers = _referralStats();
+  const totalReferrals = Object.values(referrers).reduce((s, r) => s + r.count, 0);
+  const referrerBonus = Number(settings.refBonusReferrer || 0);
+  const refereeBonus = Number(settings.refBonusReferee || 0);
+  const totalBonusPaid = totalReferrals * (referrerBonus + refereeBonus);
+
+  document.getElementById('report-referral-stats').innerHTML = `
+    <div class="stat"><div class="num">${totalReferrals}</div><div class="lbl">Total Referrals</div></div>
+    <div class="stat"><div class="num">${Object.keys(referrers).length}</div><div class="lbl">Active Referrers</div></div>
+    <div class="stat"><div class="num">${totalBonusPaid}</div><div class="lbl">Bonus Points Paid</div></div>`;
+
+  const rows = Object.values(referrers).sort((a,b) => b.count - a.count).map(r => `
+    <tr>
+      <td><b>${escapeHtml(r.name)}</b></td>
+      <td class="mono">${escapeHtml(r.phone)}</td>
+      <td>${r.count}</td>
+      <td><span class="badge">+${r.count * referrerBonus}</span></td>
+    </tr>`).join('');
+
+  document.getElementById('report-referral-table').innerHTML = rows ? `
+    <div class="table-responsive"><table><thead><tr><th>Referrer</th><th>Phone</th><th>Customers Referred</th><th>Bonus Earned</th></tr></thead><tbody>${rows}</tbody></table></div>`
+    : '<div class="empty">No referrals yet.</div>';
+}
+
+window.exportReferralCSV = function() {
+  const referrers = _referralStats();
+  const rows = Object.values(referrers);
+  if (rows.length === 0) { toast('No referral data to export'); return; }
+  const referrerBonus = Number(settings.refBonusReferrer || 0);
+  let csv = 'Referrer Name,Referrer Phone,Customers Referred,Bonus Points Earned\n';
+  rows.forEach(r => { csv += `"${r.name}",${r.phone},${r.count},${r.count * referrerBonus}\n`; });
+  downloadFile(csv, `referral-report.csv`, 'text/csv');
+  toast('Referral Report exported!');
+};
+
+// 8. Inactive / Win-Back Customers — purely local, no date range tie-in
+// (it's about "now", not a bill date range).
+function _inactiveCustomers() {
+  const days = Math.max(1, parseInt(document.getElementById('r-inactive-days').value, 10) || 30);
+  const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
+  return Object.values(customers)
+    .filter(c => c.lastVisit && new Date(c.lastVisit).getTime() < cutoff)
+    .map(c => ({ ...c, daysSince: Math.floor((Date.now() - new Date(c.lastVisit).getTime()) / (24*60*60*1000)) }))
+    .sort((a,b) => b.daysSince - a.daysSince);
+}
+
+window.renderInactiveReport = function() {
+  const inactive = _inactiveCustomers();
+  document.getElementById('report-inactive-table').innerHTML = inactive.length ? `
+    <div class="table-responsive"><table><thead><tr><th>Customer</th><th>Phone</th><th>Points</th><th>Last Visit</th><th>Days Inactive</th></tr></thead><tbody>
+    ${inactive.slice(0, 100).map(c => `<tr><td><b>${escapeHtml(c.name)}</b></td><td class="mono">${escapeHtml(c.phone)}</td><td><span class="badge">${c.totalPoints} pts</span></td><td>${c.lastVisit}</td><td class="mono">${c.daysSince}</td></tr>`).join('')}
+    </tbody></table></div>${inactive.length > 100 ? `<div class="sub" style="margin-top:8px;">Showing 100 of ${inactive.length}. Export CSV for full list.</div>` : ''}`
+    : '<div class="empty">No customers past that inactivity threshold.</div>';
+};
+
+window.exportInactiveCSV = function() {
+  const inactive = _inactiveCustomers();
+  if (inactive.length === 0) { toast('No inactive customers to export'); return; }
+  let csv = 'Customer Name,Phone,Points,Last Visit,Days Inactive\n';
+  inactive.forEach(c => { csv += `"${c.name}",${c.phone},${c.totalPoints},${c.lastVisit},${c.daysSince}\n`; });
+  downloadFile(csv, `inactive-customers.csv`, 'text/csv');
+  toast('Inactive Customers list exported!');
+};
+
+// 9. Point Ledger Audit — the one report that isn't built from data
+// already loaded locally, since the ledger can grow large. Queries
+// Supabase directly, optionally filtered to one customer's phone.
+window.searchLedger = async function() {
+  const box = document.getElementById('report-ledger-table');
+  if (!supabaseClient) {
+    box.innerHTML = '<div class="empty">The point ledger audit report needs a live Supabase connection (it reads the point_ledger table directly).</div>';
+    return;
+  }
+  const phone = document.getElementById('r-ledger-phone').value.trim();
+  box.innerHTML = '<div class="empty"><span class="spinner dark"></span> Loading ledger…</div>';
+
+  let query = supabaseClient.from('point_ledger').select('*').order('created_at', { ascending: false }).limit(200);
+  if (phone) query = query.eq('customer_phone', get10DigitPhone(phone));
+
+  const { data, error } = await query;
+  if (error) { box.innerHTML = `<div class="empty">Could not load ledger: ${escapeHtml(error.message)}</div>`; return; }
+  if (!data || !data.length) { box.innerHTML = '<div class="empty">No ledger entries found.</div>'; return; }
+
+  const typeLabel = { purchase: 'Purchase', referral_bonus: 'Referral Bonus', redemption_hold: 'Redemption', redemption_cancel: 'Redemption Cancelled', manual_adjustment: 'Manual Adjustment', bill_delete_reversal: 'Bill Deleted' };
+  const rows = data.map(l => `
+    <tr>
+      <td>${new Date(l.created_at).toLocaleString()}</td>
+      <td class="mono">${escapeHtml(l.customer_phone)}</td>
+      <td>${typeLabel[l.type] || escapeHtml(l.type)}</td>
+      <td><span class="badge ${l.points < 0 ? 'redeem' : ''}">${l.points > 0 ? '+' : ''}${l.points}</span></td>
+      <td class="mono">${l.balance_after}</td>
+      <td style="max-width:260px;">${escapeHtml(l.reason || '—')}</td>
+      <td>${escapeHtml(l.created_by || '—')}</td>
+    </tr>`).join('');
+
+  box.innerHTML = `
+    <div class="table-responsive"><table><thead><tr><th>When</th><th>Phone</th><th>Type</th><th>Points</th><th>Balance After</th><th>Reason</th><th>By</th></tr></thead><tbody>${rows}</tbody></table></div>
+    ${data.length === 200 ? '<div class="sub" style="margin-top:8px;">Showing the most recent 200 entries. Search by phone to narrow it down.</div>' : ''}`;
+};
 
 window.exportFilteredCSV = function() {
   const from = document.getElementById('r-from').value || '2000-01-01';
