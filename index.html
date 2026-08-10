@@ -2025,13 +2025,21 @@ document.getElementById('save-bill').addEventListener('click', async () => {
         playSound('error');
         return;
       }
-      if (transactions.some(t => t.billNo === bill)) {
+      if (transactions.some(t => t.billNo === bill && t.date === date)) {
         statusEl.style.color = 'var(--accent-red)';
-        statusEl.innerHTML = `⚠️ Bill #${escapeHtml(bill)} already exists.`;
+        statusEl.innerHTML = `⚠️ Bill #${escapeHtml(bill)} already exists for ${escapeHtml(date)}.`;
         btn.innerHTML = originalText; btn.disabled = false;
         return;
       }
-      redeem = Math.round(Math.min(redeem, c.totalPoints));
+      if (redeem > c.totalPoints) {
+        statusEl.style.color = 'var(--accent-red)';
+        statusEl.innerHTML = `⚠️ Insufficient points: customer has ${c.totalPoints} but ${redeem} was requested.`;
+        btn.innerHTML = originalText; btn.disabled = false;
+        toast('Insufficient points for that redemption');
+        playSound('error');
+        return;
+      }
+      redeem = Math.round(redeem);
       earned = settings.rate > 0 ? Math.floor(amount / settings.rate) : 0;
       c.name = name;
       c.totalPoints = c.totalPoints - redeem + earned;
@@ -2257,7 +2265,7 @@ function renderCustomers() {
       </td>
       <td>${c.visits}</td>
       <td class="mono">₹${c.totalSpent.toFixed(2)}</td>
-      <td><span class="badge">${c.totalPoints} pts</span></td>
+      <td><span class="badge${c.totalPoints < 0 ? ' redeem' : ''}">${c.totalPoints < 0 ? '⚠️ ' : ''}${c.totalPoints} pts</span></td>
       <td class="mono">₹${(c.totalPoints * (settings.redeemVal || 0)).toFixed(2)}</td>
       <td>
         <button class="btn secondary" style="padding:4px 8px; font-size:11.5px; margin-right:4px;" onclick="editCustomerModal('${c.phone}')" title="Edit Customer Details">
@@ -2412,8 +2420,10 @@ window.showCustomer = function(phone) {
           </div>
         </div>
         <div style="text-align:right;">
-          <div style="font-size:22px; font-weight:800; color:var(--ink);" class="mono">${c.totalPoints} pts</div>
-          <div style="font-size:12px; color:var(--text-sub);">Closing Cash Liability: <b class="mono" style="color:var(--accent-emerald);">₹${(c.totalPoints * (settings.redeemVal || 0)).toFixed(2)}</b></div>
+          <div style="font-size:22px; font-weight:800; color:${c.totalPoints < 0 ? 'var(--accent-red)' : 'var(--ink)'};" class="mono">${c.totalPoints} pts</div>
+          ${c.totalPoints < 0
+            ? `<div style="font-size:12px; color:var(--accent-red); font-weight:700;">⚠️ Customer owes ${Math.abs(c.totalPoints)} pts — a deleted bill's points had already been redeemed elsewhere. Review before further redemptions.</div>`
+            : `<div style="font-size:12px; color:var(--text-sub);">Closing Cash Liability: <b class="mono" style="color:var(--accent-emerald);">₹${(c.totalPoints * (settings.redeemVal || 0)).toFixed(2)}</b></div>`}
         </div>
       </div>
       
@@ -2456,7 +2466,10 @@ window.deleteTxn = async function(id) {
       c.totalPoints = cust.total_points; c.totalSpent = cust.total_spent; c.visits = cust.visits;
     }
   } else if (c) {
-    c.totalPoints = Math.max(0, c.totalPoints - t.earned + t.redeemed);
+    // No artificial floor at zero here either — see delete_bill in
+    // the SQL for why: clamping hides a real "customer owes points
+    // back" situation instead of surfacing it.
+    c.totalPoints = c.totalPoints - t.earned + t.redeemed;
     c.totalSpent = Math.max(0, c.totalSpent - t.amount);
     c.visits = Math.max(0, c.visits - 1);
   }
